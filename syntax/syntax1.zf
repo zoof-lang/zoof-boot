@@ -1,0 +1,129 @@
+## Intro
+#
+# In this file I explore possible syntactice elements for Zoof.
+# This file should be viewed in Pyzo on the Zoof branch to benefit from syntax highlighting.
+
+
+## Comments
+
+# I am familiar with Python comments.
+// Although C style might be easier to *reach*
+% Le's not do Matlab
+-- Elm is also not bad
+
+
+## Assignment
+
+// Classic
+foo = 3
+
+// The weird thing is that the right side of the equation is evaluated first,
+// so this might make more sense? Can we explore this?
+3 -> foo
+
+
+## Literals
+
+// The usual stuff
+an_int = 3
+a_float = 3.4
+another_float = 1.2e3
+
+
+## Strings
+
+// Single line
+a = 'Use quotes'
+b = "Or double qoutes"
+
+// Allow both? Is there a reason to prefer either one?
+// I don't think we should use another char (like backticks) because its so damn common to use quotes.
+
+// Multiline strings.
+s = | This style makes parsing easier.
+    | And prevents indentation issues that are so common in e.g. Python.
+    | Co
+
+
+b = " or use double-quotes
+    " for this
+    " (currently this is parsed as an unclosed string)
+
+
+// We should also think about
+// - escaping
+// - raw strings
+// - string interpolation (aka formatting)
+// - cell comments
+// - docstrings
+
+
+## Object literals / namespaces
+
+// Looks like Elm. Note that we use equals sign, not colon.
+ob1 = { foo = 3, bar = 'asd' }
+
+// They look like namespaces
+ob2 = {
+    foo = 3
+    bar = 'asd'
+}
+
+// Should these "namespaces be mutable? Can fields be added?
+// Or are they static like records in Elm? Maybe have both?
+record = { a = 1, b = 2}
+ns = {{ a = 1, b = 2 }}
+
+
+
+## Functions
+
+// Keywords could be function, func, fun or fn.
+fun foo()
+    ...
+end
+
+// A short keyword is nice for anynymous functions
+x.sort(fun (x) -x end)
+
+
+## Types
+
+// Elm does this
+type alias Person = { name: Text, age : int }
+
+
+
+## If expressions
+
+if expr then
+   ...
+end
+
+
+// I like ternary operators to have the same syntax
+a = if expr then
+    3
+else
+    5
+end
+
+// Or on a single line
+a = if expr then 3 else 4 end
+
+
+## Loops
+
+// What if we always use the loop keyword?
+loop over sequence as i do
+    ...
+end
+
+loop repeat 3
+    ...
+end
+
+// Simple ranges should be easy to express
+loop over 1..9 as i do ... end
+
+
