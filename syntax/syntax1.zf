@@ -79,12 +79,15 @@ ns = {{ a = 1, b = 2 }}
 ## Functions
 
 // Keywords could be function, func, fun or fn.
-fun foo()
+fun foo() {
     ...
-end
+}
 
 // A short keyword is nice for anynymous functions
 x.sort(fun (x) -x end)
+//or ?
+x.sort(fun(x) {-x})
+
 
 
 ## Types

@@ -1,18 +1,18 @@
 import sys
 
-from .scanner import Scanner
+from scanner import Scanner
 
 
 class ZoofCompiler:
     def __init__(self):
         self.errorHandler = ErrorHandler()
 
-    def main(self):
-        if len(sys.argv) > 1:
-            print("UsageL zoofpyc [script]")
+    def main(self, argv):
+        if len(argv) > 1:
+            print("Usage zoofpyc [script]")
             sys.exit(64)
-        elif len(sys.argv) == 1:
-            self.runFile(sys.argv[0])
+        elif len(argv) == 1:
+            self.runFile(argv[0])
         else:
             self.runPrompt()
 
@@ -49,3 +49,9 @@ class ErrorHandler:
     def report(self, line, where, message):
         print(f"[line {line}] Error {where}: {message}")
         self.hadError = True
+
+
+if __name__ == "__main__":
+    c = ZoofCompiler()
+    # c.main(sys.argv)
+    c.main(["../syntax/syntax1.zf"])
