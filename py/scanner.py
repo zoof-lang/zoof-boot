@@ -94,20 +94,6 @@ class Scanner:
         self.current += 1
         return c
 
-    def addToken(self, type, literal=None):
-        text = self.source[self.start : self.current]
-        self.tokens.append(Token(type, text, literal, self.line))
-
-    def match(self, expected):
-        # Conditional advance
-        if self.isAtEnd():
-            return False
-        if self.source[self.current] != expected:
-            return False
-        else:
-            self.current += 1
-            return True
-
     def peek(self):
         # Lookahead
         if self.isAtEnd():
@@ -121,6 +107,20 @@ class Scanner:
             return "\0"
         else:
             return self.source[self.current + 1]
+
+    def match(self, expected):
+        # Conditional advance
+        if self.isAtEnd():
+            return False
+        if self.source[self.current] != expected:
+            return False
+        else:
+            self.current += 1
+            return True
+
+    def addToken(self, type, literal=None):
+        text = self.source[self.start : self.current]
+        self.tokens.append(Token(type, text, literal, self.line))
 
     def scanToken(self):
         c = self.advance()

@@ -1,3 +1,14 @@
+# Stuff that I like:
+#
+# * Obviously feels familiar
+# * Feels free
+#
+# Stuff I like less:
+#
+# * There may be an error in code paths that I don't cover.
+# * A switch/match would be nice.
+# * Proper enums would be nice
+
 import sys
 
 from scanner import Scanner
