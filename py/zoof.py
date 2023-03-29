@@ -11,7 +11,7 @@
 
 import sys
 
-from scanner import Scanner
+from lexer import Lexer
 
 
 class ZoofCompiler:
@@ -43,8 +43,8 @@ class ZoofCompiler:
             self.errorHandler.hadError = False
 
     def run(self, source):
-        scanner = Scanner(source, self.errorHandler)
-        tokens = scanner.scanTokens()
+        lexer = Lexer(source, self.errorHandler)
+        tokens = lexer.findTokens()
 
         for token in tokens:
             print(token)
