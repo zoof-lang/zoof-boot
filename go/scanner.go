@@ -99,7 +99,7 @@ func (token *Token) ToString() string {
 	case float64:
 		suffix = " -> " + fmt.Sprint(v)
 	case string:
-		suffix = " -> " + v
+		suffix = " -> '" + v + "'"
 	default:
 		suffix = ""
 	}

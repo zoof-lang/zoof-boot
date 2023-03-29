@@ -8,7 +8,7 @@
 // * modules don't feel very dynamic, though I guess that makes sense.
 // * methods feel verbose to write.
 // * Eek, pointers!
-// * No default args, wtf
+// * No default args, wtf, and also no method overloading ...
 // * Not a lot of batteries included, e.g. Array.contains
 //
 // Note: could also apply https://www.youtube.com/watch?v=HxaD_trXwRE
