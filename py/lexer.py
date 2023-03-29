@@ -2,7 +2,6 @@ import enum
 
 
 class TokenType(enum.Enum):
-
     LeftParen = 11
     RightParen = 12
     LeftBrace = 13
@@ -49,7 +48,21 @@ TT = TokenType
 
 ##
 
-KEYWORDS = "import", "from", "as", "and", "or", "fun", "return", "if", "elseif", "then", "do", "for", "while",
+KEYWORDS = (
+    "import",
+    "from",
+    "as",
+    "and",
+    "or",
+    "fun",
+    "return",
+    "if",
+    "elseif",
+    "then",
+    "do",
+    "for",
+    "while",
+)
 RESERVED = "super", "this", "swicth", "match"
 
 
@@ -81,7 +94,9 @@ class Lexer:
             self.start = self.current
             self.findToken()
 
-        self.tokens.append(Token(TokenType.EOF, "", self.line, self.start - self.lineOffset))
+        self.tokens.append(
+            Token(TokenType.EOF, "", self.line, self.start - self.lineOffset)
+        )
         return self.tokens
 
     def isAtEnd(self):
@@ -118,7 +133,7 @@ class Lexer:
 
     def addToken(self, type):
         text = self.source[self.start : self.current]
-        self.tokens.append(Token(type, text, self.line, self.start- self.lineOffset))
+        self.tokens.append(Token(type, text, self.line, self.start - self.lineOffset))
 
     def findToken(self):
         c = self.advance()

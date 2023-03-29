@@ -12,6 +12,8 @@
 import sys
 
 from lexer import Lexer
+from printer import AstPrinter
+from parser import Parser
 
 
 class ZoofCompiler:
@@ -46,8 +48,16 @@ class ZoofCompiler:
         lexer = Lexer(source, self.errorHandler)
         tokens = lexer.findTokens()
 
-        for token in tokens:
-            print(token)
+        # for token in tokens:
+        #     print(token)
+
+        parser = Parser(tokens, self.errorHandler)
+        expr = parser.parse()
+        if self.errorHandler.hadError:
+            return
+
+        printer = AstPrinter()
+        printer.print(expr)
 
 
 class ErrorHandler:
@@ -61,8 +71,17 @@ class ErrorHandler:
         print(f"[line {line}] Error {where}: {message}")
         self.hadError = True
 
+    def error_for_token(self, token, message):
+        from lexer import TT
+
+        if token.type == TT.EOF:
+            self.report(token.line, " at end", message)
+        else:
+            self.report(token.line, "at '" + token.lexeme + "'", message)
+
 
 if __name__ == "__main__":
     c = ZoofCompiler()
     # c.main(sys.argv)
-    c.main(["../syntax/syntax1.zf"])
+    c.main([])
+    # c.main(["../syntax/syntax1.zf"])
