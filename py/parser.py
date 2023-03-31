@@ -1,4 +1,4 @@
-from lexer import TT
+from tokens import TT
 import tree
 
 
@@ -7,6 +7,8 @@ class ParseError(Exception):
 
 
 class Parser:
+    """A recursive descent parser."""
+
     def __init__(self, tokens, handler):
         self.handler = handler
         self.tokens = tokens
@@ -61,9 +63,15 @@ class Parser:
     # %%
 
     def expression(self):
-        return self.equality()
+        # -> equality
+        expr = self.equality()
+        self.advance()
+        if not self.isAtEnd():
+            raise self.error(self.peek(), "Unexpected expression?")
+        return expr
 
     def equality(self):
+        # -> comparison ( ( "==" | "!=" ) comparison )*
         expr = self.comparison()
         while self.match(TT.BangEqual, TT.EqualEqual):
             op = self.previous()
@@ -72,30 +80,45 @@ class Parser:
         return expr
 
     def comparison(self):
-        expr = self.term()
+        # -> sum ( ( "<" | "<=" | ">" | ">=") sum )*
+        expr = self.sum()
         while self.match(TT.Greater, TT.GreaterEqual, TT.Less, TT.LessEqual):
             op = self.previous()
-            right = self.term()
+            right = self.sum()
             expr = tree.BinaryExpr(expr, op, right)
         return expr
 
-    def term(self):
-        expr = self.factor()
+    def sum(self):
+        # aka term
+        # -> product ( ( "-" | "+" ) product )* ;
+        expr = self.product()
         while self.match(TT.Minus, TT.Plus):
             op = self.previous()
-            right = self.factor()
+            right = self.product()
             expr = tree.BinaryExpr(expr, op, right)
         return expr
 
-    def factor(self):
-        expr = self.unary()
+    def product(self):
+        # aka factor
+        # -> power ( ( "/" | "*" ) power )* ;
+        expr = self.power()
         while self.match(TT.Slash, TT.Star):
+            op = self.previous()
+            right = self.power()
+            expr = tree.BinaryExpr(expr, op, right)
+        return expr
+
+    def power(self):
+        # -> unary ( "^" unary )* ;
+        expr = self.unary()
+        while self.match(TT.Caret):
             op = self.previous()
             right = self.unary()
             expr = tree.BinaryExpr(expr, op, right)
         return expr
 
     def unary(self):
+        # -> ( "!" | "-" ) unary | primary
         if self.match(TT.Plus, TT.Minus):
             op = self.previous()
             right = self.unary()
@@ -104,6 +127,7 @@ class Parser:
             return self.primary()
 
     def primary(self):
+        # -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
         if self.match(
             TT.LiteralFalse,
             TT.LiteralTrue,

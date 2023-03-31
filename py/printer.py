@@ -1,7 +1,4 @@
-import tree
-
-
-class AstPrinter(tree.Visitor):
+class AstPrinter:
     def print(self, expr):
         print(expr.accept(self))
 
@@ -27,6 +24,7 @@ class AstPrinter(tree.Visitor):
 
 if __name__ == "__main__":
     import lexer
+    import tree
 
     expr = tree.BinaryExpr(
         tree.UnaryExpr(

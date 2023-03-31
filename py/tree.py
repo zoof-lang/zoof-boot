@@ -3,8 +3,11 @@ class Expr:
         raise NotImplementedError()
 
     def accept(self, visitor):
-        method = getattr(visitor, "visit" + self.__class__.__name__)
-        return method(self)
+        method = getattr(visitor, "visit" + self.__class__.__name__, None)
+        if method is None:
+            raise NotImplemented(method)
+        else:
+            return method(self)
 
 
 class BinaryExpr(Expr):
@@ -28,7 +31,3 @@ class UnaryExpr(Expr):
     def __init__(self, op, right):
         self.op = op
         self.right = right
-
-
-class Visitor:
-    pass
