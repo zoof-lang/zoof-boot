@@ -1,17 +1,15 @@
 class ErrorHandler:
     def __init__(self):
         self.lines = []
-        self.hadError = False
+        self.hadSyntaxError = False
         self.hadRuntimeError = False
 
     def setSource(self, source):
         self.lines = source.splitlines()
 
-    def error(self, line, message):
-        self.report(line, "", message)
-
     def syntaxError(self, token, message):
         """An error due to invalid syntax."""
+        self.hadSyntaxError = True
         self._show_error(token, "SyntaxError: " + message)
 
     def analysisError(self, token, message):
@@ -21,24 +19,14 @@ class ErrorHandler:
     def runtimeError(self, token, message):
         """An error generated at runtime."""
         # print(f"[line {token.line}] Error : {message}")
+        self.hadRuntimeError = True
         self._show_error(token, "RuntimeError: " + message)
-        self.hadRuntimeError = False
-
-    def report(self, line, where, message):
-        print(f"[line {line}] Error {where}: {message}")
-        self.hadError = True
-
-    def error_for_token(self, token, message):
-        from lexer import TT
-
-        if token.type == TT.EOF:
-            self.report(token.line, " at end", message)
-        else:
-            self.report(token.line, "at '" + token.lexeme + "'", message)
 
     def _show_error(self, token, message):
+        tokenName = str(token.type).split(".")[-1]
         prefix = f"{token.line}| "
-        print(message)
+        squigle = "^" * len(token.lexeme)
+        print(message + f" at '{token.lexeme}' ({tokenName})")
         print()
-        print(prefix, self.lines[token.line - 1])
-        print(" " * (len(prefix) + token.column) + "/\\")
+        print(prefix + self.lines[token.line - 1])
+        print(" " * (len(prefix) + token.column - 1) + squigle)

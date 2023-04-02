@@ -39,6 +39,8 @@ class TokenType(enum.Enum):
     LiteralNul = 65
 
     Comment = 71
+    Invalid = 72
+    LiteralUnterminatedString = 73
 
     EOF = 99
 

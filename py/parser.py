@@ -9,8 +9,8 @@ class ParseError(Exception):
 class Parser:
     """A recursive descent parser."""
 
-    def __init__(self, tokens, handler):
-        self.handler = handler
+    def __init__(self, tokens, errorHandler):
+        self.ehandler = errorHandler
         self.tokens = tokens
         self.current = 0
 
@@ -51,11 +51,11 @@ class Parser:
         if self.check(tokentype):
             return self.advance()
         else:
-            raise self.error(self.peek(), message)
+            self.error(self.peek(), message)
 
     def error(self, token, message):
-        self.handler.error_for_token(token, message)
-        return ParseError()
+        self.ehandler.syntaxError(token, message)
+        raise ParseError()  # to unwind the stack
 
     def synchronize(self):
         raise NotImplementedError()
@@ -65,9 +65,9 @@ class Parser:
     def expression(self):
         # -> equality
         expr = self.equality()
-        self.advance()
+        next = self.advance()
         if not self.isAtEnd():
-            raise self.error(self.peek(), "Unexpected expression?")
+            self.error(next, "Unexpected expression")
         return expr
 
     def equality(self):
@@ -119,9 +119,11 @@ class Parser:
 
     def unary(self):
         # -> ( "!" | "-" ) unary | primary
+        # todo: can I only allow unary at the start of a nuneric expression?
         if self.match(TT.Plus, TT.Minus):
             op = self.previous()
-            right = self.unary()
+            # right = self.unary()
+            right = self.primary()  # only allow one unary
             return tree.UnaryExpr(op, right)
         else:
             return self.primary()
@@ -142,4 +144,4 @@ class Parser:
             self.consume(TT.RightParen, "Expect ')' after expression.")
             return tree.GroupingExpr(expr)
         else:
-            raise self.error(self.peek(), "Expected expression.")
+            self.error(self.peek(), "Expected expression.")

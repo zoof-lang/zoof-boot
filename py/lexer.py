@@ -2,11 +2,12 @@ from tokens import TT, KEYWORDS, RESERVED, Token
 
 
 class Lexer:
-    """A scanner, or lexer, call it what you want, but it gets the job done."""
+    """A scanner, or lexer, call it what you want, but it gets the job done.
+    It wont't ever show errors, it will simply emit failure tokens.
+    """
 
-    def __init__(self, source, errorHandler):
+    def __init__(self, source):
         self.source = source
-        self.errorHandler = errorHandler
         self.tokens = []
 
         self.start = 0
@@ -56,6 +57,10 @@ class Lexer:
 
     def addToken(self, type):
         text = self.source[self.start : self.current]
+        if type == TT.Invalid:
+            if len(self.tokens) > 0 and self.tokens[-1].type == TT.Invalid:
+                self.tokens[-1].lexeme += text
+                return
         self.tokens.append(Token(type, text, self.line, self.start - self.lineOffset))
 
     def findToken(self):
@@ -104,7 +109,7 @@ class Lexer:
             if self.match("="):
                 self.addToken(TT.BangEqual)
             else:
-                self.error(f"Expected '=' after '!', use 'not' for logical negation.")
+                self.addToken(TT.Invalid)
         elif c == "=":
             self.addToken(TT.EqualEqual if self.match("=") else TT.Equal)
         elif c == "<":
@@ -120,25 +125,26 @@ class Lexer:
             self.handleIdentifier()
         # Fail!
         else:
-            self.error(f"Unexpected character: '{c}'")
-
-    def error(self, message):
-        self.errorHandler.error(self.line, message)
+            self.addToken(TT.Invalid)
 
     def handleString(self):
-        while self.peek() != "'" and not self.isAtEnd():
-            if self.peek() == "\n":
-                self.line += 1
-                # todo: dont allow multiline for normal strings
+        unterminated = False
+        while self.peek() != "'":
+            if self.isAtEnd():
+                unterminated = True
+                break
+            elif self.peek() != "\n":
+                unterminated = True
+                break
             self.advance()
 
-        if self.isAtEnd():
-            self.errorHandler.error(self.line, "Unterminated string.")
-            return
-
-        # Move past the closing quote char
-        self.advance()
-        self.addToken(TT.LiteralString)
+        if unterminated:
+            self.addToken(TT.LiteralUnterminatedString)
+            self.advance()
+        else:
+            # Move past the closing quote char
+            self.advance()
+            self.addToken(TT.LiteralString)
 
     def handleNumber(self):
         while isNumeric(self.peek()):

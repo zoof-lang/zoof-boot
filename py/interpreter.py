@@ -73,12 +73,13 @@ class InterpreterVisitor:
             raise RuntimeErr(expr.token, f"Unexpected literal: '{s}'")
 
     def visitUnaryExpr(self, expr):
-        right = self.evaluate(expr)
+        right = self.evaluate(expr.right)
         if expr.op.type == TT.Minus:
             self.checkNumberOperand(expr.op, right)
             return -right
-        elif expr.op.type == TT.Bang:  # todo: must use "not"
-            return not self.isTruethy(expr.op, right)
+        if expr.op.type == TT.Plus:
+            self.checkNumberOperand(expr.op, right)
+            return right
         else:
             raise RuntimeErr(expr.op, f"Unexpected unary operation.")
 

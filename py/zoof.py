@@ -36,7 +36,7 @@ class ZoofCompiler:
         with open(path, "rb") as f:
             source = f.read().decode()
         self.run(source)
-        if self.ehandler.hadError:
+        if self.ehandler.hadSyntaxError:
             sys.exit(65)
         elif self.ehandler.hadRuntimeError:
             sys.exit(70)
@@ -47,13 +47,13 @@ class ZoofCompiler:
             if not line:
                 break
             self.run(line)
-            self.ehandler.hadError = False
+            self.ehandler.hadSyntaxError = False
             self.ehandler.hadRuntimeError = False
 
     def run(self, source):
         self.ehandler.setSource(source)
 
-        lexer = Lexer(source, self.ehandler)
+        lexer = Lexer(source)
         tokens = lexer.findTokens()
 
         # for token in tokens:
@@ -61,11 +61,11 @@ class ZoofCompiler:
 
         parser = Parser(tokens, self.ehandler)
         expr = parser.parse()
-        if self.ehandler.hadError:
+        if self.ehandler.hadSyntaxError:
             return
 
-        # printer = PrinterVisitor()
-        # printer.print(expr)
+        printer = PrinterVisitor()
+        printer.print(expr)
         self.interpreter.interpret(expr)
 
 
