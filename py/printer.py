@@ -1,4 +1,4 @@
-class AstPrinter:
+class PrinterVisitor:
     def print(self, expr):
         print(expr.accept(self))
 
@@ -37,5 +37,5 @@ if __name__ == "__main__":
         ),
     )
 
-    p = AstPrinter()
+    p = PrinterVisitor()
     p.print(expr)

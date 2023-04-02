@@ -12,13 +12,16 @@
 import sys
 
 from lexer import Lexer
-from printer import AstPrinter
+from printer import PrinterVisitor
 from parser import Parser
+from interpreter import InterpreterVisitor
+from errors import ErrorHandler
 
 
 class ZoofCompiler:
     def __init__(self):
-        self.errorHandler = ErrorHandler()
+        self.ehandler = ErrorHandler()
+        self.interpreter = InterpreterVisitor(self.ehandler)
 
     def main(self, argv):
         if len(argv) > 1:
@@ -33,8 +36,10 @@ class ZoofCompiler:
         with open(path, "rb") as f:
             source = f.read().decode()
         self.run(source)
-        if self.errorHandler.hadError:
+        if self.ehandler.hadError:
             sys.exit(65)
+        elif self.ehandler.hadRuntimeError:
+            sys.exit(70)
 
     def runPrompt(self):
         while True:
@@ -42,42 +47,26 @@ class ZoofCompiler:
             if not line:
                 break
             self.run(line)
-            self.errorHandler.hadError = False
+            self.ehandler.hadError = False
+            self.ehandler.hadRuntimeError = False
 
     def run(self, source):
-        lexer = Lexer(source, self.errorHandler)
+        self.ehandler.setSource(source)
+
+        lexer = Lexer(source, self.ehandler)
         tokens = lexer.findTokens()
 
         # for token in tokens:
         #     print(token)
 
-        parser = Parser(tokens, self.errorHandler)
+        parser = Parser(tokens, self.ehandler)
         expr = parser.parse()
-        if self.errorHandler.hadError:
+        if self.ehandler.hadError:
             return
 
-        printer = AstPrinter()
-        printer.print(expr)
-
-
-class ErrorHandler:
-    def __init__(self):
-        self.hadError = False
-
-    def error(self, line, message):
-        self.report(line, "", message)
-
-    def report(self, line, where, message):
-        print(f"[line {line}] Error {where}: {message}")
-        self.hadError = True
-
-    def error_for_token(self, token, message):
-        from lexer import TT
-
-        if token.type == TT.EOF:
-            self.report(token.line, " at end", message)
-        else:
-            self.report(token.line, "at '" + token.lexeme + "'", message)
+        # printer = PrinterVisitor()
+        # printer.print(expr)
+        self.interpreter.interpret(expr)
 
 
 if __name__ == "__main__":
