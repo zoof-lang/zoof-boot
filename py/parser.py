@@ -15,10 +15,11 @@ class Parser:
         self.current = 0
 
     def parse(self):
-        try:
-            return self.expression()
-        except ParseError:
-            return None
+        # program -> statement* EOF
+        statements = []
+        while not self.isAtEnd():
+            statements.append(self.statement())
+        return statements
 
     def match(self, *tokentypes):
         for tokentype in tokentypes:
@@ -26,6 +27,16 @@ class Parser:
                 self.advance()
                 return True
         return False
+
+    def matchKeyword(self, keyword):
+        if self.isAtEnd():
+            return False
+        token = self.peek()
+        if token.type == TT.Keyword and token.lexeme == keyword:
+            self.advance()
+            return True
+        else:
+            return False
 
     def check(self, tokentype):
         if self.isAtEnd():
@@ -38,8 +49,8 @@ class Parser:
         return self.previous()
 
     def isAtEnd(self):
-        # return self.peek == TT.EOF
-        return self.current >= len(self.tokens)
+        return self.peek().type == TT.EOF
+        # return self.current >= len(self.tokens)
 
     def peek(self):
         return self.tokens[self.current]
@@ -62,12 +73,30 @@ class Parser:
 
     # %%
 
+    def statement(self):
+        # -> expressionStmt | printStmt
+        if self.matchKeyword("print"):
+            return self.printStatement()
+        else:
+            return self.expressionStatement()
+
+    def printStatement(self):
+        # -> "print" expression "\n"
+        value = self.expression()
+        # todo: expect eol?
+        return tree.PrintStmt(value)
+
+    def expressionStatement(self):
+        # -> expression "\n"
+        expr = self.expression()
+        # todo: expect eol?
+        return tree.ExpressionStmt(expr)
+
+    # %%
+
     def expression(self):
         # -> equality
         expr = self.equality()
-        next = self.advance()
-        if not self.isAtEnd():
-            self.error(next, "Unexpected expression")
         return expr
 
     def equality(self):

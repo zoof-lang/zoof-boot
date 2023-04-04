@@ -60,17 +60,21 @@ class ZoofCompiler:
         #     print(token)
 
         parser = Parser(tokens, self.ehandler)
-        expr = parser.parse()
+        statements = parser.parse()
         if self.ehandler.hadSyntaxError:
             return
 
-        printer = PrinterVisitor()
-        printer.print(expr)
-        self.interpreter.interpret(expr)
+        # printer = PrinterVisitor()
+        # for stmt in statements:
+        #     printer.print(stmt)
+        self.interpreter.interpret(statements)
 
 
 if __name__ == "__main__":
+    argv = sys.argv.copy()
+    if argv and argv[0].endswith("zoof.py"):
+        argv.pop(0)
+
     c = ZoofCompiler()
-    # c.main(sys.argv)
-    c.main([])
+    c.main(argv)
     # c.main(["../syntax/syntax1.zf"])

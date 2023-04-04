@@ -133,7 +133,7 @@ class Lexer:
             if self.isAtEnd():
                 unterminated = True
                 break
-            elif self.peek() != "\n":
+            elif self.peek() == "\n":
                 unterminated = True
                 break
             self.advance()

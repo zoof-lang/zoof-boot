@@ -51,6 +51,7 @@ TT = TokenType
 ##
 
 KEYWORDS = (
+    "print",
     "import",
     "from",
     "as",

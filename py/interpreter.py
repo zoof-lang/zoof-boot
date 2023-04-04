@@ -12,14 +12,20 @@ class InterpreterVisitor:
     def __init__(self, handler):
         self.handler = handler
 
-    def interpret(self, expr):
+    def interpret(self, statements):
         try:
-            result = self.evaluate(expr)
-            print(self.stringify(result))
+            val = None
+            for statement in statements:
+                val = self.execute(statement)
+            if val is not None:
+                print(val)  # todo: is this the right way to print the last value?
         except RuntimeErr as err:
             self.handler.runtimeError(err.token, err.message)
         except Exception as err:
             raise err
+
+    def execute(self, stmt):
+        return stmt.accept(self)
 
     def evaluate(self, expr):
         return expr.accept(self)
@@ -59,6 +65,17 @@ class InterpreterVisitor:
             return "nil"
         else:
             return repr(value)
+
+    # %%
+
+    def visitExpressionStmt(self, expr):
+        return self.evaluate(expr.expr)
+
+    def visitPrintStmt(self, expr):
+        value = self.evaluate(expr.expr)
+        print(self.stringify(value))
+
+    # %%
 
     def visitGroupingExpr(self, expr):
         return self.evaluate(expr.expr)
