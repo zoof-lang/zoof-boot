@@ -39,8 +39,6 @@ class Parser:
             return False
 
     def check(self, tokentype):
-        if self.isAtEnd():
-            return False
         return self.peek().type == tokentype
 
     def advance(self):
@@ -59,6 +57,7 @@ class Parser:
         return self.tokens[self.current - 1]
 
     def consume(self, tokentype, message):
+        # Expect a certain tokentype
         if self.check(tokentype):
             return self.advance()
         else:
@@ -83,14 +82,18 @@ class Parser:
     def printStatement(self):
         # -> "print" expression "\n"
         value = self.expression()
-        # todo: expect eol?
-        return tree.PrintStmt(value)
+        if self.match(TT.Comment, TT.Newline, TT.EOF):
+            return tree.PrintStmt(value)
+        else:
+            self.error(self.peek(), "Dit not expect code after expression.")
 
     def expressionStatement(self):
         # -> expression "\n"
         expr = self.expression()
-        # todo: expect eol?
-        return tree.ExpressionStmt(expr)
+        if self.match(TT.Comment, TT.Newline, TT.EOF):
+            return tree.ExpressionStmt(expr)
+        else:
+            self.error(self.peek(), "Dit not expect code after expression.")
 
     # %%
 

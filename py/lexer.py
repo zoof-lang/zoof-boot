@@ -69,6 +69,9 @@ class Lexer:
         if c == "\n":
             self.line += 1
             self.lineOffset = self.current - 1
+            while self.peek() in " \t":
+                self.advance()
+            self.addToken(TT.Newline)
         elif c in " \t\r":
             pass
         elif c == "#":
