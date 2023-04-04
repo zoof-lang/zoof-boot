@@ -18,7 +18,9 @@ class Parser:
         # program -> statement* EOF
         statements = []
         while not self.isAtEnd():
-            statements.append(self.statement())
+            stmt = self.statement()
+            if stmt is not None:
+                statements.append(stmt)
         return statements
 
     def match(self, *tokentypes):
@@ -68,32 +70,44 @@ class Parser:
         raise ParseError()  # to unwind the stack
 
     def synchronize(self):
-        raise NotImplementedError()
+        while not self.match(TT.Newline, TT.EOF):
+            self.advance()
 
     # %%
 
     def statement(self):
-        # -> expressionStmt | printStmt
-        if self.matchKeyword("print"):
-            return self.printStatement()
-        else:
-            return self.expressionStatement()
+        # -> (expressionStmt | printStmt) ((Comment)? Newline | EOF)
+
+        try:
+            # Skip lines that are empty or only have a comment
+            self.match(TT.Comment)
+            self.match(TT.Newline)
+            if self.isAtEnd():
+                return None
+            # Process statement
+            if self.matchKeyword("print"):
+                result = self.printStatement()
+            else:
+                result = self.expressionStatement()
+            # Check end
+            self.match(TT.Comment)
+            if not self.match(TT.Newline, TT.EOF):
+                self.error(self.peek(), "Dit not expect code after expression.")
+        except ParseError:
+            self.synchronize()
+            return None
+
+        return result
 
     def printStatement(self):
         # -> "print" expression "\n"
         value = self.expression()
-        if self.match(TT.Comment, TT.Newline, TT.EOF):
-            return tree.PrintStmt(value)
-        else:
-            self.error(self.peek(), "Dit not expect code after expression.")
+        return tree.PrintStmt(value)
 
     def expressionStatement(self):
         # -> expression "\n"
         expr = self.expression()
-        if self.match(TT.Comment, TT.Newline, TT.EOF):
-            return tree.ExpressionStmt(expr)
-        else:
-            self.error(self.peek(), "Dit not expect code after expression.")
+        return tree.ExpressionStmt(expr)
 
     # %%
 
