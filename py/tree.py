@@ -15,6 +15,17 @@ class Expr(ExprOrStmt):
     pass
 
 
+class AssignExpr(Expr):
+    def __init__(self, name, value):
+        self.name = name
+        self.value = value
+
+
+class VariableExpr(Expr):
+    def __init__(self, name):
+        self.name = name
+
+
 class BinaryExpr(Expr):
     def __init__(self, left, op, right):
         self.left = left

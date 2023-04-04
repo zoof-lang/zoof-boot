@@ -1,4 +1,4 @@
-from tokens import TT
+from tokens import TT, Token
 
 
 class RuntimeErr(Exception):
@@ -8,9 +8,24 @@ class RuntimeErr(Exception):
         self.message = message
 
 
+class Environment:
+    def __init__(self):
+        self._map = {}
+
+    def set(self, name: Token, value):
+        self._map[name.lexeme] = value
+
+    def get(self, name: Token):
+        try:
+            return self._map[name.lexeme]
+        except KeyError:
+            raise RuntimeErr(name, f"Undefined variable '{name.lexeme}'.")
+
+
 class InterpreterVisitor:
     def __init__(self, handler):
         self.handler = handler
+        self.env = Environment()
 
     def interpret(self, statements):
         try:
@@ -76,6 +91,14 @@ class InterpreterVisitor:
         print(self.stringify(value))
 
     # %%
+
+    def visitVariableExpr(self, expr):
+        return self.env.get(expr.name)
+
+    def visitAssignExpr(self, expr):
+        value = self.evaluate(expr.value)
+        self.env.set(expr.name, value)
+        return value
 
     def visitGroupingExpr(self, expr):
         return self.evaluate(expr.expr)

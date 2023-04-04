@@ -65,9 +65,10 @@ class Parser:
         else:
             self.error(self.peek(), message)
 
-    def error(self, token, message):
+    def error(self, token, message, *, throw=True):
         self.ehandler.syntaxError(token, message)
-        raise ParseError()  # to unwind the stack
+        if throw:
+            raise ParseError()  # to unwind the stack
 
     def synchronize(self):
         while not self.match(TT.Newline, TT.EOF):
@@ -112,8 +113,23 @@ class Parser:
     # %%
 
     def expression(self):
-        # -> equality
+        # -> assignment
+        expr = self.assignment()
+        return expr
+
+    def assignment(self):
+        # -> IDENTIFIER  "=" assignment | equality
         expr = self.equality()
+        if self.match(TT.Equal):
+            equalsToken = self.previous()
+            value = self.assignment()
+            if isinstance(expr, tree.VariableExpr):
+                # Convert r-value expr into l-value assignment
+                name = expr.name
+                return tree.AssignExpr(name, value)
+            else:
+                # Error, but no need to unwind, because we're not in a confused state
+                self.error(equalsToken, "Invalid assignment target.", throw=False)
         return expr
 
     def equality(self):
@@ -185,6 +201,8 @@ class Parser:
         ):
             # return tree.LiteralExpr(self.peek())
             return tree.LiteralExpr(self.previous())
+        elif self.match(TT.Identifier):
+            return tree.VariableExpr(self.previous())
         elif self.match(TT.LeftParen):
             expr = self.expression()
             self.consume(TT.RightParen, "Expect ')' after expression.")
