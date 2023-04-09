@@ -11,6 +11,31 @@ class ExprOrStmt:
             return method(self)
 
 
+# %%
+
+
+class Stmt(ExprOrStmt):
+    pass
+
+
+class BlockStmt(Stmt):
+    def __init__(self, statements):
+        self.statements = statements
+
+
+class PrintStmt(Stmt):
+    def __init__(self, expr):
+        self.expr = expr
+
+
+class ExpressionStmt(Stmt):
+    def __init__(self, expr):
+        self.expr = expr
+
+
+# %%
+
+
 class Expr(ExprOrStmt):
     pass
 
@@ -47,17 +72,3 @@ class UnaryExpr(Expr):
     def __init__(self, op, right):
         self.op = op
         self.right = right
-
-
-class Stmt(ExprOrStmt):
-    pass
-
-
-class ExpressionStmt(Stmt):
-    def __init__(self, expr):
-        self.expr = expr
-
-
-class PrintStmt(Stmt):
-    def __init__(self, expr):
-        self.expr = expr

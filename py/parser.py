@@ -77,7 +77,7 @@ class Parser:
     # %%
 
     def statement(self):
-        # -> (expressionStmt | printStmt) ((Comment)? Newline | EOF)
+        # -> (expressionStmt | printStmt | block) ((Comment)? Newline | EOF)
 
         try:
             # Skip lines that are empty or only have a comment
@@ -88,6 +88,8 @@ class Parser:
             # Process statement
             if self.matchKeyword("print"):
                 result = self.printStatement()
+            elif self.matchKeyword("do"):
+                result = tree.BlockStmt(self.blockStatement())
             else:
                 result = self.expressionStatement()
             # Check end
@@ -99,6 +101,15 @@ class Parser:
             return None
 
         return result
+
+    def blockStatement(self):
+        # -> "do" "{" declaration "}" "\n"
+        statements = []
+        self.consume(TT.LeftBrace, "Expected '{' after 'do'.")
+        while not (self.check(TT.RightBrace) or self.check(TT.EOF)):
+            statements.append(self.statement())
+        self.consume(TT.RightBrace, "Expected '{' after 'do'.")
+        return statements
 
     def printStatement(self):
         # -> "print" expression "\n"

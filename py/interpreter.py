@@ -9,23 +9,27 @@ class RuntimeErr(Exception):
 
 
 class Environment:
-    def __init__(self):
-        self._map = {}
+    def __init__(self, parent):
+        self.parent = parent
+        self.map = {}
 
     def set(self, name: Token, value):
-        self._map[name.lexeme] = value
+        self.map[name.lexeme] = value
 
     def get(self, name: Token):
         try:
-            return self._map[name.lexeme]
+            return self.map[name.lexeme]
         except KeyError:
-            raise RuntimeErr(name, f"Undefined variable '{name.lexeme}'.")
+            if self.parent:
+                return self.parent.get(name)
+            else:
+                raise RuntimeErr(name, f"Undefined variable '{name.lexeme}'.")
 
 
 class InterpreterVisitor:
     def __init__(self, handler):
         self.handler = handler
-        self.env = Environment()
+        self.env = Environment(None)
 
     def interpret(self, statements):
         try:
@@ -38,6 +42,15 @@ class InterpreterVisitor:
             self.handler.runtimeError(err.token, err.message)
         except Exception as err:
             raise err
+
+    def executeBock(self, statements, environment):
+        original_environment = self.env
+        try:
+            self.env = environment
+            for stmt in statements:
+                self.execute(stmt)
+        finally:
+            self.env = original_environment
 
     def execute(self, stmt):
         return stmt.accept(self)
@@ -83,12 +96,15 @@ class InterpreterVisitor:
 
     # %%
 
-    def visitExpressionStmt(self, expr):
-        return self.evaluate(expr.expr)
+    def visitBlockStmt(self, stmt):
+        self.executeBock(stmt.statements, Environment(self.env))
 
-    def visitPrintStmt(self, expr):
-        value = self.evaluate(expr.expr)
+    def visitPrintStmt(self, stmt):
+        value = self.evaluate(stmt.expr)
         print(self.stringify(value))
+
+    def visitExpressionStmt(self, stmt):
+        return self.evaluate(stmt.expr)
 
     # %%
 
