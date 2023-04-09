@@ -52,6 +52,10 @@ class InterpreterVisitor:
         finally:
             self.env = original_environment
 
+    def exececuteMultiple(self, statements):
+        for stmt in statements:
+            self.execute(stmt)
+
     def execute(self, stmt):
         return stmt.accept(self)
 
@@ -82,7 +86,7 @@ class InterpreterVisitor:
             classname = right.__class__.__name__
             raise RuntimeErr(op, f"Right operand must be a number, not '{classname}'")
 
-    def isEqual(left, right):
+    def isEqual(self, left, right):
         if left is None and right is None:
             return True
         else:
@@ -98,6 +102,12 @@ class InterpreterVisitor:
 
     def visitBlockStmt(self, stmt):
         self.executeBock(stmt.statements, Environment(self.env))
+
+    def visitIfStmt(self, stmt):
+        if self.evaluate(stmt.condition):
+            self.exececuteMultiple(stmt.thenBranch)
+        else:
+            self.exececuteMultiple(stmt.elseBranch)
 
     def visitPrintStmt(self, stmt):
         value = self.evaluate(stmt.expr)

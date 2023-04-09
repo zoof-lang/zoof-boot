@@ -20,7 +20,7 @@ class Parser:
         # program -> statement* EOF
         statements = self.statements()
         if not self.check(TT.EOF):
-            self.error("Unexpected end")
+            self.error(self.peek(), "Unexpected end")
         return statements
 
     def match(self, *tokentypes):
@@ -86,39 +86,54 @@ class Parser:
     def checkEos(self):
         # End Of Statement
         self.match(TT.Comment)
-        elif self.check(TT.Newline):
+        if self.check(TT.Newline):
             self.curIndent = len(self.peek().lexeme) - 1
             self.advance()
         elif self.check(TT.EOF):
             self.advance()
         else:
-            self.error(self.peek(), "Dit not expect code after expression.")
+            self.error(self.peek(), "Expected newline")
 
     def statements(self):
-        # Anywhere where we can expect one statement, we can expect more
+        # Collect a list of statements
 
         statements = []
 
-        try:
-            while True:
-                # Skip whitespace
-                self.skipEmptyLines()
-                if self.isAtEnd():
+        while True:
+            # Skip whitespace
+            self.skipEmptyLines()
+            if self.isAtEnd():
+                break
+            # Check indentation
+            if self.curIndent != self.refIndent:
+                if self.curIndent < self.refIndent:
                     break
-                # Check indentation
-                if self.curIndent != self.refIndent:
-                    if self.curIndent < self.refIndent:
-                        break
-                    else:
-                        self.error(self.peek(), "Unexpected indent.")
+                else:
+                    self.error(self.peek(), "Unexpected indent.")
+            try:
                 # Process statement
                 statements.append(self.statement())
-                # Check newline
-                self.checkEos()
+            except ParseError:
+                self.synchronize()
 
-        except ParseError:
-            self.synchronize()
+        return statements
 
+    def indentedStatements(self, context):
+        # Collect a list of indented statements
+
+        self.skipEmptyLines()
+        if self.curIndent <= self.refIndent:
+            self.error(self.peek(), "Expected indentation on line " + context)
+
+        previousIndent = self.refIndent
+        self.refIndent = self.curIndent
+
+        statements = self.statements()
+
+        if self.curIndent > previousIndent:
+            self.error(self.peek(), "Unexpected indentation")
+
+        self.refIndent = previousIndent
         return statements
 
     def statement(self):
@@ -126,45 +141,50 @@ class Parser:
         if self.matchKeyword("do"):
             return tree.BlockStmt(self.blockStatement())
         elif self.matchKeyword("if"):
-            return tree.ifStatement()
+            return self.ifStatement()
         elif self.matchKeyword("print"):
             return self.printStatement()
         else:
-           return self.expressionStatement()
+            return self.expressionStatement()
 
     def blockStatement(self):
         # -> "do" "{" statement* "}" "\n"
-        statements = []
         self.consume(TT.LeftBrace, "Expected '{' after 'do'.")
-        while not (self.check(TT.RightBrace) or self.check(TT.EOF)):
-            statements.append(self.statement())
-        self.consume(TT.RightBrace, "Expected '{' after 'do'.")
+        self.checkEos()
+
+        statements = self.indentedStatements("after 'do'")
+
+        self.consume(TT.RightBrace, "Expected '}' at the end of 'do'.")
+        if self.curIndent != self.refIndent:
+            self.error(self.peek(), "Expect '}' to match the indentation level of 'do'")
+
         return statements
 
     def ifStatement(self):
         # -> "if" expression EOS statement* ("else" EOS statement*)?
         condition = self.expression()
         self.checkEos()
-        # Indent
-        if self.curIndent <= self.refIndent:
-            self.error(self.peek(), "Expected indentation on line after 'if'.")
-        previousIndent = self.refIndent
-        self.refIndent = self.curIndent
 
-        # while self.curIndent < self.curIndent:
-        #     statements.append(self.statement())
-        #
-        # if
+        thenStatements = self.indentedStatements("after 'if'")
 
+        if self.curIndent == self.refIndent and self.matchKeyword("else"):
+            self.checkEos()
+            elseStatements = self.indentedStatements("after 'else'")
+        else:
+            elseStatements = []  # else
+
+        return tree.IfStmt(condition, thenStatements, elseStatements)
 
     def printStatement(self):
         # -> "print" expression "\n"
         value = self.expression()
+        self.checkEos()
         return tree.PrintStmt(value)
 
     def expressionStatement(self):
         # -> expression "\n"
         expr = self.expression()
+        self.checkEos()
         return tree.ExpressionStmt(expr)
 
     # %%

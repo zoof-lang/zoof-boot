@@ -76,5 +76,5 @@ if __name__ == "__main__":
         argv.pop(0)
 
     c = ZoofCompiler()
-    c.main(argv)
-    # c.main(["../syntax/syntax1.zf"])
+    # c.main(argv)
+    c.main(["../example.zf"])
