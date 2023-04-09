@@ -13,14 +13,14 @@ class Parser:
         self.ehandler = errorHandler
         self.tokens = tokens
         self.current = 0
+        self.refIndent = 0
+        self.curIndent = 0
 
     def parse(self):
         # program -> statement* EOF
-        statements = []
-        while not self.isAtEnd():
-            stmt = self.statement()
-            if stmt is not None:
-                statements.append(stmt)
+        statements = self.statements()
+        if not self.check(TT.EOF):
+            self.error("Unexpected end")
         return statements
 
     def match(self, *tokentypes):
@@ -76,40 +76,86 @@ class Parser:
 
     # %%
 
-    def statement(self):
-        # -> (expressionStmt | printStmt | block) ((Comment)? Newline | EOF)
+    def skipEmptyLines(self):
+        self.match(TT.Comment)
+        while self.check(TT.Newline):
+            self.curIndent = len(self.peek().lexeme) - 1
+            self.advance()
+            self.match(TT.Comment)
+
+    def checkEos(self):
+        # End Of Statement
+        self.match(TT.Comment)
+        elif self.check(TT.Newline):
+            self.curIndent = len(self.peek().lexeme) - 1
+            self.advance()
+        elif self.check(TT.EOF):
+            self.advance()
+        else:
+            self.error(self.peek(), "Dit not expect code after expression.")
+
+    def statements(self):
+        # Anywhere where we can expect one statement, we can expect more
+
+        statements = []
 
         try:
-            # Skip lines that are empty or only have a comment
-            self.match(TT.Comment)
-            self.match(TT.Newline)
-            if self.isAtEnd():
-                return None
-            # Process statement
-            if self.matchKeyword("print"):
-                result = self.printStatement()
-            elif self.matchKeyword("do"):
-                result = tree.BlockStmt(self.blockStatement())
-            else:
-                result = self.expressionStatement()
-            # Check end
-            self.match(TT.Comment)
-            if not self.match(TT.Newline, TT.EOF):
-                self.error(self.peek(), "Dit not expect code after expression.")
+            while True:
+                # Skip whitespace
+                self.skipEmptyLines()
+                if self.isAtEnd():
+                    break
+                # Check indentation
+                if self.curIndent != self.refIndent:
+                    if self.curIndent < self.refIndent:
+                        break
+                    else:
+                        self.error(self.peek(), "Unexpected indent.")
+                # Process statement
+                statements.append(self.statement())
+                # Check newline
+                self.checkEos()
+
         except ParseError:
             self.synchronize()
-            return None
 
-        return result
+        return statements
+
+    def statement(self):
+        # -> (expressionStmt | printStmt | block) ((Comment)? Newline | EOF)
+        if self.matchKeyword("do"):
+            return tree.BlockStmt(self.blockStatement())
+        elif self.matchKeyword("if"):
+            return tree.ifStatement()
+        elif self.matchKeyword("print"):
+            return self.printStatement()
+        else:
+           return self.expressionStatement()
 
     def blockStatement(self):
-        # -> "do" "{" declaration "}" "\n"
+        # -> "do" "{" statement* "}" "\n"
         statements = []
         self.consume(TT.LeftBrace, "Expected '{' after 'do'.")
         while not (self.check(TT.RightBrace) or self.check(TT.EOF)):
             statements.append(self.statement())
         self.consume(TT.RightBrace, "Expected '{' after 'do'.")
         return statements
+
+    def ifStatement(self):
+        # -> "if" expression EOS statement* ("else" EOS statement*)?
+        condition = self.expression()
+        self.checkEos()
+        # Indent
+        if self.curIndent <= self.refIndent:
+            self.error(self.peek(), "Expected indentation on line after 'if'.")
+        previousIndent = self.refIndent
+        self.refIndent = self.curIndent
+
+        # while self.curIndent < self.curIndent:
+        #     statements.append(self.statement())
+        #
+        # if
+
 
     def printStatement(self):
         # -> "print" expression "\n"

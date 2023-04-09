@@ -23,6 +23,13 @@ class BlockStmt(Stmt):
         self.statements = statements
 
 
+class IfStmt(Stmt):
+    def __init__(self, condition, thenBranch, elseBranch):
+        self.condition = condition
+        self.thenBranch = thenBranch
+        self.elseBranch = elseBranch
+
+
 class PrintStmt(Stmt):
     def __init__(self, expr):
         self.expr = expr
