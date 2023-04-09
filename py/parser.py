@@ -166,12 +166,19 @@ class Parser:
         self.checkEos()
 
         thenStatements = self.indentedStatements("after 'if'")
+        elseStatements = []
 
-        if self.curIndent == self.refIndent and self.matchKeyword("else"):
-            self.checkEos()
-            elseStatements = self.indentedStatements("after 'else'")
-        else:
-            elseStatements = []  # else
+        if self.curIndent == self.refIndent:
+            if self.matchKeyword("else"):
+                if self.matchKeyword("if"):
+                    elseStatements = [self.ifStatement()]
+                else:
+                    self.checkEos()
+                    elseStatements = self.indentedStatements("after 'else'")
+            elif self.matchKeyword("elif"):
+                elseStatements = [self.ifStatement()]
+            elif self.matchKeyword("elseif"):
+                elseStatements = [self.ifStatement()]
 
         return tree.IfStmt(condition, thenStatements, elseStatements)
 
