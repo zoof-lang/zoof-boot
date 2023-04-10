@@ -168,6 +168,7 @@ class Parser:
     def ifStatement(self):
         # -> "if" expression EOS statement* ("else" EOS statement*)?
         condition = self.expression()
+        then = self.peek()
 
         if not self.matchKeyword("then"):
             self.error(self.peek(), "expect 'then' after if-condition")
@@ -188,7 +189,7 @@ class Parser:
                 elif self.matchKeyword("elseif"):
                     elseStatements = [self.ifStatement()]
 
-            return tree.IfStmt(condition, thenStatements, elseStatements)
+            return tree.IfStmt(then, condition, thenStatements, elseStatements)
 
         else:
             # expression mode
@@ -199,7 +200,7 @@ class Parser:
                     "In single-line if-expression, an else-expression is required.",
                 )
             elseExpression = self.expression()
-            return tree.IfExpr(condition, thenExpression, elseExpression)
+            return tree.IfExpr(then, condition, thenExpression, elseExpression)
 
     def printStatement(self):
         # -> "print" expression "\n"
@@ -216,7 +217,7 @@ class Parser:
     # %%
 
     def expression(self):
-        # -> assignment
+        # -> ifexpr
         expr = self.ifexpr()
         return expr
 
@@ -236,13 +237,13 @@ class Parser:
                     "In single-line if-expression, an else-expression is required.",
                 )
             elseExpression = self.assignment()
-            return tree.IfExpr(condition, thenExpression, elseExpression)
+            return tree.IfExpr(then, condition, thenExpression, elseExpression)
         else:
             return self.assignment()
 
     def assignment(self):
-        # -> IDENTIFIER  "=" assignment | equality
-        expr = self.equality()
+        # -> IDENTIFIER  "=" assignment | logicalOr
+        expr = self.logicalOr()
         if self.match(TT.Equal):
             equalsToken = self.previous()
             value = self.assignment()
@@ -253,6 +254,24 @@ class Parser:
             else:
                 # Error, but no need to unwind, because we're not in a confused state
                 self.error(equalsToken, "Invalid assignment target.", throw=False)
+        return expr
+
+    def logicalOr(self):
+        # -> logicalAnd "or" logicalAnd
+        expr = self.logicalAnd()
+        while self.matchKeyword("or"):
+            operator = self.previous()
+            right = self.logicalAnd()
+            expr = tree.LogicalExpr(expr, operator, right)
+        return expr
+
+    def logicalAnd(self):
+        # -> equality "and" equality
+        expr = self.equality()
+        while self.matchKeyword("and"):
+            operator = self.previous()
+            right = self.equality()
+            expr = tree.LogicalExpr(expr, operator, right)
         return expr
 
     def equality(self):

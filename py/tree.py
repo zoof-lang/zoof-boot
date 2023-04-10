@@ -24,7 +24,8 @@ class BlockStmt(Stmt):
 
 
 class IfStmt(Stmt):
-    def __init__(self, condition, thenBranch, elseBranch):
+    def __init__(self, token, condition, thenBranch, elseBranch):
+        self.token = token
         self.condition = condition
         self.thenBranch = thenBranch
         self.elseBranch = elseBranch
@@ -47,6 +48,14 @@ class Expr(ExprOrStmt):
     pass
 
 
+class IfExpr(Expr):
+    def __init__(self, token, condition, thenExpr, elseExpr):
+        self.token = token
+        self.condition = condition
+        self.thenExpr = thenExpr
+        self.elseExpr = elseExpr
+
+
 class AssignExpr(Expr):
     def __init__(self, name, value):
         self.name = name
@@ -58,11 +67,11 @@ class VariableExpr(Expr):
         self.name = name
 
 
-class IfExpr(Expr):
-    def __init__(self, condition, thenExpr, elseExpr):
-        self.condition = condition
-        self.thenExpr = thenExpr
-        self.elseExpr = elseExpr
+class LogicalExpr(Expr):
+    def __init__(self, left, op, right):
+        self.left = left
+        self.op = op
+        self.right = right
 
 
 class BinaryExpr(Expr):

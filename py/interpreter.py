@@ -104,7 +104,7 @@ class InterpreterVisitor:
         self.executeBock(stmt.statements, Environment(self.env))
 
     def visitIfStmt(self, stmt):
-        if self.evaluate(stmt.condition):
+        if self.isTruethy(self.evaluate(stmt.condition), None):
             self.exececuteMultiple(stmt.thenBranch)
         else:
             self.exececuteMultiple(stmt.elseBranch)
@@ -121,19 +121,19 @@ class InterpreterVisitor:
     def visitVariableExpr(self, expr):
         return self.env.get(expr.name)
 
-    def visitAssignExpr(self, expr):
-        value = self.evaluate(expr.value)
-        self.env.set(expr.name, value)
-        return value
+    def visitIfExpr(self, expr):
+        if self.isTruethy(self.evaluate(expr.condition), None):
+            return self.evaluate(expr.thenExpr)
+        else:
+            self.evaluate(expr.elseExpr)
 
     def visitGroupingExpr(self, expr):
         return self.evaluate(expr.expr)
 
-    def visitIfExpr(self, expr):
-        if self.evaluate(expr.condition):
-            return self.evaluate(expr.thenExpr)
-        else:
-            self.evaluate(expr.elseExpr)
+    def visitAssignExpr(self, expr):
+        value = self.evaluate(expr.value)
+        self.env.set(expr.name, value)
+        return value
 
     def visitLiteralExpr(self, expr):
         s = expr.token.lexeme
@@ -154,6 +154,20 @@ class InterpreterVisitor:
             return right
         else:
             raise RuntimeErr(expr.op, f"Unexpected unary operation.")
+
+    def visitLogicalExpr(self, expr):
+        left = self.evaluate(expr.left)
+        opname = expr.op.lexeme
+        if opname == "or":
+            if self.isTruethy(left, expr.op):
+                return left
+            return self.evaluate(expr.right)
+        elif opname == "and":
+            if not self.isTruethy(left, expr.op):
+                return left
+            return self.evaluate(expr.right)
+        else:
+            raise RuntimeErr(expr.op, f"Unexpected logical expr '{optype}'")
 
     def visitBinaryExpr(self, expr):
         left = self.evaluate(expr.left)
