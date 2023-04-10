@@ -83,15 +83,20 @@ class Parser:
             self.advance()
             self.match(TT.Comment)
 
-    def checkEos(self):
+    def matchEos(self):
         # End Of Statement
         self.match(TT.Comment)
         if self.check(TT.Newline):
             self.curIndent = len(self.peek().lexeme) - 1
             self.advance()
+            return True
         elif self.check(TT.EOF):
-            self.advance()
+            return True
         else:
+            return False
+
+    def checkEos(self):
+        if not self.matchEos():
             self.error(self.peek(), "Expected newline")
 
     def statements(self):
@@ -163,24 +168,38 @@ class Parser:
     def ifStatement(self):
         # -> "if" expression EOS statement* ("else" EOS statement*)?
         condition = self.expression()
-        self.checkEos()
 
-        thenStatements = self.indentedStatements("after 'if'")
-        elseStatements = []
+        if not self.matchKeyword("then"):
+            self.error(self.peek(), "expect 'then' after if-condition")
 
-        if self.curIndent == self.refIndent:
-            if self.matchKeyword("else"):
-                if self.matchKeyword("if"):
+        if self.matchEos():
+            # Statement-mode
+
+            thenStatements = self.indentedStatements("after 'if'")
+            elseStatements = []
+
+            if self.curIndent == self.refIndent:
+                if self.matchKeyword("else"):
+                    if self.matchKeyword("if"):
+                        elseStatements = [self.ifStatement()]
+                    else:
+                        self.checkEos()
+                        elseStatements = self.indentedStatements("after 'else'")
+                elif self.matchKeyword("elseif"):
                     elseStatements = [self.ifStatement()]
-                else:
-                    self.checkEos()
-                    elseStatements = self.indentedStatements("after 'else'")
-            elif self.matchKeyword("elif"):
-                elseStatements = [self.ifStatement()]
-            elif self.matchKeyword("elseif"):
-                elseStatements = [self.ifStatement()]
 
-        return tree.IfStmt(condition, thenStatements, elseStatements)
+            return tree.IfStmt(condition, thenStatements, elseStatements)
+
+        else:
+            # expression mode
+            thenExpression = self.expression()
+            if not self.matchKeyword("else"):
+                self.error(
+                    self.peek(),
+                    "In single-line if-expression, an else-expression is required.",
+                )
+            elseExpression = self.expression()
+            return tree.IfExpr(condition, thenExpression, elseExpression)
 
     def printStatement(self):
         # -> "print" expression "\n"
@@ -198,8 +217,28 @@ class Parser:
 
     def expression(self):
         # -> assignment
-        expr = self.assignment()
+        expr = self.ifexpr()
         return expr
+
+    def ifexpr(self):
+        # -> 'if' assignment 'then' assignment 'else' assignment
+        if self.matchKeyword("if"):
+            condition = self.assignment()
+            then = self.peek()
+            if not self.matchKeyword("then"):
+                self.error(self.peek(), "expect 'then' after if-condition")
+            if self.matchEos():
+                self.error(then, "An if-expression must be on a single line")
+            thenExpression = self.assignment()
+            if not self.matchKeyword("else"):
+                self.error(
+                    then,
+                    "In single-line if-expression, an else-expression is required.",
+                )
+            elseExpression = self.assignment()
+            return tree.IfExpr(condition, thenExpression, elseExpression)
+        else:
+            return self.assignment()
 
     def assignment(self):
         # -> IDENTIFIER  "=" assignment | equality

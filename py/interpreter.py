@@ -129,6 +129,12 @@ class InterpreterVisitor:
     def visitGroupingExpr(self, expr):
         return self.evaluate(expr.expr)
 
+    def visitIfExpr(self, expr):
+        if self.evaluate(expr.condition):
+            return self.evaluate(expr.thenExpr)
+        else:
+            self.evaluate(expr.elseExpr)
+
     def visitLiteralExpr(self, expr):
         s = expr.token.lexeme
         if s[0] in "0123456789":

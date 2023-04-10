@@ -58,6 +58,13 @@ class VariableExpr(Expr):
         self.name = name
 
 
+class IfExpr(Expr):
+    def __init__(self, condition, thenExpr, elseExpr):
+        self.condition = condition
+        self.thenExpr = thenExpr
+        self.elseExpr = elseExpr
+
+
 class BinaryExpr(Expr):
     def __init__(self, left, op, right):
         self.left = left
