@@ -67,6 +67,8 @@ KEYWORDS = (
     "else",
     "then",
     "do",
+    "loop",
+    "over",
     "for",
     "while",
 )

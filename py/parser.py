@@ -1,4 +1,4 @@
-from tokens import TT
+from tokens import TT, Token
 import tree
 
 
@@ -147,6 +147,8 @@ class Parser:
             return tree.BlockStmt(self.blockStatement())
         elif self.matchKeyword("if"):
             return self.ifStatement()
+        elif self.matchKeyword("loop"):
+            return self.loopStatement()
         elif self.matchKeyword("print"):
             return self.printStatement()
         else:
@@ -197,10 +199,56 @@ class Parser:
             if not self.matchKeyword("else"):
                 self.error(
                     self.peek(),
-                    "In single-line if-expression, an else-expression is required.",
+                    "In single-line if-expression, an else-clause is required.",
                 )
             elseExpression = self.expression()
-            return tree.IfExpr(then, condition, thenExpression, elseExpression)
+            return tree.IfStmt(then, condition, [thenExpression], [elseExpression])
+            # return tree.IfExpr(then, condition, thenExpression, elseExpression)
+
+    def loopStatement(self):
+        # -> "loop" ( expression | expression "over" expression) "do" EOS statement*
+        loopOp = self.previous()
+        if self.matchKeyword("do"):
+            # Infinite loop (a.k.a. while-true-loop)
+            trueToken = Token(TT.LiteralTrue, loopOp.lexeme, loopOp.line, loopOp.column)
+            stmt = tree.loopWhileStmt(loopOp, tree.LiteralExpr(trueToken), [])
+        else:
+            expr = self.expression()
+            if self.matchKeyword("over"):
+                # Loop iter (a.k.a. a for-loop)
+                if not isinstance(expr, tree.VariableExpr):
+                    self.error(
+                        self.previous(), "in 'loop x over y', 'x' must be a variable"
+                    )
+                var = expr
+                iterator = self.expression()
+                stmt = tree.loopIterStmt(loopOp, var, iterator, [])
+            else:
+                # Loop condition (a.k.a. a while-loop)
+                condition = expr
+                stmt = tree.loopWhileStmt(loopOp, condition, [])
+
+            if not self.matchKeyword("do"):
+                self.error(self.peek(), "expect 'do' after loop condition")
+
+        if self.matchEos():
+            # Statement-mode
+            statements = self.indentedStatements("after 'loop'")
+            if self.curIndent == self.refIndent:
+                if self.matchKeyword("else"):
+                    self.error(self.previous(), "loop-else not (yet?) supported")
+            stmt.statements = statements
+            return stmt
+        else:
+            # Expression-mode
+            expr = self.expression()
+            if self.matchKeyword("else"):
+                self.error(
+                    self.previous(),
+                    "In single-line loop-expression, the else-clause is forbidden",
+                )
+            stmt.statements = [expr]
+            return stmt
 
     def printStatement(self):
         # -> "print" expression "\n"

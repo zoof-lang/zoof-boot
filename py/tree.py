@@ -31,6 +31,21 @@ class IfStmt(Stmt):
         self.elseBranch = elseBranch
 
 
+class loopIterStmt(Stmt):
+    def __init__(self, token, var, iter, statements):
+        self.token = token
+        self.var = var
+        self.iter = iter
+        self.statements = statements
+
+
+class loopWhileStmt(Stmt):
+    def __init__(self, token, condition, statements):
+        self.token = token
+        self.condition = condition
+        self.statements = statements
+
+
 class PrintStmt(Stmt):
     def __init__(self, expr):
         self.expr = expr

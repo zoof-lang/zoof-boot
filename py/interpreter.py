@@ -109,6 +109,10 @@ class InterpreterVisitor:
         else:
             self.exececuteMultiple(stmt.elseBranch)
 
+    def visitloopWhileStmt(self, stmt):
+        while self.isTruethy(self.evaluate(stmt.condition), stmt.token):
+            self.exececuteMultiple(stmt.statements)
+
     def visitPrintStmt(self, stmt):
         value = self.evaluate(stmt.expr)
         print(self.stringify(value))
@@ -136,13 +140,19 @@ class InterpreterVisitor:
         return value
 
     def visitLiteralExpr(self, expr):
-        s = expr.token.lexeme
-        if s[0] in "0123456789":
-            return float(s)
-        elif s.startswith("'"):
-            return s[1:-1]
+        t = expr.token.type
+        if t == TT.LiteralNul:
+            return None
+        elif t == TT.LiteralTrue:
+            return True
+        elif t == TT.LiteralFalse:
+            return False
+        elif t == TT.LiteralNumber:
+            return float(expr.token.lexeme)
+        elif t == TT.LiteralString:
+            return expr.token.lexeme[1:-1]
         else:
-            raise RuntimeErr(expr.token, f"Unexpected literal: '{s}'")
+            raise RuntimeErr(expr.token, f"Unexpected literal: '{expr.token.lexeme}'")
 
     def visitUnaryExpr(self, expr):
         right = self.evaluate(expr.right)
