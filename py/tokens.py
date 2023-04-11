@@ -67,11 +67,12 @@ KEYWORDS = (
     "elseif",
     "else",
     "then",
+    "for",
+    "in",
+    "while",
     "do",
     "loop",
     "over",
-    "for",
-    "while",
 )
 RESERVED = "super", "this", "swicth", "match"
 

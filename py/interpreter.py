@@ -125,11 +125,11 @@ class InterpreterVisitor:
         else:
             self.exececuteMultiple(stmt.elseBranch)
 
-    def visitloopWhileStmt(self, stmt):
+    def visitWhileStmt(self, stmt):
         while self.isTruethy(self.evaluate(stmt.condition), stmt.token):
             self.exececuteMultiple(stmt.statements)
 
-    def visitloopIterStmt(self, stmt):
+    def visitForStmt(self, stmt):
         iter = self.evaluate(stmt.iter)
         assert isinstance(iter, ZoofRange)
         value = iter.start

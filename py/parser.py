@@ -30,11 +30,11 @@ class Parser:
                 return True
         return False
 
-    def matchKeyword(self, keyword):
+    def matchKeyword(self, *keywords):
         if self.isAtEnd():
             return False
         token = self.peek()
-        if token.type == TT.Keyword and token.lexeme == keyword:
+        if token.type == TT.Keyword and token.lexeme in keywords:
             self.advance()
             return True
         else:
@@ -147,7 +147,7 @@ class Parser:
             return tree.BlockStmt(self.blockStatement())
         elif self.matchKeyword("if"):
             return self.ifStatement()
-        elif self.matchKeyword("loop"):
+        elif self.matchKeyword("for", "while", "loop"):
             return self.loopStatement()
         elif self.matchKeyword("print"):
             return self.printStatement()
@@ -207,26 +207,32 @@ class Parser:
 
     def loopStatement(self):
         # -> "loop" ( expression | expression "over" expression) "do" EOS statement*
+        # Note: Until I make up my mind about the syntax that I want, this allows all variations of:
+        # for i in xx do
+        # while i in xx do
+        # loop i in xx do
+        # for i < x do
+        # etc.
         loopOp = self.previous()
         if self.matchKeyword("do"):
             # Infinite loop (a.k.a. while-true-loop)
             trueToken = Token(TT.LiteralTrue, loopOp.lexeme, loopOp.line, loopOp.column)
-            stmt = tree.loopWhileStmt(loopOp, tree.LiteralExpr(trueToken), [])
+            stmt = tree.WhileStmt(loopOp, tree.LiteralExpr(trueToken), [])
         else:
             expr = self.expression()
-            if self.matchKeyword("over"):
+            if self.matchKeyword("in", "over"):
                 # Loop iter (a.k.a. a for-loop)
                 var = expr
                 if not isinstance(var, tree.VariableExpr):
                     self.error(
-                        self.previous(), "in 'loop x over y', 'x' must be a variable"
+                        self.previous(), "in 'for x in y', 'x' must be a variable"
                     )
                 iterator = self.expression()
-                stmt = tree.loopIterStmt(loopOp, var, iterator, [])
+                stmt = tree.ForStmt(loopOp, var, iterator, [])
             else:
                 # Loop condition (a.k.a. a while-loop)
                 condition = expr
-                stmt = tree.loopWhileStmt(loopOp, condition, [])
+                stmt = tree.WhileStmt(loopOp, condition, [])
 
             if not self.matchKeyword("do"):
                 self.error(self.peek(), "expect 'do' after loop condition")

@@ -31,7 +31,7 @@ class IfStmt(Stmt):
         self.elseBranch = elseBranch
 
 
-class loopIterStmt(Stmt):
+class ForStmt(Stmt):
     def __init__(self, token, var, iter, statements):
         self.token = token
         self.var = var
@@ -39,7 +39,7 @@ class loopIterStmt(Stmt):
         self.statements = statements
 
 
-class loopWhileStmt(Stmt):
+class WhileStmt(Stmt):
     def __init__(self, token, condition, statements):
         self.token = token
         self.condition = condition
