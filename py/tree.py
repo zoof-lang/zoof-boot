@@ -101,6 +101,14 @@ class GroupingExpr(Expr):
         self.expr = expr
 
 
+class RangeExpr(Expr):
+    # Note: I think this expression is temporary, and should be resolved in a function call or something?
+    def __init__(self, start, stop, step):
+        self.start = start
+        self.stop = stop
+        self.step = step
+
+
 class LiteralExpr(Expr):
     def __init__(self, token):
         self.token = token

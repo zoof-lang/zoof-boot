@@ -1,6 +1,22 @@
 from tokens import TT, Token
 
 
+## Minilib
+
+
+class ZoofRange:
+    def __init__(self, start, stop, step=1):
+        self.start = start
+        self.stop = stop
+        if step is None:
+            step = 1
+        assert step > 0
+        self.step = step
+
+
+##
+
+
 class RuntimeErr(Exception):
     def __init__(self, token, message):
         super().__init__(message)
@@ -113,6 +129,15 @@ class InterpreterVisitor:
         while self.isTruethy(self.evaluate(stmt.condition), stmt.token):
             self.exececuteMultiple(stmt.statements)
 
+    def visitloopIterStmt(self, stmt):
+        iter = self.evaluate(stmt.iter)
+        assert isinstance(iter, ZoofRange)
+        value = iter.start
+        while value < iter.stop:
+            self.env.set(stmt.var.name, value)
+            self.exececuteMultiple(stmt.statements)
+            value += iter.step
+
     def visitPrintStmt(self, stmt):
         value = self.evaluate(stmt.expr)
         print(self.stringify(value))
@@ -139,9 +164,16 @@ class InterpreterVisitor:
         self.env.set(expr.name, value)
         return value
 
+    def visitRangeExpr(self, expr):
+        return ZoofRange(
+            self.evaluate(expr.start),
+            self.evaluate(expr.stop),
+            self.evaluate(expr.step),
+        )
+
     def visitLiteralExpr(self, expr):
         t = expr.token.type
-        if t == TT.LiteralNul:
+        if t == TT.LiteralNil:
             return None
         elif t == TT.LiteralTrue:
             return True

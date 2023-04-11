@@ -216,11 +216,11 @@ class Parser:
             expr = self.expression()
             if self.matchKeyword("over"):
                 # Loop iter (a.k.a. a for-loop)
-                if not isinstance(expr, tree.VariableExpr):
+                var = expr
+                if not isinstance(var, tree.VariableExpr):
                     self.error(
                         self.previous(), "in 'loop x over y', 'x' must be a variable"
                     )
-                var = expr
                 iterator = self.expression()
                 stmt = tree.loopIterStmt(loopOp, var, iterator, [])
             else:
@@ -352,12 +352,26 @@ class Parser:
 
     def product(self):
         # aka factor
-        # -> power ( ( "/" | "*" ) power )* ;
-        expr = self.power()
+        # -> litrange ( ( "/" | "*" ) litrange )* ;
+        expr = self.litrange()
         while self.match(TT.Slash, TT.Star):
             op = self.previous()
-            right = self.power()
+            right = self.litrange()
             expr = tree.BinaryExpr(expr, op, right)
+        return expr
+
+    def litrange(self):
+        # -> power ".." power (".." power)?
+        expr = self.power()
+        rangeOp = self.peek()
+        if self.match(TT.DotDot):
+            expr2 = self.power()
+            if self.match(TT.DotDot):
+                expr3 = self.power()
+            else:
+                nilToken = Token(TT.LiteralNil, "nil", rangeOp.line, rangeOp.column)
+                expr3 = tree.LiteralExpr(nilToken)
+            expr = tree.RangeExpr(expr, expr2, expr3)
         return expr
 
     def power(self):
@@ -385,7 +399,7 @@ class Parser:
         if self.match(
             TT.LiteralFalse,
             TT.LiteralTrue,
-            TT.LiteralNul,
+            TT.LiteralNil,
             TT.LiteralNumber,
             TT.LiteralString,
         ):

@@ -9,10 +9,11 @@ class TokenType(enum.Enum):
 
     Comma = 21
     Dot = 22
-    Ellipsis = 23  # Or just track dots?
-    Semicolon = 24
-    Colon = 25
-    Tilde = 26
+    DotDot = 23
+    Ellipsis = 24
+    Semicolon = 25
+    Colon = 26
+    Tilde = 27
 
     Minus = 31
     Plus = 32
@@ -36,7 +37,7 @@ class TokenType(enum.Enum):
     LiteralNumber = 62
     LiteralFalse = 63
     LiteralTrue = 64
-    LiteralNul = 65
+    LiteralNil = 65
 
     Comment = 71
     Newline = 72

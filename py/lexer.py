@@ -94,7 +94,12 @@ class Lexer:
         elif c == ":":
             self.addToken(TT.Colon)
         elif c == ".":
-            self.addToken(TT.Dot)
+            ndots = 1
+            if self.match("."):
+                ndots += 1
+                if self.match("."):
+                    ndots += 1
+            self.addToken([None, TT.Dot, TT.DotDot, TT.Ellipsis][ndots])
         elif c == "~":
             self.addToken(TT.Tilde)
         elif c == "-":
