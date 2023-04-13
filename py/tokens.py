@@ -41,9 +41,12 @@ class TokenType(enum.Enum):
 
     Comment = 71
     Newline = 72
+    Indent = 73
+    Dedent = 74
 
     Invalid = 81
     LiteralUnterminatedString = 82
+    InvalidIndentation = 83
 
     EOF = 99
 

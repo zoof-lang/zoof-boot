@@ -11,7 +11,7 @@
 
 import sys
 
-from lexer import Lexer
+from lexer import splitSource, tokenize
 from printer import PrinterVisitor
 from parser import Parser
 from interpreter import InterpreterVisitor
@@ -51,10 +51,11 @@ class ZoofCompiler:
             self.ehandler.hadRuntimeError = False
 
     def run(self, source):
-        self.ehandler.setSource(source)
+        lines = splitSource(source)
 
-        lexer = Lexer(source)
-        tokens = lexer.findTokens()
+        self.ehandler.setSourceLines(lines)
+
+        tokens = list(tokenize(lines))
 
         # for token in tokens:
         #     print(token)

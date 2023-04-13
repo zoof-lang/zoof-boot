@@ -13,8 +13,6 @@ class Parser:
         self.ehandler = errorHandler
         self.tokens = tokens
         self.current = 0
-        self.refIndent = 0
-        self.curIndent = 0
 
     def parse(self):
         # program -> statement* EOF
@@ -31,8 +29,6 @@ class Parser:
         return False
 
     def matchKeyword(self, *keywords):
-        if self.isAtEnd():
-            return False
         token = self.peek()
         if token.type == TT.Keyword and token.lexeme in keywords:
             self.advance()
@@ -44,13 +40,10 @@ class Parser:
         return self.peek().type == tokentype
 
     def advance(self):
-        if not self.isAtEnd():
+        token = self.peek()
+        if token.type != TT.EOF:
             self.current += 1
-        return self.previous()
-
-    def isAtEnd(self):
-        return self.peek().type == TT.EOF
-        # return self.current >= len(self.tokens)
+        return token
 
     def peek(self):
         return self.tokens[self.current]
@@ -71,75 +64,48 @@ class Parser:
             raise ParseError()  # to unwind the stack
 
     def synchronize(self):
-        while not self.match(TT.Newline, TT.EOF):
+        while not self.match(TT.Newline):
             self.advance()
 
     # %%
 
-    def skipEmptyLines(self):
-        self.match(TT.Comment)
-        while self.check(TT.Newline):
-            self.curIndent = len(self.peek().lexeme) - 1
-            self.advance()
-            self.match(TT.Comment)
-
     def matchEos(self):
+        # todo: we can drop the check for eof in many places, because its always preceded by an eol
         # End Of Statement
         self.match(TT.Comment)
         if self.check(TT.Newline):
-            self.curIndent = len(self.peek().lexeme) - 1
             self.advance()
-            return True
-        elif self.check(TT.EOF):
+            while True:
+                self.match(TT.Comment)
+                if not self.check(TT.Newline):
+                    break
+                self.advance()
             return True
         else:
             return False
 
-    def checkEos(self):
+    def consumeEos(self):
         if not self.matchEos():
             self.error(self.peek(), "Expected newline")
 
     def statements(self):
         # Collect a list of statements
-
         statements = []
 
-        while True:
-            # Skip whitespace
-            self.skipEmptyLines()
-            if self.isAtEnd():
-                break
-            # Check indentation
-            if self.curIndent != self.refIndent:
-                if self.curIndent < self.refIndent:
-                    break
-                else:
-                    self.error(self.peek(), "Unexpected indent.")
+        while not self.match(TT.Dedent, TT.EOF):
             try:
-                # Process statement
                 statements.append(self.statement())
             except ParseError:
                 self.synchronize()
 
+            # elif self.match(TT.InvalidIndentation):
+            #     self.error(self.peek(), "Unexpected indent.")
+
         return statements
 
     def indentedStatements(self, context):
-        # Collect a list of indented statements
-
-        self.skipEmptyLines()
-        if self.curIndent <= self.refIndent:
-            self.error(self.peek(), "Expected indentation on line " + context)
-
-        previousIndent = self.refIndent
-        self.refIndent = self.curIndent
-
-        statements = self.statements()
-
-        if self.curIndent > previousIndent:
-            self.error(self.peek(), "Unexpected indentation")
-
-        self.refIndent = previousIndent
-        return statements
+        self.consume(TT.Indent, "Expected indentation on line " + context)
+        return self.statements()
 
     def statement(self):
         # -> (expressionStmt | printStmt | block) ((Comment)? Newline | EOF)
@@ -157,14 +123,10 @@ class Parser:
     def blockStatement(self):
         # -> "do" "{" statement* "}" "\n"
         self.consume(TT.LeftBrace, "Expected '{' after 'do'.")
-        self.checkEos()
-
+        self.consumeEos()
         statements = self.indentedStatements("after 'do'")
-
         self.consume(TT.RightBrace, "Expected '}' at the end of 'do'.")
-        if self.curIndent != self.refIndent:
-            self.error(self.peek(), "Expect '}' to match the indentation level of 'do'")
-
+        self.consumeEos()
         return statements
 
     def ifStatement(self):
@@ -181,15 +143,14 @@ class Parser:
             thenStatements = self.indentedStatements("after 'if'")
             elseStatements = []
 
-            if self.curIndent == self.refIndent:
-                if self.matchKeyword("else"):
-                    if self.matchKeyword("if"):
-                        elseStatements = [self.ifStatement()]
-                    else:
-                        self.checkEos()
-                        elseStatements = self.indentedStatements("after 'else'")
-                elif self.matchKeyword("elseif"):
+            if self.matchKeyword("elseif"):
+                elseStatements = [self.ifStatement()]
+            elif self.matchKeyword("else"):
+                if self.matchKeyword("if"):
                     elseStatements = [self.ifStatement()]
+                else:
+                    self.consumeEos()
+                    elseStatements = self.indentedStatements("after 'else'")
 
             return tree.IfStmt(then, condition, thenStatements, elseStatements)
 
@@ -240,9 +201,8 @@ class Parser:
         if self.matchEos():
             # Statement-mode
             statements = self.indentedStatements("after 'loop'")
-            if self.curIndent == self.refIndent:
-                if self.matchKeyword("else"):
-                    self.error(self.previous(), "loop-else not (yet?) supported")
+            if self.matchKeyword("else"):
+                self.error(self.previous(), "loop-else not (yet?) supported")
             stmt.statements = statements
             return stmt
         else:
@@ -259,16 +219,18 @@ class Parser:
     def printStatement(self):
         # -> "print" expression "\n"
         value = self.expression()
-        self.checkEos()
+        self.consumeEos()
         return tree.PrintStmt(value)
 
     def expressionStatement(self):
         # -> expression "\n"
         expr = self.expression()
-        self.checkEos()
+        self.consumeEos()
         return tree.ExpressionStmt(expr)
 
     # %%
+
+    # Note: Wren lists a nice precedence table here: https://wren.io/syntax.html
 
     def expression(self):
         # -> ifexpr
