@@ -231,6 +231,7 @@ class Parser:
     # %%
 
     # Note: Wren lists a nice precedence table here: https://wren.io/syntax.html
+    # Note: as soon as I have proper tests and benchmarks, lets try to replace this with precedense climbing https://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing
 
     def expression(self):
         # -> ifexpr
@@ -343,6 +344,7 @@ class Parser:
         return expr
 
     def power(self):
+        # todo: power is right-associative: add a test for 2 ^ 3 ^ 4 == 2 ^ (3 ^ 4)
         # -> unary ( "^" unary )* ;
         expr = self.unary()
         while self.match(TT.Caret):
