@@ -1,21 +1,10 @@
-# Stuff that I like:
-#
-# * Obviously feels familiar
-# * Feels free
-#
-# Stuff I like less:
-#
-# * There may be an error in code paths that I don't cover.
-# * A switch/match would be nice.
-# * Proper enums would be nice
-
 import sys
 
-from lexer import splitSource, tokenize
-from printer import PrinterVisitor
-from parser import Parser
-from interpreter import InterpreterVisitor
-from errors import ErrorHandler
+from .lexer import splitSource, tokenize
+from .printer import PrinterVisitor
+from .parser import Parser
+from .interpreter import InterpreterVisitor
+from .errors import ErrorHandler
 
 
 class ZoofCompiler:
@@ -69,13 +58,3 @@ class ZoofCompiler:
         # for stmt in statements:
         #     printer.print(stmt)
         self.interpreter.interpret(statements)
-
-
-if __name__ == "__main__":
-    argv = sys.argv.copy()
-    if argv and argv[0].endswith("zoof.py"):
-        argv.pop(0)
-
-    c = ZoofCompiler()
-    # c.main(argv)
-    c.main(["../example.zf"])

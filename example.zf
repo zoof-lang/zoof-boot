@@ -1,0 +1,63 @@
+a = 42
+b = 7
+
+print a + b
+
+
+
+do {
+    print a
+    a = 3
+    b = 'foo'
+    print a
+    print b
+
+    if a == 42 then
+        print 'a is 42'
+    elseif b == 7 then
+        print 'b is 7'
+    else if b == 'foo' then
+        print 'b is not a num!'
+    elseif b == 'foo' then
+        print 'b is not a num!'
+    else
+        print 'a is not 42'
+
+    foo = 42
+}
+
+if a == 42 then toprint = 'a is 42' else toprint 'a is not 42'
+print toprint
+print if a == 42 then 'a is 42' else 'a is not 42'
+
+
+print 0 or 3
+print 1 or 3
+print 0 and 4
+print 1 and 4
+
+print '-------------------'
+for i in 1.1..10..0.5 do
+    print i
+
+print '-------------------'
+i = 0
+while i < 10 do
+   i = i + 1
+   print i
+
+print '-------------------'
+# loop do
+#    i = i + 1
+#    print i
+
+
+
+
+3 # for 4 in 5 do nil
+
+
+
+
+
+'bla \(foo) '

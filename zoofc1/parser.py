@@ -1,5 +1,5 @@
-from tokens import TT, Token
-import tree
+from .tokens import TT, Token
+from . import tree
 
 
 class ParseError(Exception):

@@ -1,4 +1,4 @@
-from tokens import TT, Token
+from .tokens import TT, Token
 
 
 ## Minilib

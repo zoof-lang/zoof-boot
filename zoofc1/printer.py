@@ -23,8 +23,8 @@ class PrinterVisitor:
 
 
 if __name__ == "__main__":
-    import lexer
-    import tree
+    from zoofc1 import lexer
+    from zoofc1 import tree
 
     expr = tree.BinaryExpr(
         tree.UnaryExpr(

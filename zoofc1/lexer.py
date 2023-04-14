@@ -1,4 +1,4 @@
-from tokens import TT, KEYWORDS, RESERVED, Token
+from .tokens import TT, KEYWORDS, RESERVED, Token
 
 
 def splitSource(source):
