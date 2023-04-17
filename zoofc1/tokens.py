@@ -88,5 +88,8 @@ class Token:
         self.column = column
 
     def __repr__(self):
-        stype = str(self.type).split(".")[1]
-        return f"<Token {stype} {self.lexeme!r} ({self.line}:{self.column})>"
+        return f"<Token {self.typename} {self.lexeme!r} ({self.line}:{self.column})>"
+
+    @property
+    def typename(self):
+        return str(self.type).split(".")[1]

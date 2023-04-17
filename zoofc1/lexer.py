@@ -2,10 +2,12 @@ from .tokens import TT, KEYWORDS, RESERVED, Token
 
 
 def splitSource(source):
-    """Split the source in lines. Always ends with an empty line."""
-    lines = source.splitlines(False)
+    """Split the source in lines. Always ends with exactly one empty line."""
+    lines = source.split("\n")
     if not lines or lines[-1] != "":
         lines.append("")
+    while len(lines) >= 2 and lines[-1] == "" and lines[-2] == "":
+        lines.pop(-1)
     return lines
 
 

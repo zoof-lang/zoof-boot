@@ -9,6 +9,7 @@ from zoofc1 import ZoofCompiler
 
 # %% Configure
 
+config.rootDir = os.path.dirname(__file__)
 config.dirs = ["snippets"]
 config.separator = "####"
 config.pattern = "*.zf"
@@ -23,7 +24,10 @@ def action_repr(source):
 @addAction("tokenize")
 def action_tokenize(source):
     c = ZoofCompiler()
-    return "\n".join(repr(t) for t in c.tokenize(source))
+    lines = []
+    for token in c.tokenize(source):
+        lines.append(f"{token.typename} {token.lexeme!r} at {token.line}:{token.column}")
+    return "\n".join(lines)
 
 
 @addAction("exec")
@@ -32,11 +36,6 @@ def action_exec(source):
     c = ZoofCompiler(file)
     c.run(source)
     return file.getvalue().rstrip()
-
-
-@addAction("eval")
-def action_eval(source):
-    return "TODO"
 
 
 # %% Can run this file with pytest
