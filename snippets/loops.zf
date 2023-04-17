@@ -1,3 +1,35 @@
+#### exec: loop over range
+for i in 1..6 do
+    print i
+#### output
+1.0
+2.0
+3.0
+4.0
+5.0
+#### end
+
+
+
+#### exec: loop over range floats
+for i in 1.4..6..0.5 do
+    print i
+# todo: yuk!  ->  for i in 1.4 : 6 : 0.5  seems cleaner
+#### output
+1.4
+1.9
+2.4
+2.9
+3.4
+3.9
+4.4
+4.9
+5.4
+5.9
+#### end
+
+
+
 #### exec: Fibonacci
 a = 0
 b = 1

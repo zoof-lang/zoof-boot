@@ -1,0 +1,27 @@
+#### exec: string
+a = 'foo'
+a
+#### output
+foo
+#### end
+
+
+
+#### exec: string concatenation 1
+'foo' + 'bar'
+#### output
+foobar
+#### end
+
+
+
+#### exec: string concatenation 2
+a = 'foo'
+b = 'bar'
+a + b
+#### output
+foobar
+#### end
+
+
+

@@ -26,7 +26,9 @@ def action_tokenize(source):
     c = ZoofCompiler()
     lines = []
     for token in c.tokenize(source):
-        lines.append(f"{token.typename} {token.lexeme!r} at {token.line}:{token.column}")
+        lines.append(
+            f"{token.typename} {token.lexeme!r} at {token.line}:{token.column}"
+        )
     return "\n".join(lines)
 
 

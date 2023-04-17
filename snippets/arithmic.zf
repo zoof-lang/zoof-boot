@@ -1,7 +1,94 @@
-#### exec: 
+#### exec: literal
 3 + 4
 #### output
 7.0
+#### end
+
+
+
+#### exec: literal
+# a comment (this was broken at some point)
+3 + 4
+#### expected output
+7.0
+#### actual output
+SyntaxError: Expected expression. at '# a comment (this was broken at some point)' (Comment)
+
+1| # a comment (this was broken at some point)
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+#### end
+
+
+
+#### exec: literal
+
+3 + 4
+#### expected output
+7.0
+#### actual output
+SyntaxError: Expected expression. at '' (Newline)
+
+1|
+#### end
+
+
+
+#### exec: unary -
+-3 + 4
+#### output
+1.0
+#### end
+
+
+
+#### exec: unary +
++3 + 4
+#### output
+7.0
+#### end
+
+
+
+#### exec: multiply first
+3 + 4 * 2
+#### output
+11.0
+#### end
+
+
+
+#### exec: power first
+3 + 4 * 2 ^ 3
+#### output
+35.0
+#### end
+
+
+
+#### exec: power is right-associative
+print 4 ^ 3 ^ 2
+print 4 ^ (3 ^ 2)
+print (4 ^ 3) ^ 2
+#### output
+262144.0
+262144.0
+4096.0
+#### end
+
+
+
+#### exec: sqrt
+4 ^ 0.5
+#### output
+2.0
+#### end
+
+
+
+#### exec: power and unary -
+4 ^ - 2
+#### output
+0.0625
 #### end
 
 

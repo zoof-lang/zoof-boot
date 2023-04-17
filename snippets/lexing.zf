@@ -141,6 +141,34 @@ EOF '' at 6:1
 
 
 
+#### tokenize: comments 1
+1
+# foo
+#### output
+LiteralNumber '1' at 1:1
+Newline '' at 1:2
+Comment '# foo' at 2:1
+Newline '' at 2:6
+Newline '' at 3:1
+EOF '' at 3:1
+#### end
+
+
+
+#### tokenize: comments 2
+# foo
+1
+#### output
+Comment '# foo' at 1:1
+Newline '' at 1:6
+LiteralNumber '1' at 2:1
+Newline '' at 2:2
+Newline '' at 3:1
+EOF '' at 3:1
+#### end
+
+
+
 #### tokenize: invalid syntax
 foo $$ bar
 if a then

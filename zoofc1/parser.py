@@ -344,12 +344,11 @@ class Parser:
         return expr
 
     def power(self):
-        # todo: power is right-associative: add a test for 2 ^ 3 ^ 4 == 2 ^ (3 ^ 4)
         # -> unary ( "^" unary )* ;
         expr = self.unary()
-        while self.match(TT.Caret):
+        if self.match(TT.Caret):
             op = self.previous()
-            right = self.unary()
+            right = self.power()
             expr = tree.BinaryExpr(expr, op, right)
         return expr
 
