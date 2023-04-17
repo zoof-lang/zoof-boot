@@ -1,3 +1,57 @@
+"""
+Utility to execute and verify snippets. The idea is to import the lib
+in a script, set the config and add actions. Then create files with
+snippets!
+
+Example script:
+
+```py
+
+    from snippettesterlib import config, addAction, iterateSnippets, run, show
+
+    config.rootDir = os.path.dirname(__file__)
+    config.dirs = ["snippets"]
+    config.separator = "####"
+    config.pattern = "*.py"
+
+
+    @addAction("echo")
+    def action_echo(source):
+        return source
+
+
+    if __name__ == "__main__":
+        ok = run()
+        sys.exit(0 if ok else 1)
+
+```
+
+Example snippet file:
+
+```py
+
+    # example snippetfile
+
+    #### echo: foo
+    foo
+    #### output
+    foo
+    #### end
+
+
+    #### echo: bar
+    foo
+    bar
+    #### output
+    foo
+    bar
+    #### end
+
+```
+
+"""
+
+
 import os
 import glob
 
