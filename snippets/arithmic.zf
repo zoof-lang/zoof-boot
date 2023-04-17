@@ -6,29 +6,20 @@
 
 
 
-#### exec: literal
+#### exec: literal v2
 # a comment (this was broken at some point)
 3 + 4
-#### expected output
+#### output
 7.0
-#### actual output
-SyntaxError: Expected expression. at '# a comment (this was broken at some point)' (Comment)
-
-1| # a comment (this was broken at some point)
-   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 #### end
 
 
 
-#### exec: literal
+#### exec: literal v3 (start with newline)
 
 3 + 4
-#### expected output
+#### output
 7.0
-#### actual output
-SyntaxError: Expected expression. at '' (Newline)
-
-1|
 #### end
 
 

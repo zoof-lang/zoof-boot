@@ -1,0 +1,78 @@
+#### exec: basic if 1
+a = 3
+if a > 2 then
+    print 'yes'
+else
+    print 'no'
+#### output
+'yes'
+#### end
+
+
+
+#### exec: basic if 2
+a = 1
+if a > 2 then
+    print 'yes'
+else
+    print 'no'
+#### output
+'no'
+#### end
+
+
+
+#### exec: more or less indentation
+a = 7
+if a > 2 then
+          print 'yes'
+if a < 9 then
+ print 'no'
+#### output
+'yes'
+'no'
+#### end
+
+
+
+#### exec: base indentation
+    a = 3
+    if a > 2 then
+        print 'yes'
+#### expected output
+'yes'
+#### actual output
+SyntaxError: Expected expression. at '    ' (Indent)
+
+1|     a = 3
+   ^^^^
+#### end
+
+
+
+#### exec: base indentation, first line defines base
+    a = 3
+    if a > 2 then
+        print 'yes'
+  b = 2
+#### expected output
+SyntaxError: Expected expression. at '    ' (Indent)
+
+4|   b = 2
+   ^^
+#### actual output
+SyntaxError: Expected expression. at '    ' (Indent)
+
+1|     a = 3
+   ^^^^
+SyntaxError: Expected expression. at '  ' (InvalidIndentation)
+
+4|   b = 2
+   ^^
+SyntaxError: Expected expression. at '' (Newline)
+
+5|
+#### end
+
+
+

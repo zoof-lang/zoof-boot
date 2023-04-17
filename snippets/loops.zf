@@ -1,4 +1,4 @@
-#### exec: loop over range
+#### exec: for-loop over range
 for i in 1..6 do
     print i
 #### output
@@ -11,7 +11,7 @@ for i in 1..6 do
 
 
 
-#### exec: loop over range floats
+#### exec: for-loop over range of floats
 for i in 1.4..6..0.5 do
     print i
 # todo: yuk!  ->  for i in 1.4 : 6 : 0.5  seems cleaner
@@ -30,10 +30,54 @@ for i in 1.4..6..0.5 do
 
 
 
+#### exec: while-loop
+i = 0
+while i < 5 do
+    i = i + 1
+    print i
+#### output
+1.0
+2.0
+3.0
+4.0
+5.0
+#### end
+
+
+
+#### exec: loop repeat n times
+for i in 0..4 do
+    print 42
+#### output
+42.0
+42.0
+42.0
+42.0
+#### end
+
+
+
+#### exec: infinite loop
+i = 0
+while do
+    i = i + 1
+    if i > 4 then
+        break
+print i
+#### expected output
+5.0
+#### actual output
+RuntimeError: Undefined variable 'break'. at 'break' (Identifier)
+
+5|         break
+           ^^^^^
+#### end
+
+
+
 #### exec: Fibonacci
 a = 0
 b = 1
-
 while a < 100 do
     print a
     temp = a

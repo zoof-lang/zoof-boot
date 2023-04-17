@@ -16,6 +16,7 @@ class Parser:
 
     def parse(self):
         # program -> statement* EOF
+        self.matchEos()  # skip initial comments and newlines
         statements = self.statements()
         if not self.check(TT.EOF):
             self.error(self.peek(), "Unexpected end", throw=False)
