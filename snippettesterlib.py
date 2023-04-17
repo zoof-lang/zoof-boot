@@ -29,23 +29,22 @@ ACTIONS = {}
 
 
 def iterateSnippets():
-    """A generator producing Snippet objects.
-    """
+    """A generator producing Snippet objects."""
     return SnippetCollection().iterSnippets()
 
 
 def addAction(name):
-    """Decorator to apply to a function to mark it as an action.
-    """
+    """Decorator to apply to a function to mark it as an action."""
+
     def wrapper(func):
         ACTIONS[name] = func
         return func
+
     return wrapper
 
 
 def show():
-    """Show a summary of the detected snippets.
-    """
+    """Show a summary of the detected snippets."""
     collection = SnippetCollection()
     nfiles = len(collection.files)
     nsnippets = sum(len(file.snippets) for file in collection.files)
@@ -55,8 +54,7 @@ def show():
 
 
 def run():
-    """Run all snippets. Returns True if all results were as expected.
-    """
+    """Run all snippets. Returns True if all results were as expected."""
     collection = SnippetCollection()
 
     nfiles = len(collection.files)
@@ -90,20 +88,20 @@ def run():
 
 
 class SnippetCollection:
-    """ Represents a set of files with snippets.
-    """
+    """Represents a set of files with snippets."""
 
     def __init__(self):
         self.dirnames = [os.path.join(config.rootDir, p) for p in config.dirs]
         self.collect()
 
     def collect(self):
-
         self.files = []
 
         for dirname in self.dirnames:
             assert os.path.isdir(dirname)
-            filenames = glob.glob(os.path.join(dirname, "**", config.pattern), recursive=True)
+            filenames = glob.glob(
+                os.path.join(dirname, "**", config.pattern), recursive=True
+            )
             for filename in filenames:
                 snippetFile = SnippetFile(filename)
                 self.files.append(snippetFile)
@@ -115,15 +113,13 @@ class SnippetCollection:
 
 
 class SnippetFile:
-    """ Represents a file with zero or more snippets.
-    """
+    """Represents a file with zero or more snippets."""
 
     def __init__(self, filename):
         self.filename = filename
         self.load()
 
     def load(self):
-
         self.snippets = []
 
         assert os.path.isfile(self.filename)
@@ -137,14 +133,16 @@ class SnippetFile:
         for lineid, line in enumerate(lines):
             if line.startswith(config.separator):
                 if ":" in line:
-                    action, _, title = line[len(config.separator):].partition(":")
+                    action, _, title = line[len(config.separator) :].partition(":")
                     action = action.strip()
                     title = title.strip()
                     if action:
-                        pending_snippet = Snippet(self.filename, lineid + 1, action, title)
+                        pending_snippet = Snippet(
+                            self.filename, lineid + 1, action, title
+                        )
                         pending_snippet.linenr = lineid + 1
                 elif pending_snippet:
-                    sniptext = "\n".join(lines[lastsep+1:lineid])
+                    sniptext = "\n".join(lines[lastsep + 1 : lineid])
                     if pending_snippet.source is None:
                         pending_snippet.source = sniptext
                         self.snippets.append(pending_snippet)
@@ -172,9 +170,11 @@ class SnippetFile:
 
 
 class Snippet:
-    """Represents a snippet, consisting of at least two parts, the source, and the expected output.
-    """
-    def __init__(self, filename, linenr, action, title, source=None, expect=None, result=None):
+    """Represents a snippet, consisting of at least two parts, the source, and the expected output."""
+
+    def __init__(
+        self, filename, linenr, action, title, source=None, expect=None, result=None
+    ):
         # Meta data, just to repr the snippet better
         self.filename = filename
         self.linenr = linenr
@@ -219,7 +219,7 @@ class Snippet:
             lines.extend(self.result.split("\n"))
         # End sep and spacing
         lines.append(f"{config.separator} end")
-        lines.extend(["", "", ""])
+        lines.extend(["", "", "", ""])
 
         return "\n".join(lines)
 
