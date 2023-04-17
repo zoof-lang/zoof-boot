@@ -12,5 +12,4 @@ if __name__ == "__main__":
     if argv and argv[0] == "zoofc1":
         argv.pop(0)
 
-    c = zoofc1.ZoofCompiler()
-    c.main(argv)
+    zoofc1.main(argv)

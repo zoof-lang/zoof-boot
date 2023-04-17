@@ -43,7 +43,8 @@ class Environment:
 
 
 class InterpreterVisitor:
-    def __init__(self, handler):
+    def __init__(self, print, handler):
+        self.print = print
         self.handler = handler
         self.env = Environment(None)
 
@@ -53,7 +54,7 @@ class InterpreterVisitor:
             for statement in statements:
                 val = self.execute(statement)
             if val is not None:
-                print(val)  # todo: is this the right way to print the last value?
+                self.print(val)  # todo: is this the right way to print the last value?
         except RuntimeErr as err:
             self.handler.runtimeError(err.token, err.message)
         except Exception as err:
@@ -140,7 +141,7 @@ class InterpreterVisitor:
 
     def visitPrintStmt(self, stmt):
         value = self.evaluate(stmt.expr)
-        print(self.stringify(value))
+        self.print(self.stringify(value))
 
     def visitExpressionStmt(self, stmt):
         return self.evaluate(stmt.expr)

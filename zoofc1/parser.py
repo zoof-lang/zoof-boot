@@ -18,7 +18,7 @@ class Parser:
         # program -> statement* EOF
         statements = self.statements()
         if not self.check(TT.EOF):
-            self.error(self.peek(), "Unexpected end")
+            self.error(self.peek(), "Unexpected end", throw=False)
         return statements
 
     def match(self, *tokentypes):

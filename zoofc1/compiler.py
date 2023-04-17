@@ -1,4 +1,5 @@
 import sys
+from functools import partial
 
 from .lexer import splitSource, tokenize
 from .printer import PrinterVisitor
@@ -8,18 +9,10 @@ from .errors import ErrorHandler
 
 
 class ZoofCompiler:
-    def __init__(self):
-        self.ehandler = ErrorHandler()
-        self.interpreter = InterpreterVisitor(self.ehandler)
-
-    def main(self, argv):
-        if len(argv) > 1:
-            print("Usage zoofpyc [script]")
-            sys.exit(64)
-        elif len(argv) == 1:
-            self.runFile(argv[0])
-        else:
-            self.runPrompt()
+    def __init__(self, file=None):
+        self.print = partial(print, file=file)
+        self.ehandler = ErrorHandler(self.print)
+        self.interpreter = InterpreterVisitor(self.print, self.ehandler)
 
     def runFile(self, path):
         with open(path, "rb") as f:
@@ -39,22 +32,36 @@ class ZoofCompiler:
             self.ehandler.hadSyntaxError = False
             self.ehandler.hadRuntimeError = False
 
-    def run(self, source):
+    def tokenize(self, source):
         lines = splitSource(source)
-
         self.ehandler.setSourceLines(lines)
+        # todo: let the error handler construct the lines and filename from the tokens?
+        return list(tokenize(lines))
 
-        tokens = list(tokenize(lines))
-
-        # for token in tokens:
-        #     print(token)
-
+    def parse(self, source):
+        tokens = self.tokenize(source)
         parser = Parser(tokens, self.ehandler)
-        statements = parser.parse()
+        return parser.parse()
+
+    def run(self, source, out=None):
+        statements = self.parse(source)
         if self.ehandler.hadSyntaxError:
             return
 
         # printer = PrinterVisitor()
         # for stmt in statements:
         #     printer.print(stmt)
+
         self.interpreter.interpret(statements)
+
+
+def main(argv):
+    c = ZoofCompiler()
+
+    if len(argv) > 1:
+        print("Usage zoofpyc [script]")
+        sys.exit(64)
+    elif len(argv) == 1:
+        c.runFile(argv[0])
+    else:
+        c.runPrompt()

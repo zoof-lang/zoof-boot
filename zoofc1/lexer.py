@@ -10,6 +10,7 @@ def splitSource(source):
 
 
 def tokenize(lines):
+    assert isinstance(lines, list)
     lexer = Lexer(0)
     for line in lines:
         yield from lexer.processLine(line)

@@ -1,5 +1,6 @@
 class ErrorHandler:
-    def __init__(self):
+    def __init__(self, print):
+        self.print = print
         self.lines = []
         self.hadSyntaxError = False
         self.hadRuntimeError = False
@@ -18,7 +19,7 @@ class ErrorHandler:
 
     def runtimeError(self, token, message):
         """An error generated at runtime."""
-        # print(f"[line {token.line}] Error : {message}")
+        # self.print(f"[line {token.line}] Error : {message}")
         self.hadRuntimeError = True
         self._show_error(token, "RuntimeError: " + message)
 
@@ -26,7 +27,7 @@ class ErrorHandler:
         tokenName = str(token.type).split(".")[-1]
         prefix = f"{token.line}| "
         squigle = "^" * len(token.lexeme)
-        print(message + f" at {repr(token.lexeme)} ({tokenName})")
-        print()
-        print(prefix + self.lines[token.line - 1])
-        print(" " * (len(prefix) + token.column - 1) + squigle)
+        self.print(message + f" at {repr(token.lexeme)} ({tokenName})")
+        self.print()
+        self.print(prefix + self.lines[token.line - 1])
+        self.print(" " * (len(prefix) + token.column - 1) + squigle)
