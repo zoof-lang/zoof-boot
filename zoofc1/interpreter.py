@@ -53,8 +53,9 @@ class InterpreterVisitor:
             val = None
             for statement in statements:
                 val = self.execute(statement)
+            # Print the last value if it was an expression-statement
             if val is not None:
-                self.print(val)  # todo: is this the right way to print the last value?
+                self.print(val)
         except RuntimeErr as err:
             self.handler.runtimeError(err.token, err.message)
         except Exception as err:
@@ -138,6 +139,9 @@ class InterpreterVisitor:
             self.env.set(stmt.var.name, value)
             self.exececuteMultiple(stmt.statements)
             value += iter.step
+
+    def visitBreakStmt(self, stmt):
+        raise RuntimeErr(stmt.token, "break is not yet implemented.")
 
     def visitPrintStmt(self, stmt):
         value = self.evaluate(stmt.expr)

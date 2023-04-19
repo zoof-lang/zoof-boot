@@ -114,8 +114,12 @@ class Parser:
             return tree.BlockStmt(self.blockStatement())
         elif self.matchKeyword("if"):
             return self.ifStatement()
-        elif self.matchKeyword("for", "while", "loop"):
+        elif self.matchKeyword("for", "while"):
             return self.loopStatement()
+        elif self.matchKeyword("break"):
+            token = self.previous()
+            self.consumeEos()
+            return tree.BreakStmt(token)
         elif self.matchKeyword("print"):
             return self.printStatement()
         else:

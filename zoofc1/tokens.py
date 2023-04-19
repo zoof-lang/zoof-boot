@@ -74,8 +74,8 @@ KEYWORDS = (
     "in",
     "while",
     "do",
-    "loop",
-    "over",
+    "break",
+    "continue",
 )
 RESERVED = "super", "this", "swicth", "match"
 

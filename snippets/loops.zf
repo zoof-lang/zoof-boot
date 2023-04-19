@@ -67,7 +67,7 @@ print i
 #### expected output
 5.0
 #### actual output
-RuntimeError: Undefined variable 'break'. at 'break' (Identifier)
+RuntimeError: break is not yet implemented. at 'break' (Keyword)
 
 5|         break
            ^^^^^

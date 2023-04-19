@@ -46,6 +46,11 @@ class WhileStmt(Stmt):
         self.statements = statements
 
 
+class BreakStmt(Stmt):
+    def __init__(self, token):
+        self.token = token
+
+
 class PrintStmt(Stmt):
     def __init__(self, expr):
         self.expr = expr
