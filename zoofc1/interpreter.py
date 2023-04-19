@@ -1,3 +1,5 @@
+import time
+
 from .tokens import TT, Token
 
 
@@ -12,6 +14,30 @@ class ZoofRange:
             step = 1
         assert step > 0
         self.step = step
+
+
+class Callable:
+    def arity(self):
+        raise NotImplementedError()
+
+    def call(self, interpreter, arguments):
+        raise NotImplementedError()
+
+
+class Clock(Callable):
+    def arity(self):
+        return 0
+
+    def call(self, interpreter, arguments):
+        return time.perf_counter()
+
+
+class ArbitraryNumber(Callable):
+    def arity(self):
+        return 0
+
+    def call(self, interpreter, arguments):
+        return 7.0  # not random, arbitrary! (consistent for tests)
 
 
 ##
@@ -46,7 +72,13 @@ class InterpreterVisitor:
     def __init__(self, print, handler):
         self.print = print
         self.handler = handler
-        self.env = Environment(None)
+        self.globals = Environment(None)
+        self.env = Environment(self.globals)
+        self.loadGlobals()
+
+    def loadGlobals(self):
+        self.globals.map["clock"] = Clock()
+        self.globals.map["arbitraryNumber"] = ArbitraryNumber()
 
     def interpret(self, statements):
         try:
@@ -241,7 +273,9 @@ class InterpreterVisitor:
             else:
                 classname1 = left.__class__.__name__
                 classname2 = right.__class__.__name__
-                raise RuntimeErr(expr.op, f"Cannot add '{classname1}' and {classname2}")
+                raise RuntimeErr(
+                    expr.op, f"Cannot add '{classname1}' and '{classname2}'"
+                )
         # Comparisons
         elif optype == TT.Greater:
             self.checkNumberOperands(expr.op, left, right)
@@ -262,3 +296,18 @@ class InterpreterVisitor:
             return not self.isEqual(left, right)
         else:
             raise RuntimeErr(expr.op, f"Unexpected binary expr '{optype}'")
+
+    def visitCallExpr(self, expr):
+        callee = self.evaluate(expr.callee)
+        arguments = [self.evaluate(argExpr) for argExpr in expr.arguments]
+
+        # todo: error is bound to the closing paren :/
+        if not isinstance(callee, Callable):
+            raise RuntimeErr(expr.paren, "not a callable object.")
+        elif callee.arity() != len(arguments):
+            raise RuntimeErr(
+                expr.paren,
+                f"Expected {callee.arity()} arguments, but got {len(arguments)}",
+            )
+
+        return callee.call(self, arguments)

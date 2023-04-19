@@ -6,6 +6,9 @@ from snippettesterlib import config, addAction, iterateSnippets, run, show
 import pytest
 from zoofc1 import ZoofCompiler
 
+# when I run this in my IDE, load these in the env
+from zoofc1.tokens import TokenType as TT
+
 
 # %% Configure
 

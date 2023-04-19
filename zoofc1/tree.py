@@ -114,6 +114,13 @@ class RangeExpr(Expr):
         self.step = step
 
 
+class CallExpr(Expr):
+    def __init__(self, callee, paren, arguments):
+        self.callee = callee
+        self.paren = paren  # the closing one
+        self.arguments = arguments
+
+
 class LiteralExpr(Expr):
     def __init__(self, token):
         self.token = token

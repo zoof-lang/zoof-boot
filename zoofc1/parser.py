@@ -358,15 +358,41 @@ class Parser:
         return expr
 
     def unary(self):
-        # -> ( "!" | "-" ) unary | primary
+        # -> ( "!" | "-" ) primary | call
         # todo: can I only allow unary at the start of a nuneric expression?
         if self.match(TT.Plus, TT.Minus):
             op = self.previous()
-            # right = self.unary()
             right = self.primary()  # only allow one unary
             return tree.UnaryExpr(op, right)
         else:
-            return self.primary()
+            return self.call()
+
+    def call(self):
+        # -> primary ( "(" arguments? ")" )*
+        # arguments -> expression ( "," expression )* ","?
+        # Bit weird way to spell this, but will make sense when we add attr access
+        expr = self.primary()
+        while True:
+            if self.match(TT.LeftParen):
+                expr = self.finishCall(expr)
+            else:
+                break
+        return expr
+
+    def finishCall(self, callee):
+        arguments = []
+        if self.match(TT.RightParen):
+            pass  # no args
+        else:
+            while True:
+                arguments.append(self.expression())
+                if len(arguments) > 250:
+                    self.error(self.peek(), "Cannot have more than 250 arguments.")
+                if self.match(TT.RightParen):
+                    break
+                self.consume(TT.Comma, "Expecting ',' or ')' after argument.")
+
+        return tree.CallExpr(callee, self.previous(), arguments)
 
     def primary(self):
         # -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
