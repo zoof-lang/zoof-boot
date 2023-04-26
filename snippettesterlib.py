@@ -260,7 +260,7 @@ class Snippet:
         ending = "end"
         # Expected and actual output
         if self.expect is None:
-             ending = "end (missing expected output)"
+            ending = "end (missing expected output)"
         elif self.result is None:
             lines.append(f"{config.separator} (expected) output")
             lines.extend(self.expect.split("\n"))

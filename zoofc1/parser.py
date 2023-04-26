@@ -65,7 +65,7 @@ class Parser:
             raise ParseError()  # to unwind the stack
 
     def synchronize(self):
-        while not self.match(TT.Newline):
+        while not self.matchEos():
             self.advance()
 
     # %%
@@ -232,13 +232,16 @@ class Parser:
         name = self.consume(TT.Identifier, f"Expect {kind} name")
         self.consume(TT.LeftParen, "Expect '(' after {kind} name")
         params = []
-        while True:
-            params.append(self.consume(TT.Identifier, "Expect parameter name"))
-            if len(params) > 250:
-                self.error(self.peek(), "Cannot have more than 250 parameters.")
-            if self.match(TT.RightParen):
-                break
-            self.consume(TT.Comma, "Expecting ',' or ')' after argument.")
+        if not self.match(TT.RightParen):
+            while True:
+                params.append(self.consume(TT.Identifier, "Expect parameter name"))
+                if len(params) > 250:
+                    self.error(self.peek(), "Cannot have more than 250 parameters.")
+                hasComma = self.match(TT.Comma)
+                if self.match(TT.RightParen):
+                    break
+                if not hasComma:
+                    self.error(self.peek(), "Expecting ',' or ')' after argument.")
 
         if not self.matchKeyword("do"):
             self.error(self.peek(), "expect 'do' after function signature")
@@ -429,9 +432,11 @@ class Parser:
                 arguments.append(self.expression())
                 if len(arguments) > 250:
                     self.error(self.peek(), "Cannot have more than 250 arguments.")
+                hasComma = self.match(TT.Comma)
                 if self.match(TT.RightParen):
                     break
-                self.consume(TT.Comma, "Expecting ',' or ')' after argument.")
+                if not hasComma:
+                    self.error(self.peek(), "Expecting ',' or ')' after argument.")
 
         return tree.CallExpr(callee, self.previous(), arguments)
 

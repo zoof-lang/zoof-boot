@@ -1,0 +1,85 @@
+#### exec: simple
+func foo(a, b) do
+    return a + b
+
+print foo(40, 2)
+#### output
+42.0
+#### end
+
+
+
+#### exec: simple no return
+func foo(a, b) do
+    a + b
+
+print foo(40, 2)
+#### output
+nil
+#### end
+
+
+
+#### exec: returns
+func islargerthan5(a) do
+    if a > 5 then
+        return true
+    else
+        return false
+
+print islargerthan5(3)
+print islargerthan5(6)
+#### output
+false
+true
+#### end
+
+
+
+#### exec: fibonacci
+func fib(n) do
+  if n <= 1 then
+      return n
+  return fib(n - 2) + fib(n - 1)
+
+for i in 0..10 do
+  print fib(i)
+#### output
+0.0
+1.0
+1.0
+2.0
+3.0
+5.0
+8.0
+13.0
+21.0
+34.0
+#### end
+
+
+
+#### exec: counter
+func makeCounter() do
+  i = 0  # todo: dont have nonlocals yet. this'd have to be an object I guess?
+  func count() do
+    i = i + 1
+    print i
+  return count
+
+counter = makeCounter()
+counter()
+counter()
+counter()
+#### expected output
+1.0
+2.0
+3.0
+#### actual output
+1.0
+1.0
+1.0
+#### end
+
+
+

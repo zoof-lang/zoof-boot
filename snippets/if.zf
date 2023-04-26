@@ -69,9 +69,6 @@ SyntaxError: Expected expression. at '  ' (InvalidIndentation)
 
 4|   b = 2
    ^^
-SyntaxError: Expected expression. at '' (Newline)
-
-5|
 #### end
 
 

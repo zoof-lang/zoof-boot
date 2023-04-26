@@ -45,15 +45,15 @@ class ArbitraryNumber(NativeCallable):
 
 
 class ZoofFunction(Callable):
-
-    def __init__(self, declaration):
+    def __init__(self, declaration, closure):
         self.declaration = declaration
+        self.closure = closure
 
     def arity(self):
         return len(self.declaration.params)
 
     def call(self, interpreter, arguments):
-        environment = Environment(interpreter.globals)
+        environment = Environment(self.closure)
         for param, arg in zip(self.declaration.params, arguments):
             environment.set(param, arg)
         try:
@@ -62,6 +62,7 @@ class ZoofFunction(Callable):
             return ret.value
         else:
             return None
+
 
 ##
 
@@ -116,7 +117,7 @@ class InterpreterVisitor:
                 val = self.execute(statement)
             # Print the last value if it was an expression-statement
             if val is not None:
-                self.print(val)
+                self.print(self.stringify(val))
         except RuntimeErr as err:
             self.handler.runtimeError(err.token, err.message)
         except Exception as err:
@@ -174,6 +175,8 @@ class InterpreterVisitor:
     def stringify(self, value):
         if value is None:
             return "nil"
+        elif isinstance(value, bool):
+            return "true" if value else "false"
         else:
             return repr(value)
 
@@ -209,7 +212,7 @@ class InterpreterVisitor:
         self.print(self.stringify(value))
 
     def visitFunctionStmt(self, stmt):
-        function = ZoofFunction(stmt)
+        function = ZoofFunction(stmt, self.env)
         self.env.set(stmt.name, function)
 
     def visitReturnStmt(self, stmt):
