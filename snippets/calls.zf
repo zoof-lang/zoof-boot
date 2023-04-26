@@ -1,0 +1,70 @@
+#### exec: ArbitraryNumber
+arbitraryNumber() + 2
+#### output
+9.0
+#### end
+
+
+
+#### exec: simple
+func foo(a, b) do
+    return a + b
+
+foo(40, 2)
+#### output
+42.0
+#### end
+
+
+
+#### exec: simple no return
+func foo(a, b) do
+    a + b
+
+foo(40, 2)
+#### output
+
+#### end
+
+
+
+#### exec: simple, too few args
+func foo(a) do a + 1
+
+foo()
+#### end (missing expected output)
+
+
+
+#### exec: simple, too many args
+func foo(a) do a + 1
+
+foo(1, 2)
+#### end (missing expected output)
+
+
+
+#### exec: simple, extra comma is fine
+func foo(a) do a + 1
+
+foo(1, )
+#### end (missing expected output)
+
+
+
+#### exec: simple, but comma is needed
+func foo(a) do a + 1
+
+foo(1 2)
+#### end (missing expected output)
+
+
+
+#### exec: xxxx
+func foo(a, b) do
+    return a + b
+
+#### end (missing expected output)
+
+
+

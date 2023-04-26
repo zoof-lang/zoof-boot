@@ -24,7 +24,11 @@ class Callable:
         raise NotImplementedError()
 
 
-class Clock(Callable):
+class NativeCallable(Callable):
+    pass
+
+
+class Clock(NativeCallable):
     def arity(self):
         return 0
 
@@ -32,13 +36,32 @@ class Clock(Callable):
         return time.perf_counter()
 
 
-class ArbitraryNumber(Callable):
+class ArbitraryNumber(NativeCallable):
     def arity(self):
         return 0
 
     def call(self, interpreter, arguments):
         return 7.0  # not random, arbitrary! (consistent for tests)
 
+
+class ZoofFunction(Callable):
+
+    def __init__(self, declaration):
+        self.declaration = declaration
+
+    def arity(self):
+        return len(self.declaration.params)
+
+    def call(self, interpreter, arguments):
+        environment = Environment(interpreter.globals)
+        for param, arg in zip(self.declaration.params, arguments):
+            environment.set(param, arg)
+        try:
+            interpreter.executeBlock(self.declaration.body, environment)
+        except Return as ret:
+            return ret.value
+        else:
+            return None
 
 ##
 
@@ -48,6 +71,12 @@ class RuntimeErr(Exception):
         super().__init__(message)
         self.token = token
         self.message = message
+
+
+class Return(Exception):
+    def __init__(self, value):
+        super().__init__()
+        self.value = value
 
 
 class Environment:
@@ -93,7 +122,7 @@ class InterpreterVisitor:
         except Exception as err:
             raise err
 
-    def executeBock(self, statements, environment):
+    def executeBlock(self, statements, environment):
         original_environment = self.env
         try:
             self.env = environment
@@ -151,7 +180,7 @@ class InterpreterVisitor:
     # %%
 
     def visitBlockStmt(self, stmt):
-        self.executeBock(stmt.statements, Environment(self.env))
+        self.executeBlock(stmt.statements, Environment(self.env))
 
     def visitIfStmt(self, stmt):
         if self.isTruethy(self.evaluate(stmt.condition), None):
@@ -178,6 +207,17 @@ class InterpreterVisitor:
     def visitPrintStmt(self, stmt):
         value = self.evaluate(stmt.expr)
         self.print(self.stringify(value))
+
+    def visitFunctionStmt(self, stmt):
+        function = ZoofFunction(stmt)
+        self.env.set(stmt.name, function)
+
+    def visitReturnStmt(self, stmt):
+        if stmt.value is None:
+            value = None
+        else:
+            value = self.evaluate(stmt.value)
+        raise Return(value)
 
     def visitExpressionStmt(self, stmt):
         return self.evaluate(stmt.expr)

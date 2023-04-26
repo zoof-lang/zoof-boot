@@ -76,3 +76,24 @@ SyntaxError: Expected expression. at '' (Newline)
 
 
 
+#### exec: one-line if 1
+foo = if true then 7 else 0
+print foo
+foo = if false then 7 else 0
+print foo
+#### expected output
+7.0
+0.0
+#### actual output
+SyntaxError: Expected expression. at 'if' (Keyword)
+
+1| foo = if true then 7 else 0
+         ^^
+SyntaxError: Expected expression. at 'if' (Keyword)
+
+3| foo = if false then 7 else 0
+         ^^
+#### end
+
+
+

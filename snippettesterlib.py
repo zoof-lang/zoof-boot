@@ -257,9 +257,10 @@ class Snippet:
         # Source
         lines.append(f"{config.separator} {self.action}: {self.title}")
         lines.extend(self.source.split("\n"))
+        ending = "end"
         # Expected and actual output
         if self.expect is None:
-            pass
+             ending = "end (missing expected output)"
         elif self.result is None:
             lines.append(f"{config.separator} (expected) output")
             lines.extend(self.expect.split("\n"))
@@ -272,13 +273,15 @@ class Snippet:
             lines.append(f"{config.separator} actual output")
             lines.extend(self.result.split("\n"))
         # End sep and spacing
-        lines.append(f"{config.separator} end")
+        lines.append(f"{config.separator} {ending}")
         lines.extend(["", "", "", ""])
 
         return "\n".join(lines)
 
     def run(self):
         assert isinstance(self.source, str)
+        if self.expect is None:
+            return False
         if self.action not in ACTIONS:
             raise RuntimeError(f"Unknown action: {self.action}")
         fun = ACTIONS[self.action]

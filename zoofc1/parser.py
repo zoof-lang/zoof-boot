@@ -109,7 +109,7 @@ class Parser:
         return self.statements()
 
     def statement(self):
-        # -> (expressionStmt | printStmt | block) ((Comment)? Newline | EOF)
+        # -> (expressionStmt | printStmt | ... ) ((Comment)? Newline | EOF)
         if self.matchKeyword("do"):
             return tree.BlockStmt(self.blockStatement())
         elif self.matchKeyword("if"):
@@ -120,8 +120,12 @@ class Parser:
             token = self.previous()
             self.consumeEos()
             return tree.BreakStmt(token)
+        elif self.matchKeyword("return"):
+            return self.returnStatement()
         elif self.matchKeyword("print"):
             return self.printStatement()
+        elif self.matchKeyword("func"):
+            return self.funcStatement("function")
         else:
             return self.expressionStatement()
 
@@ -220,6 +224,43 @@ class Parser:
                 )
             stmt.statements = [expr]
             return stmt
+
+    def funcStatement(self, kind):
+        # -> "func" IDENTIFIER "(" parameters? ")" "do" EOS statement*
+        # parameters -> IDENTIFIER ( "," IDENTIFIER )* ","?
+        # todo: should we prohibit function/class declarations inside loops or ifs? E.g. only in the "root" of a scope?
+        name = self.consume(TT.Identifier, f"Expect {kind} name")
+        self.consume(TT.LeftParen, "Expect '(' after {kind} name")
+        params = []
+        while True:
+            params.append(self.consume(TT.Identifier, "Expect parameter name"))
+            if len(params) > 250:
+                self.error(self.peek(), "Cannot have more than 250 parameters.")
+            if self.match(TT.RightParen):
+                break
+            self.consume(TT.Comma, "Expecting ',' or ')' after argument.")
+
+        if not self.matchKeyword("do"):
+            self.error(self.peek(), "expect 'do' after function signature")
+
+        if self.matchEos():
+            # Statement-mode
+            statements = self.indentedStatements("after 'func'")
+        else:
+            # Expression-mode
+            statements = [self.expression()]
+
+        return tree.FunctionStmt(name, params, statements)
+
+    def returnStatement(self):
+        # -> "return" expression? EOS
+        keyword = self.previous()
+        value = None
+        if not self.matchEos():
+            value = self.expression()
+        if not self.matchEos():
+            self.error(keyword, "Expected newline after return value")
+        return tree.ReturnStmt(keyword, value)
 
     def printStatement(self):
         # -> "print" expression "\n"

@@ -61,6 +61,19 @@ class ExpressionStmt(Stmt):
         self.expr = expr
 
 
+class FunctionStmt(Stmt):
+    def __init__(self, name, params, body):
+        self.name = name
+        self.params = params
+        self.body = body
+
+
+class ReturnStmt(Stmt):
+    def __init__(self, keyword, value):
+        self.keyword = keyword
+        self.value = value
+
+
 # %%
 
 
