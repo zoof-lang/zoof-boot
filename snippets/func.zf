@@ -59,27 +59,9 @@ for i in 0..10 do
 
 
 
-#### exec: counter
-func makeCounter() do
-  i = 0  # todo: dont have nonlocals yet. this'd have to be an object I guess?
-  func count() do
-    i = i + 1
-    print i
-  return count
-
-counter = makeCounter()
-counter()
-counter()
-counter()
-#### expected output
-1.0
-2.0
-3.0
-#### actual output
-1.0
-1.0
-1.0
-#### end
+#### noop: summary
+# See scope_closures.zf for functions that capture free variables.
+#### end (no output)
 
 
 

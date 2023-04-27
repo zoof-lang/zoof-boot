@@ -1,0 +1,34 @@
+#### noop: summary
+# A variable name refers to the object that was last assigned to that
+# name in the innermost scope that encloses the expression where the
+# variable name is used.
+#
+# See scope_closures.zf for details.
+#### end (no output)
+
+
+
+#### exec: simple 1
+a = 1
+b = 2
+print(a)
+print(b)
+#### output
+1.0
+2.0
+#### end
+
+
+
+#### exec: notexist 1
+a = 1
+c = b
+#### output
+RuntimeError: Undefined variable 'b'. at 'b' (Identifier)
+
+2| c = b
+       ^
+#### end
+
+
+

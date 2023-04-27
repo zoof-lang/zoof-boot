@@ -18,6 +18,11 @@ config.separator = "####"
 config.pattern = "*.zf"
 
 
+@addAction("noop")
+def action_noop(source):
+    return ""
+
+
 @addAction("repr")
 def action_repr(source):
     # Really just for testing the snippet mechanics

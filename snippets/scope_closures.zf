@@ -1,0 +1,148 @@
+#### noop: summary
+# Robert says about scope, for langs that use explicit variable declarations:
+#
+# Lexical scoping means that you can figure out which declaration a
+# variable name refers to just by reading the text of the program.
+#
+# A variable usage refers to the preceding declaration with the same
+# name in the innermost scope that encloses the expression where the
+# variable is used.
+#
+# But Zoof uses implicit declarations. We can reformulate the rules:
+#
+# Lexical scoping means that you can figure out (the source of) the
+# object a variable name refers to just by reading the text of the
+# program.
+#
+# A variable name refers to the object that was last assigned to that
+# name in the innermost scope that encloses the expression where the
+# variable name is used.
+#
+# In Robert's formulation, closures must capture free variables by
+# reference. In Crafting Interpreters this is implemented by storing
+# the complete enclosing environment. Python follows the same rules,
+# but manages to pick out only the variables that need to be stored
+# using another level of indirection, using cells.
+#
+# In Zoof's formulation, closures capture free variables by value, which
+# is *a lot* easier to implement. It has some advantages too, like being
+# able to create closures with different free variable values in a loop.
+# It feels pretty natural (to me), since the closure cannot change the
+# free variable's value anyway (we have no nonlocal keyword). Users can
+# create mutable state by using a struct.
+#### end (no output)
+
+
+
+#### exec: not a closure 1
+# Just to be clear, a function is only a closure when it is called from
+# another scope as the one in which it is defined and captures free variables.
+func outer() do
+    a = 1
+    func printa() do  # not a closure!
+        print a
+    printa()
+    a = 2
+    printa()
+outer()
+#### output
+1.0
+2.0
+#### end
+
+
+
+#### exec: not a closure 2
+# Called in different scope, but function does not capture free variables.
+func outer() do
+    func printer(a) do  # not a closure!
+        print a
+    return printer
+p = outer()
+p(1)
+p(2)
+#### output
+1.0
+2.0
+#### end
+
+
+
+#### exec: closure 1
+# Free variables are captured by value, not by ref.
+func outer() do
+    a = 1
+    func inner() do
+        print a
+    a = 2
+    return inner
+f = outer()
+f()
+#### expected output
+1.0
+#### actual output
+2.0
+#### end
+
+
+
+#### exec: closure 2 - translation of Robert's adversary snippet
+a = 'global'
+do {
+  func showA() do
+    print a
+
+  showA()
+  a = 'block'
+  showA()
+}
+#### expected output
+I am not sure yet!
+#### actual output
+'global'
+'block'
+#### end
+
+
+
+#### exec: closure 3
+# todo: need lists for this
+func outer() do
+    funcs = []
+    for i in 0..5 do
+        funcs.put(func() i)
+    return funcs
+
+ff = outer()
+for f in ff do
+    print f()  # prints 0 1 2 3 4
+#### end (missing expected output)
+
+
+
+#### exec: counter
+# Zoof cannot set variables in outer scopes. Use a struct!
+# todo: we don't have struct-like objects yet
+func makeCounter() do
+  i = 0
+  func count() do
+    i = i + 1
+    print i
+  return count
+
+counter = makeCounter()
+counter()
+counter()
+counter()
+#### expected output
+1.0
+2.0
+3.0
+#### actual output
+1.0
+1.0
+1.0
+#### end
+
+
+
