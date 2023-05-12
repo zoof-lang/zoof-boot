@@ -1,4 +1,10 @@
-a = 1
-func foo() do
-  print(a)
-foo()
+# Not sure yet what to do here!
+a = 'global'
+func main() do
+  func showA() do
+    print a
+
+  showA()
+  a = 'block'
+  showA()
+main()

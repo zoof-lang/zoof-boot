@@ -92,17 +92,20 @@ RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
 
 
 #### exec: closure 2 - translation of Robert's adversary snippet
-# Not sure yet what to do here!
+# todo: Not sure yet what to do here!
 a = 'global'
-do {
+func main() do
   func showA() do
     print a
 
   showA()
   a = 'block'
   showA()
-}
-#### end (missing expected output)
+main()
+#### actual output
+'global'
+'global'
+#### end
 
 
 
@@ -192,7 +195,7 @@ func make() do
   foo()
 make()
 #### expected output
-this must fail!
+this must fail! I think, also See Roberts snippet above
 #### actual output
 2.0
 3.0

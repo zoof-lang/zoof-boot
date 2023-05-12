@@ -9,19 +9,24 @@ from .interpreter import BUILTINS
 
 
 class Scope:
-    def __init__(self, names):
-        self.names = names
+    def __init__(self, names=None):
+        self.names = names or set()
         self.freeVars = {}
+
+    def contains(self, name):
+        return name in self.names
+
+    def add(self, name):
+        self.names.add(name)
 
 
 class ResolverVisitor:
     def __init__(self, interpreter, ehandler):
         self.interpreter = interpreter
         self.ehandler = ehandler
-        self.scopes = [{name for name in BUILTINS.keys()}]
+        self.scopes = [Scope({name for name in BUILTINS.keys()})]
         # We delay resolving functions until they're called or scope is left
         self.unresolvedFunctions = {}
-        self.freeVars = {}
 
     def error(self, token, message):
         self.ehandler.syntaxError(token, message)
@@ -41,8 +46,7 @@ class ResolverVisitor:
         stmt_or_expr.accept(self)
 
     def beginScope(self):
-        self.scopes.append(set())
-        self.freeVars = {}
+        self.scopes.append(Scope())
 
     def endScope(self):
         for nameStr in list(self.unresolvedFunctions.keys()):
@@ -51,8 +55,8 @@ class ResolverVisitor:
         self.scopes.pop(-1)
 
     def declare(self, name):
-        if name.lexeme in self.freeVars:
-            expr = self.freeVars[name.lexeme]
+        if name.lexeme in self.scopes[-1].freeVars:
+            expr = self.scopes[-1].freeVars[name.lexeme]
             self.error(
                 expr.name,
                 "Variable is used before it's defined in this scope (cannot use a variable that is shadowed in the same scope).",
@@ -64,7 +68,7 @@ class ResolverVisitor:
         name = expr.name
         expr.depth = -1
         for depth, scope in enumerate(self.scopes):
-            if name.lexeme in scope:
+            if scope.contains(name.lexeme):
                 expr.depth = depth
         if expr.depth == -1:
             self.error(name, f"Undefined variable")
@@ -73,8 +77,9 @@ class ResolverVisitor:
         else:
             # A free variable, in the liberal sense. It can still be a global or
             # builtin, but for the logic in declare() we need to include *all* non-locals.
-            if name.lexeme not in self.freeVars:
-                self.freeVars[name.lexeme] = expr
+            freeVars = self.scopes[-1].freeVars
+            if name.lexeme not in freeVars:
+                freeVars[name.lexeme] = expr
 
     # %% The interesting bits
 
@@ -95,7 +100,9 @@ class ResolverVisitor:
                 self.declare(param)
             self.resolve_statements(stmt.body)
             stmt.freeVars = {
-                name: expr for name, expr in self.freeVars.items() if expr.depth >= 1
+                name: expr
+                for name, expr in self.scopes[-1].freeVars.items()
+                if expr.depth >= 1
             }
             self.endScope()
 
@@ -159,7 +166,7 @@ class ResolverVisitor:
     def visitCallExpr(self, expr):
         self.resolve(expr.callee)
         if isinstance(expr.callee, VariableExpr):
-            self.checkFunction(expr.callee.name)
+            self.checkFunction(expr.callee.name.lexeme)
         for arg in expr.arguments:
             self.resolve(arg)
 
