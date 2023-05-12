@@ -8,15 +8,16 @@
 # name in the innermost scope that encloses the expression where the
 # variable is used.
 #
-# But Zoof uses implicit declarations. We can reformulate the rules:
+# But Zoof uses implicit declarations. We still have the same rules, since
+# the first setting of a variable is its (implicit) declaration, but it makes
+# sense to reformulate it a bit:
 #
-# Lexical scoping means that you can figure out (the source of) the
-# object a variable name refers to just by reading the text of the
-# program.
+# Lexical scoping means that you can figure out which variable a
+# variable name refers to just by reading the text of the program.
 #
-# A variable name refers to the object that was last assigned to that
-# name in the innermost scope that encloses the expression where the
-# variable name is used.
+# A variable name refers to the variable (with that name) that was set
+# earlier in the code, in the innermost scope that encloses the
+# expression where the variable is used.
 #
 # In Robert's formulation, closures must capture free variables by
 # reference. In Crafting Interpreters this is implemented by storing
@@ -24,12 +25,15 @@
 # but manages to pick out only the variables that need to be stored
 # using another level of indirection, using cells.
 #
-# In Zoof's formulation, closures capture free variables by value, which
-# is *a lot* easier to implement. It has some advantages too, like being
-# able to create closures with different free variable values in a loop.
-# It feels pretty natural (to me), since the closure cannot change the
-# free variable's value anyway (we have no nonlocal keyword). Users can
-# create mutable state by using a struct.
+# Not sure yet what to do with Zoof.
+#
+# Capturing free variables by value is *a lot* easier to implement, and
+# has some advantages too, like being able to create closures with
+# different free variable values in a loop. It feels pretty natural (to
+# me), since the closure cannot change the free variable's value anyway
+# (we have no nonlocal keyword). Users can create mutable state by using
+# a struct. The major downside is the difference in behavior of globals vs nonlocals.
+
 #### end (no output)
 
 
@@ -69,7 +73,7 @@ p(2)
 
 
 #### exec: closure 1
-# Free variables are captured by value, not by ref.
+# Free variables are captured ... duno yet
 func outer() do
     a = 1
     func inner() do
@@ -78,15 +82,17 @@ func outer() do
     return inner
 f = outer()
 f()
-#### expected output
-1.0
-#### actual output
-2.0
+#### output
+RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
+
+5|         print a
+                 ^
 #### end
 
 
 
 #### exec: closure 2 - translation of Robert's adversary snippet
+# Not sure yet what to do here!
 a = 'global'
 do {
   func showA() do
@@ -96,12 +102,7 @@ do {
   a = 'block'
   showA()
 }
-#### expected output
-I am not sure yet!
-#### actual output
-'global'
-'block'
-#### end
+#### end (missing expected output)
 
 
 
@@ -134,14 +135,131 @@ counter = makeCounter()
 counter()
 counter()
 counter()
-#### expected output
-1.0
+#### end (missing expected output)
+
+
+
+#### exec: technically not a closure
+a = 0  # just to make it more interesting
+func make() do
+  # imagine writing this code on module level, then wrapping it in a function.
+  # we want this to Just Work!
+  a = 2
+  func foo() do
+     print a
+  foo()
+  a = 3
+  foo()
+make()
+#### output
 2.0
 3.0
+#### end
+
+
+
+#### exec: now it is
+a = 0
+func make() do
+  a = 2
+  func foo() do
+     print a
+  foo()
+  a = 3
+  foo()
+  return foo
+f = make()
+f()
+#### output
+2.0
+3.0
+RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
+
+5|      print a
+              ^
+#### end
+
+
+
+#### exec: fail because of early reference
+a = 0
+func make() do
+  func foo() do
+     print a
+  a = 2
+  foo()
+  a = 3
+  foo()
+make()
+#### expected output
+this must fail!
 #### actual output
-1.0
-1.0
-1.0
+2.0
+3.0
+#### end
+
+
+
+#### exec: but works again if we remove the global that was shadowed
+func make() do
+  func foo() do
+     print a
+  a = 2
+  foo()
+  a = 3
+  foo()
+make()
+#### output
+2.0
+3.0
+#### end
+
+
+
+#### exec: deep closures 1
+a = 0
+func make1() do
+  b = 1
+  func make2() do
+    c = 2
+    func foo() do
+      print a
+      print b
+      print c
+    c = 20
+    return foo
+  f = make2()
+  b = 10
+  return f
+f = make1()
+a = 42
+f()
+#### output
+RuntimeError: Closures are not supported at the moment. at 'c' (Identifier)
+
+9|       print c
+               ^
+#### end
+
+
+
+#### exec: deep closures 1
+a = 0
+func make1() do
+  a = 1
+  func make2() do
+    a = 2
+    func foo() do
+      print a
+    return foo
+  return make2()
+f = make1()
+f()
+#### output
+RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
+
+7|       print a
+               ^
 #### end
 
 

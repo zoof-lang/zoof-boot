@@ -92,12 +92,13 @@ class IfExpr(Expr):
 class AssignExpr(Expr):
     def __init__(self, name, value):
         self.name = name
-        self.value = value
+        self.value = value  # Can be None
 
 
 class VariableExpr(Expr):
     def __init__(self, name):
         self.name = name
+        self.depth = -9  # set by resolver
 
 
 class LogicalExpr(Expr):

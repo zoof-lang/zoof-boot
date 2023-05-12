@@ -197,6 +197,9 @@ class Parser:
                     self.error(
                         self.previous(), "in 'for x in y', 'x' must be a variable"
                     )
+                var = tree.AssignExpr(
+                    var.name, None
+                )  # Turn variable into an assignment
                 iterator = self.expression()
                 stmt = tree.ForStmt(loopOp, var, iterator, [])
             else:

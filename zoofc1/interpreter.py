@@ -48,12 +48,32 @@ class ZoofFunction(Callable):
     def __init__(self, declaration, closure):
         self.declaration = declaration
         self.closure = closure
+        self.freeVars = self.declaration.freeVars.copy()
+        self.captured = {}
 
     def arity(self):
         return len(self.declaration.params)
 
+    def popEnvironment(self, environment):
+        # This is where we would capture the free variables, if we were
+        # to support closures.
+        toPop = set()
+        for name, expr in self.freeVars.items():
+            if name in environment.map:
+                toPop.add(name)
+                self.captured[name] = expr
+        for name in toPop:
+            self.freeVars.pop(name)
+        # Be good for memory
+        environment.map.clear()
+
     def call(self, interpreter, arguments):
+        if self.captured:
+            expr = list(self.captured.values())[0]
+            raise RuntimeErr(expr.name, "Closures are not supported at the moment.")
         environment = Environment(self.closure)
+        # for name, value in self.captured.items():
+        #     environment.set(name, value)
         for param, arg in zip(self.declaration.params, arguments):
             environment.set(param, arg)
         try:
@@ -63,6 +83,10 @@ class ZoofFunction(Callable):
         else:
             return None
 
+
+BUILTINS = {}
+BUILTINS["clock"] = Clock()
+BUILTINS["arbitraryNumber"] = ArbitraryNumber()
 
 ##
 
@@ -83,6 +107,7 @@ class Return(Exception):
 class Environment:
     def __init__(self, parent):
         self.parent = parent
+        self.index = 0 if parent is None else parent.index + 1
         self.map = {}
 
     def set(self, name: Token, value):
@@ -92,23 +117,17 @@ class Environment:
         try:
             return self.map[name.lexeme]
         except KeyError:
-            if self.parent:
-                return self.parent.get(name)
-            else:
-                raise RuntimeErr(name, f"Undefined variable '{name.lexeme}'.")
+            raise RuntimeErr(name, f"Undefined variable '{name.lexeme}'.")
 
 
 class InterpreterVisitor:
     def __init__(self, print, handler):
         self.print = print
         self.handler = handler
-        self.globals = Environment(None)
-        self.env = Environment(self.globals)
-        self.loadGlobals()
-
-    def loadGlobals(self):
-        self.globals.map["clock"] = Clock()
-        self.globals.map["arbitraryNumber"] = ArbitraryNumber()
+        builtins = Environment(None)
+        builtins.map.update(BUILTINS)
+        self.env = Environment(builtins)
+        self.maybeClosures = []
 
     def interpret(self, statements):
         try:
@@ -124,13 +143,17 @@ class InterpreterVisitor:
             raise err
 
     def executeBlock(self, statements, environment):
-        original_environment = self.env
+        original_env = self.env
+        self.env = environment
+        self.maybeClosures.append([])
         try:
-            self.env = environment
             for stmt in statements:
                 self.execute(stmt)
         finally:
-            self.env = original_environment
+            if self.maybeClosures:
+                for func in self.maybeClosures.pop(-1):
+                    func.popEnvironment(self.env)
+            self.env = original_env
 
     def exececuteMultiple(self, statements):
         for stmt in statements:
@@ -214,6 +237,8 @@ class InterpreterVisitor:
     def visitFunctionStmt(self, stmt):
         function = ZoofFunction(stmt, self.env)
         self.env.set(stmt.name, function)
+        if self.maybeClosures:
+            self.maybeClosures[-1].append(function)
 
     def visitReturnStmt(self, stmt):
         if stmt.value is None:
@@ -228,7 +253,11 @@ class InterpreterVisitor:
     # %%
 
     def visitVariableExpr(self, expr):
-        return self.env.get(expr.name)
+        env = self.env
+        assert expr.depth >= 0
+        while env.index > 0 and env.index > expr.depth:
+            env = env.parent
+        return env.get(expr.name)
 
     def visitIfExpr(self, expr):
         if self.isTruethy(self.evaluate(expr.condition), None):

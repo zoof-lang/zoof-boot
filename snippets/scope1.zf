@@ -9,10 +9,47 @@
 
 
 #### exec: simple 1
-a = 1
-b = 2
+a = b = 1
 print(a)
 print(b)
+#### output
+1.0
+1.0
+#### end
+
+
+
+#### exec: global 1
+a = 1
+func foo() do
+  print(a)
+foo()
+#### output
+1.0
+#### end
+
+
+
+#### exec: global 2
+# Supporting this is very convenient for mutually dependent stuff
+# todo: also support this when executing the pieces separately
+func foo() do
+  print(a)
+a = 1
+foo()
+#### output
+1.0
+#### end
+
+
+
+#### exec: global and local
+a = 1
+func foo() do
+  b = 2
+  print(a)
+  print(b)
+foo()
 #### output
 1.0
 2.0
@@ -20,14 +57,146 @@ print(b)
 
 
 
-#### exec: notexist 1
+#### exec: global, local, local 1
+a = 1
+func foo() do
+  b = 2
+  func bar() do
+    c = 3
+    print(a)
+    print(b)
+    print(c)
+  bar()
+foo()
+#### output
+1.0
+2.0
+3.0
+#### end
+
+
+
+#### exec: global, local, local 2
+func foo() do
+  func bar() do
+    c = 3
+    print(a)
+    print(b)
+    print(c)
+  b = 2
+  bar()
+a = 1
+foo()
+#### output
+1.0
+2.0
+3.0
+#### end
+
+
+
+#### exec: func, shadowing
+a = 1
+func foo() do
+  a = 2
+  print(a)
+foo()
+#### output
+2.0
+#### end
+
+
+
+#### exec: fail notexist 1
+a
+#### output
+SyntaxError: Undefined variable at 'a' (Identifier)
+
+1| a
+   ^
+#### end
+
+
+
+#### exec: fail notexist 2
 a = 1
 c = b
 #### output
-RuntimeError: Undefined variable 'b'. at 'b' (Identifier)
+SyntaxError: Undefined variable at 'b' (Identifier)
 
 2| c = b
        ^
+#### end
+
+
+
+#### exec: fail notexist in func
+func foo() do
+  print(b)
+foo()
+#### output
+SyntaxError: Undefined variable at 'b' (Identifier)
+
+2|   print(b)
+           ^
+#### end
+
+
+
+#### exec: fail notexist un uncalled func
+# todo: I think we may want to make this work at some point?
+# Maybe only for procedures, not for funcs?
+func foo() do
+  print(b)
+#### output
+SyntaxError: Undefined variable at 'b' (Identifier)
+
+4|   print(b)
+           ^
+#### end
+
+
+
+#### exec: fail notexist in sub-func
+func foo() do
+  func bar() do
+    print(b)
+  bar()
+foo()
+#### output
+SyntaxError: Undefined variable at 'b' (Identifier)
+
+3|     print(b)
+             ^
+#### end
+
+
+
+#### exec: fail notexist in uncalled subfunc
+func foo() do
+  func bar() do
+    print(b)
+foo()
+#### output
+SyntaxError: Undefined variable at 'b' (Identifier)
+
+3|     print(b)
+             ^
+#### end
+
+
+
+#### exec: func, shadowing only allowed fully
+a = 1
+func foo() do
+  print(a)
+  a = 2
+  print(a)
+#### output
+SyntaxError: Variable is used before it's defined in this scope (cannot use a variable that is shadowed in the same scope). at 'a' (Identifier)
+
+3|   print(a)
+           ^
 #### end
 
 

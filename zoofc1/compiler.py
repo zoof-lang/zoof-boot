@@ -4,6 +4,7 @@ from functools import partial
 from .lexer import splitSource, tokenize
 from .printer import PrinterVisitor
 from .parser import Parser
+from .resolver import ResolverVisitor
 from .interpreter import InterpreterVisitor
 from .errors import ErrorHandler
 
@@ -13,6 +14,7 @@ class ZoofCompiler:
         self.print = partial(print, file=file)
         self.ehandler = ErrorHandler(self.print)
         self.interpreter = InterpreterVisitor(self.print, self.ehandler)
+        self.resolver = ResolverVisitor(self.interpreter, self.ehandler)
 
     def runFile(self, path):
         with open(path, "rb") as f:
@@ -51,6 +53,10 @@ class ZoofCompiler:
         # printer = PrinterVisitor()
         # for stmt in statements:
         #     printer.print(stmt)
+
+        self.resolver.resolve_program(statements)
+        if self.ehandler.hadSyntaxError:
+            return
 
         self.interpreter.interpret(statements)
 
