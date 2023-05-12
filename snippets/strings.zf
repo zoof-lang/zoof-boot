@@ -1,9 +1,7 @@
 #### exec: string
 a = 'foo'
 a
-#### expected output
-foo
-#### actual output
+#### output
 'foo'
 #### end
 
@@ -11,9 +9,7 @@ foo
 
 #### exec: string concatenation 1
 'foo' + 'bar'
-#### expected output
-foobar
-#### actual output
+#### output
 'foobar'
 #### end
 
@@ -23,9 +19,7 @@ foobar
 a = 'foo'
 b = 'bar'
 a + b
-#### expected output
-foobar
-#### actual output
+#### output
 'foobar'
 #### end
 

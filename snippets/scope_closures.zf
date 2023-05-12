@@ -33,7 +33,10 @@
 # me), since the closure cannot change the free variable's value anyway
 # (we have no nonlocal keyword). Users can create mutable state by using
 # a struct. The major downside is the difference in behavior of globals vs nonlocals.
-
+#
+# I decided to only allow closures using globals for now, no free
+# variable scope capturing, until we figure out how to implement all
+# this in Wasm.
 #### end (no output)
 
 
@@ -102,7 +105,7 @@ func main() do
   a = 'block'
   showA()
 main()
-#### actual output
+#### output
 'global'
 'global'
 #### end

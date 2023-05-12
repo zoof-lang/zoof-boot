@@ -50,9 +50,7 @@ func foo(a) do
     a + 1
 
 foo(1 2)
-#### expected output
-
-#### actual output
+#### output
 SyntaxError: Expecting ',' or ')' after argument. at '2' (LiteralNumber)
 
 4| foo(1 2)
