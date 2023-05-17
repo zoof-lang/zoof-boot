@@ -32,7 +32,6 @@ class ResolverVisitor:
         self.ehandler.syntaxError(token, message)
 
     def resolve_program(self, statements):
-        # todo: visitBlockStmt
         self.beginScope()
         self.resolve_statements(statements)
         self.endScope()
@@ -83,10 +82,8 @@ class ResolverVisitor:
 
     # %% The interesting bits
 
-    def visitBlockStmt(self, stmt):
-        self.beginScope()
+    def visitDoStmt(self, stmt):
         self.resolve_statements(stmt.statements)
-        self.endScope()
 
     def visitFunctionStmt(self, stmt):
         self.declare(stmt.name)

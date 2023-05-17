@@ -102,7 +102,7 @@ if true do a = 3
 #### expected output
 
 #### actual output
-SyntaxError: After 'if ... do' further statements are expected on a new line. at 'a' (Identifier)
+SyntaxError: After 'if ... do' further statements are expected on a new (indented) line. at 'a' (Identifier)
 
 1| if true do a = 3
               ^

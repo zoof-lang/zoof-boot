@@ -143,6 +143,7 @@ class InterpreterVisitor:
             raise err
 
     def executeBlock(self, statements, environment):
+        # todo: only really used for functions!
         original_env = self.env
         self.env = environment
         self.maybeClosures.append([])
@@ -205,8 +206,8 @@ class InterpreterVisitor:
 
     # %%
 
-    def visitBlockStmt(self, stmt):
-        self.executeBlock(stmt.statements, Environment(self.env))
+    def visitDoStmt(self, stmt):
+        self.exececuteMultiple(stmt.statements)
 
     def visitIfStmt(self, stmt):
         if self.isTruethy(self.evaluate(stmt.condition), None):

@@ -18,7 +18,7 @@ class Stmt(ExprOrStmt):
     pass
 
 
-class BlockStmt(Stmt):
+class DoStmt(Stmt):
     def __init__(self, statements):
         self.statements = statements
 

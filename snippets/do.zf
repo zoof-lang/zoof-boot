@@ -1,0 +1,47 @@
+#### exec: do 1
+# Do blocks are just for indentation
+a = 2
+do
+    a = 3
+    b = 4
+    print a + b
+print a + b
+#### output
+7.0
+7.0
+#### end
+
+
+
+#### exec: do 2
+# The idea is to help chunk code.
+# Ideally the IDE would make the comments that follow it bold.
+
+do # my fancy algotithm
+    a = 'hello: '
+    do  # step 1
+        b = 'foo'
+    do  # step 2
+        c = 'bar'
+print a + b + c
+#### output
+'hello: foobar'
+#### end
+
+
+
+#### exec: do 3
+# Its also consistent. After every do, there are indented statement.
+# There is a nice symetry with 'if' - I've sometimes used 'if true' to indent code.
+a = 20
+if a > 10 do
+  print 'run this'
+do
+  print 'and this'
+#### output
+'run this'
+'and this'
+#### end
+
+
+

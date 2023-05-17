@@ -117,7 +117,7 @@ class Parser:
     def statement(self):
         # -> (expressionStmt | printStmt | ... ) ((Comment)? Newline | EOF)
         if self.matchKeyword("do"):
-            return tree.BlockStmt(self.blockStatement())
+            return self.doStatement()
         elif self.matchKeyword("if"):
             return self.ifStatement()
         elif self.matchKeyword("for", "while"):
@@ -135,14 +135,15 @@ class Parser:
         else:
             return self.expressionStatement()
 
-    def blockStatement(self):
-        # -> "do" "{" statement* "}" "\n"
-        self.consume(TT.LeftBrace, "Expected '{' after 'do'.")
-        self.consumeEos()
+    def doStatement(self):
+        # -> "do" EOS statement*
+        if not self.matchEos():
+            self.error(
+                self.peek(),
+                "After 'do' further statements are expected on a new (indented) line.",
+            )
         statements = self.indentedStatements("after 'do'")
-        self.consume(TT.RightBrace, "Expected '}' at the end of 'do'.")
-        self.consumeEos()
-        return statements
+        return tree.DoStmt(statements)
 
     def ifStatement(self):
         # -> "if" expression "do" EOS statement* ("else" EOS statement*)?
@@ -158,7 +159,7 @@ class Parser:
             if not self.matchEos():
                 self.error(
                     self.peek(),
-                    "After 'if ... do' further statements are expected on a new line.",
+                    "After 'if ... do' further statements are expected on a new (indented) line.",
                 )
 
             thenStatements = self.indentedStatements("after 'if'")
