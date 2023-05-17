@@ -147,6 +147,11 @@ class ResolverVisitor:
 
     # %% The boring expr's
 
+    def visitIfExpr(self, expr):
+        self.resolve(expr.condition)
+        self.resolve(expr.thenExpr)
+        self.resolve(expr.elseExpr)
+
     def visitBinaryExpr(self, expr):
         self.resolve(expr.left)
         self.resolve(expr.right)

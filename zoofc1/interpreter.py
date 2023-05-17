@@ -263,7 +263,7 @@ class InterpreterVisitor:
         if self.isTruethy(self.evaluate(expr.condition), None):
             return self.evaluate(expr.thenExpr)
         else:
-            self.evaluate(expr.elseExpr)
+            return self.evaluate(expr.elseExpr)
 
     def visitGroupingExpr(self, expr):
         return self.evaluate(expr.expr)

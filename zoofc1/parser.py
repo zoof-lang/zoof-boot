@@ -49,6 +49,12 @@ class Parser:
     def peek(self):
         return self.tokens[self.current]
 
+    def peekNext(self):
+        i = self.current + 1
+        if i >= len(self.tokens):
+            return TT.EOF
+        return self.tokens[i]
+
     def previous(self):
         return self.tokens[self.current - 1]
 
@@ -139,15 +145,21 @@ class Parser:
         return statements
 
     def ifStatement(self):
-        # -> "if" expression EOS statement* ("else" EOS statement*)?
+        # -> "if" expression "do" EOS statement* ("else" EOS statement*)?
         condition = self.expression()
         then = self.peek()
 
-        if not self.matchKeyword("then"):
-            self.error(self.peek(), "expect 'then' after if-condition")
+        if not self.matchKeyword("do", "its"):
+            self.error(self.peek(), "expect 'do' or 'its' after if-condition")
 
-        if self.matchEos():
+        if then.lexeme == "do":
             # Statement-mode
+
+            if not self.matchEos():
+                self.error(
+                    self.peek(),
+                    "After 'if ... do' further statements are expected on a new line.",
+                )
 
             thenStatements = self.indentedStatements("after 'if'")
             elseStatements = []
@@ -163,17 +175,11 @@ class Parser:
 
             return tree.IfStmt(then, condition, thenStatements, elseStatements)
 
-        else:
+        else:  # then.lexeme == "its":
             # expression mode
-            thenExpression = self.expression()
-            if not self.matchKeyword("else"):
-                self.error(
-                    self.peek(),
-                    "In single-line if-expression, an else-clause is required.",
-                )
-            elseExpression = self.expression()
-            return tree.IfStmt(then, condition, [thenExpression], [elseExpression])
-            # return tree.IfExpr(then, condition, thenExpression, elseExpression)
+            expr = self.ifExpAfterIts(condition, then)
+            self.consumeEos()
+            return tree.ExpressionStmt(expr)
 
     def loopStatement(self):
         # -> "loop" ( expression | expression "over" expression) "do" EOS statement*
@@ -286,36 +292,40 @@ class Parser:
     # Note: as soon as I have proper tests and benchmarks, lets try to replace this with precedense climbing https://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing
 
     def expression(self):
-        # -> ifexpr
-        expr = self.ifexpr()
+        # -> ifExpr
+        expr = self.ifExpr()
         return expr
 
-    def ifexpr(self):
-        # -> 'if' assignment 'then' assignment 'else' assignment
+    def ifExpr(self):
+        # -> 'if' assignment 'its' assignment 'else' assignment
         if self.matchKeyword("if"):
             condition = self.assignment()
             then = self.peek()
-            if not self.matchKeyword("then"):
-                self.error(self.peek(), "expect 'then' after if-condition")
-            if self.matchEos():
-                self.error(then, "An if-expression must be on a single line")
-            thenExpression = self.assignment()
-            if not self.matchKeyword("else"):
-                self.error(
-                    then,
-                    "In single-line if-expression, an else-expression is required.",
-                )
-            elseExpression = self.assignment()
-            return tree.IfExpr(then, condition, thenExpression, elseExpression)
+            if not self.matchKeyword("its"):
+                self.error(self.peek(), "expecting 'its' after if-expression-condition")
+            return self.ifExpAfterIts(condition, then)
         else:
             return self.assignment()
 
+    def ifExpAfterIts(self, condition, then):
+        if self.matchEos():
+            self.error(then, "An if-expression must be on a single line")
+        thenExpression = self.assignment()
+        if not self.matchKeyword("else"):
+            self.error(
+                then,
+                "In single-line if-expression, an else-expression is required.",
+            )
+        elseExpression = self.assignment()
+        return tree.IfExpr(then, condition, thenExpression, elseExpression)
+
     def assignment(self):
+        # todo: I think I want assignment to be a statement
         # -> IDENTIFIER  "=" assignment | logicalOr
         expr = self.logicalOr()
         if self.match(TT.Equal):
             equalsToken = self.previous()
-            value = self.assignment()
+            value = self.expression()
             if isinstance(expr, tree.VariableExpr):
                 # Convert r-value expr into l-value assignment
                 name = expr.name

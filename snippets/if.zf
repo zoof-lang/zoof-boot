@@ -1,6 +1,6 @@
 #### exec: basic if 1
 a = 3
-if a > 2 then
+if a > 2 do
     print 'yes'
 else
     print 'no'
@@ -12,7 +12,7 @@ else
 
 #### exec: basic if 2
 a = 1
-if a > 2 then
+if a > 2 do
     print 'yes'
 else
     print 'no'
@@ -24,9 +24,9 @@ else
 
 #### exec: more or less indentation
 a = 7
-if a > 2 then
+if a > 2 do
           print 'yes'
-if a < 9 then
+if a < 9 do
  print 'no'
 #### output
 'yes'
@@ -37,7 +37,7 @@ if a < 9 then
 
 #### exec: base indentation
     a = 3
-    if a > 2 then
+    if a > 2 do
         print 'yes'
 #### expected output
 'yes'
@@ -52,7 +52,7 @@ SyntaxError: Expected expression. at '    ' (Indent)
 
 #### exec: base indentation, first line defines base
     a = 3
-    if a > 2 then
+    if a > 2 do
         print 'yes'
   b = 2
 #### expected output
@@ -74,22 +74,52 @@ SyntaxError: Expected expression. at '  ' (InvalidIndentation)
 
 
 #### exec: one-line if 1
-foo = if true then 7 else 0
-print foo
-foo = if false then 7 else 0
-print foo
-#### expected output
+# These are expression-statements, so it covers other code paths as the next snippet
+print if true its 7 else 1
+if true its 4 else 5  # wont be shown
+if false its 7 else 1
+#### output
 7.0
-0.0
+1.0
+#### end
+
+
+
+#### exec: one-line if 2
+foo = if true its 7 else 1
+print foo
+foo = if false its 7 else 1
+print foo
+#### output
+7.0
+1.0
+#### end
+
+
+
+#### exec: statement not on single line - fail
+if true do a = 3
+#### expected output
+
 #### actual output
-SyntaxError: Expected expression. at 'if' (Keyword)
+SyntaxError: After 'if ... do' further statements are expected on a new line. at 'a' (Identifier)
 
-1| foo = if true then 7 else 0
-         ^^
-SyntaxError: Expected expression. at 'if' (Keyword)
+1| if true do a = 3
+              ^
+#### end
 
-3| foo = if false then 7 else 0
-         ^^
+
+
+#### exec: expression not on multiple lines - fail
+if true its
+    a = 3
+#### expected output
+
+#### actual output
+SyntaxError: An if-expression must be on a single line at 'its' (Keyword)
+
+1| if true its
+           ^^^
 #### end
 
 

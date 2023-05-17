@@ -29,9 +29,29 @@ func islargerthan5(a) do
 
 print islargerthan5(3)
 print islargerthan5(6)
-#### output
+#### expected output
 false
 true
+#### actual output
+SyntaxError: expect 'do' or 'its' after if-condition at 'then' (Keyword)
+
+2|     if a > 5 then
+                ^^^^
+SyntaxError: Expected expression. at '        ' (Indent)
+
+3|         return true
+   ^^^^^^^^
+SyntaxError: Expected expression. at 'else' (Keyword)
+
+4|     else
+       ^^^^
+SyntaxError: Expected expression. at '        ' (Indent)
+
+5|         return false
+   ^^^^^^^^
+SyntaxError: Unexpected end at '' (Dedent)
+
+7| print islargerthan5(3)
 #### end
 
 
@@ -44,7 +64,7 @@ func fib(n) do
 
 for i in 0..10 do
   print fib(i)
-#### output
+#### expected output
 0.0
 1.0
 1.0
@@ -55,6 +75,19 @@ for i in 0..10 do
 13.0
 21.0
 34.0
+#### actual output
+SyntaxError: expect 'do' or 'its' after if-condition at 'then' (Keyword)
+
+2|   if n <= 1 then
+               ^^^^
+SyntaxError: Expected expression. at '      ' (Indent)
+
+3|       return n
+   ^^^^^^
+SyntaxError: Unexpected end at 'for' (Keyword)
+
+6| for i in 0..10 do
+   ^^^
 #### end
 
 

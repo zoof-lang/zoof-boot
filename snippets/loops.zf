@@ -67,10 +67,18 @@ print i
 #### expected output
 5.0
 #### actual output
-RuntimeError: break is not yet implemented. at 'break' (Keyword)
+SyntaxError: expect 'do' or 'its' after if-condition at 'then' (Keyword)
+
+4|     if i > 4 then
+                ^^^^
+SyntaxError: Expected expression. at '        ' (Indent)
 
 5|         break
-           ^^^^^
+   ^^^^^^^^
+SyntaxError: Unexpected end at 'print' (Keyword)
+
+6| print i
+   ^^^^^
 #### end
 
 

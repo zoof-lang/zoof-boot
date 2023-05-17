@@ -75,6 +75,7 @@ KEYWORDS = (
     "in",
     "while",
     "do",
+    "its",
     "break",
     "continue",
 )
