@@ -104,11 +104,16 @@ class Return(Exception):
         self.value = value
 
 
+class Break(Exception):
+    pass
+
+
 class Environment:
     def __init__(self, parent):
         self.parent = parent
         self.index = 0 if parent is None else parent.index + 1
         self.map = {}
+        self.loopStack = []
 
     def set(self, name: Token, value):
         self.map[name.lexeme] = value
@@ -216,20 +221,35 @@ class InterpreterVisitor:
             self.exececuteMultiple(stmt.elseBranch)
 
     def visitWhileStmt(self, stmt):
-        while self.isTruethy(self.evaluate(stmt.condition), stmt.token):
-            self.exececuteMultiple(stmt.statements)
+        self.env.loopStack.append(True)
+        try:
+            while self.isTruethy(self.evaluate(stmt.condition), stmt.token):
+                self.exececuteMultiple(stmt.statements)
+        except Break:
+            pass
+        self.env.loopStack.pop(-1)
 
     def visitForStmt(self, stmt):
         iter = self.evaluate(stmt.iter)
         assert isinstance(iter, ZoofRange)
         value = iter.start
-        while value < iter.stop:
-            self.env.set(stmt.var.name, value)
-            self.exececuteMultiple(stmt.statements)
-            value += iter.step
+        self.env.loopStack.append(True)
+        try:
+            while value < iter.stop:
+                self.env.set(stmt.var.name, value)
+                self.exececuteMultiple(stmt.statements)
+                value += iter.step
+        except Break:
+            pass
+        self.env.loopStack.pop(-1)
 
     def visitBreakStmt(self, stmt):
-        raise RuntimeErr(stmt.token, "break is not yet implemented.")
+        if not self.env.loopStack:
+            raise RuntimeErr(
+                stmt.token, "Can only break inside a for-loop or while-loop."
+            )
+        else:
+            raise Break()
 
     def visitPrintStmt(self, stmt):
         value = self.evaluate(stmt.expr)

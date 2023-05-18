@@ -59,26 +59,13 @@ for i in 0..4 do
 
 #### exec: infinite loop
 i = 0
-while do
+while true do
     i = i + 1
-    if i > 4 then
+    if i > 4 do
         break
 print i
-#### expected output
+#### output
 5.0
-#### actual output
-SyntaxError: expect 'do' or 'its' after if-condition at 'then' (Keyword)
-
-4|     if i > 4 then
-                ^^^^
-SyntaxError: Expected expression. at '        ' (Indent)
-
-5|         break
-   ^^^^^^^^
-SyntaxError: Unexpected end at 'print' (Keyword)
-
-6| print i
-   ^^^^^
 #### end
 
 
@@ -104,6 +91,28 @@ while a < 100 do
 34.0
 55.0
 89.0
+#### end
+
+
+
+#### exec: break in wrong place 1 - fail
+break
+#### expected output
+
+#### actual output
+RuntimeError: Can only break inside a for-loop or while-loop. at 'break' (Keyword)
+
+1| break
+   ^^^^^
+#### end
+
+
+
+#### exec: expression form
+# This does not do anything yet ...
+for i in 1..5 its i
+#### output
+
 #### end
 
 

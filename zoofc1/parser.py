@@ -120,8 +120,10 @@ class Parser:
             return self.doStatement()
         elif self.matchKeyword("if"):
             return self.ifStatement()
-        elif self.matchKeyword("for", "while"):
-            return self.loopStatement()
+        elif self.matchKeyword("for"):
+            return self.forStatement()
+        elif self.matchKeyword("while"):
+            return self.whileStatement()
         elif self.matchKeyword("break"):
             token = self.previous()
             self.consumeEos()
@@ -154,7 +156,7 @@ class Parser:
             self.error(self.peek(), "expect 'do' or 'its' after if-condition")
 
         if then.lexeme == "do":
-            # Statement-mode
+            # Statement form
 
             if not self.matchEos():
                 self.error(
@@ -177,45 +179,69 @@ class Parser:
             return tree.IfStmt(then, condition, thenStatements, elseStatements)
 
         else:  # then.lexeme == "its":
-            # expression mode
+            # Expression form
             expr = self.ifExpAfterIts(condition, then)
             self.consumeEos()
             return tree.ExpressionStmt(expr)
 
-    def loopStatement(self):
-        # -> "loop" ( expression | expression "over" expression) "do" EOS statement*
-        # Note: Until I make up my mind about the syntax that I want, this allows all variations of:
-        # for i in xx do
-        # while i in xx do
-        # loop i in xx do
-        # for i < x do
-        # etc.
+    def forStatement(self):
+        # -> "for" expression "in" expression "do" EOS statement*
         loopOp = self.previous()
-        if self.matchKeyword("do"):
-            # Infinite loop (a.k.a. while-true-loop)
-            trueToken = Token(TT.LiteralTrue, loopOp.lexeme, loopOp.line, loopOp.column)
-            stmt = tree.WhileStmt(loopOp, tree.LiteralExpr(trueToken), [])
-        else:
-            expr = self.expression()
-            if self.matchKeyword("in", "over"):
-                # Loop iter (a.k.a. a for-loop)
-                var = expr
-                if not isinstance(var, tree.VariableExpr):
-                    self.error(
-                        self.previous(), "in 'for x in y', 'x' must be a variable"
-                    )
-                var = tree.AssignExpr(
-                    var.name, None
-                )  # Turn variable into an assignment
-                iterator = self.expression()
-                stmt = tree.ForStmt(loopOp, var, iterator, [])
-            else:
-                # Loop condition (a.k.a. a while-loop)
-                condition = expr
-                stmt = tree.WhileStmt(loopOp, condition, [])
 
-            if not self.matchKeyword("do"):
-                self.error(self.peek(), "expect 'do' after loop condition")
+        var = self.expression()
+        if not self.matchKeyword("in"):
+            self.error(self.peek(), "expect 'in' after 'for ...'")
+
+        if not isinstance(var, tree.VariableExpr):
+            self.error(self.previous(), "in 'for x in y', 'x' must be a variable")
+
+        # Turn variable into an assignment
+        var = tree.AssignExpr(var.name, None)
+
+        iterator = self.expression()
+        stmt = tree.ForStmt(loopOp, var, iterator, [])
+
+        if self.matchKeyword("do"):
+            # Statement form
+            if not self.matchEos():
+                self.error(
+                    self.peek(),
+                    "After 'for ... do' further statements are expected on a new (indented) line.",
+                )
+            statements = self.indentedStatements("after 'for'")
+            if self.matchKeyword("else"):
+                self.error(self.previous(), "for-else not (yet?) supported")
+            stmt.statements = statements
+            return stmt
+
+        elif self.matchKeyword("its"):
+            # Expression form
+
+            # expr = self.forExpAfterIts(condition, then)
+            # self.consumeEos()
+            # return tree.ExpressionStmt(expr)
+
+            expr = self.expression()
+            if self.matchKeyword("else"):
+                self.error(
+                    self.previous(),
+                    "In single-line loop-expression, the else-clause is forbidden",
+                )
+            stmt.statements = [expr]
+            self.consumeEos()
+            return stmt
+        else:
+            self.error(self.peek(), "expect 'do' or 'its' after 'for ... in ... '")
+
+    def whileStatement(self):
+        # -> "for" expression "in" expression "do" EOS statement*
+        loopOp = self.previous()
+
+        condition = self.expression()
+        stmt = tree.WhileStmt(loopOp, condition, [])
+
+        if not self.matchKeyword("do"):
+            self.error(self.peek(), "expect 'do' after loop condition")
 
         if self.matchEos():
             # Statement-mode
@@ -224,16 +250,28 @@ class Parser:
                 self.error(self.previous(), "loop-else not (yet?) supported")
             stmt.statements = statements
             return stmt
-        else:
-            # Expression-mode
-            expr = self.expression()
-            if self.matchKeyword("else"):
+
+        if self.matchKeyword("do"):
+            # Statement form
+            if not self.matchEos():
                 self.error(
-                    self.previous(),
-                    "In single-line loop-expression, the else-clause is forbidden",
+                    self.peek(),
+                    "After 'while ... do' further statements are expected on a new (indented) line.",
                 )
-            stmt.statements = [expr]
+            statements = self.indentedStatements("after 'while'")
+            if self.matchKeyword("else"):
+                self.error(self.previous(), "while-else not (yet?) supported")
+            stmt.statements = statements
             return stmt
+
+        elif self.matchKeyword("its"):
+            # Expression form
+            self.error(
+                self.previous(),
+                "The expression form 'while ... its' is not supported, use 'while ... do' instead",
+            )
+        else:
+            self.error(self.peek(), "expect 'do' or 'its' after 'for ... in ... '")
 
     def funcStatement(self, kind):
         # -> "func" IDENTIFIER "(" parameters? ")" "do" EOS statement*
