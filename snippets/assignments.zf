@@ -1,0 +1,125 @@
+#### exec: simple
+a = 3
+print a
+#### output
+3.0
+#### end
+
+
+
+#### exec: compound
+a = b = 3
+print a
+print b
+#### output
+3.0
+3.0
+#### end
+
+
+
+#### exec: expression assignments, simple
+print 4 + (a=2)
+print a
+#### output
+6.0
+2.0
+#### end
+
+
+
+#### exec: expression assignments, if
+read_number = func() its 42
+
+if (a = read_number()) > 0 do
+    print a
+#### output
+42.0
+#### end
+
+
+
+#### exec: expression assignments, while
+# We can later write this using globals, but we dont have structs yet,
+# so we need to change the_number from the outside for now ...
+the_number = 0
+read_number = func() its the_number
+
+# This is the form we'd need if we did not have assignment expressions
+the_number = 2
+while true do
+    a = read_number()
+    if a == 0 do
+        break
+    print a
+    the_number = the_number - 1
+
+# We can now write this like this. This may be the most convincing use-case, IMO
+the_number = 2
+while (a = read_number()) > 0 do
+    print a
+    the_number = the_number - 1
+#### output
+2.0
+1.0
+2.0
+1.0
+#### end
+
+
+
+#### exec: force comparisons 1 - fail
+# Without implicit truethyness, this bug-case is avoided
+a = 42.0
+if b = a do
+  print 1
+#### expected output
+
+#### actual output
+SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
+
+3| if b = a do
+            ^^
+#### end
+
+
+
+#### exec: force comparisons 2 - fail
+# But we need an explicit check for this
+a = true
+if b = a do
+  print 1
+#### expected output
+
+#### actual output
+SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
+
+3| if b = a do
+            ^^
+#### end
+
+
+
+#### exec: force comparisons 3 - fail
+# But we need an explicit check for this
+a = true
+if (b = a) do
+  print 1
+#### expected output
+
+#### actual output
+SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
+
+3| if (b = a) do
+              ^^
+#### end
+
+
+
+#### noop: notes
+# We need to check that assignment statements can assign to attributes and indices,
+# while assignment expressions cannot.
+#### end (no output)
+
+
+

@@ -89,7 +89,7 @@ print foo(9)
 #### actual output
 SyntaxError: Undefined variable at 'a' (Identifier)
 
-1| foo = func (b) its a + b
+3| foo = func (b) its a + b
                       ^
 #### end
 

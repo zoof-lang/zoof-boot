@@ -223,7 +223,7 @@ class InterpreterVisitor:
         self.exececuteMultiple(stmt.statements)
 
     def visitIfStmt(self, stmt):
-        if self.isTruethy(self.evaluate(stmt.condition), None):
+        if self.isTruethy(self.evaluate(stmt.condition), stmt.token):
             self.exececuteMultiple(stmt.thenBranch)
         else:
             self.exececuteMultiple(stmt.elseBranch)

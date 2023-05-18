@@ -150,6 +150,15 @@ class Parser:
     def ifStatement(self):
         # -> "if" expression "do" EOS statement* ("else" EOS statement*)?
         condition = self.expression()
+        while isinstance(condition, tree.GroupingExpr):
+            condition = condition.expr
+        if isinstance(condition, tree.AssignExpr):
+            self.error(
+                self.peek(),
+                "To avoid bugs, it's required to compare the result of an assignment here",
+                throw=False,
+            )
+
         then = self.peek()
 
         if not self.matchKeyword("do", "its"):
@@ -343,6 +352,12 @@ class Parser:
     def ifExpr(self):
         # -> 'if' assignment 'its' assignment 'else' assignment
         condition = self.assignment()
+        if isinstance(condition, tree.AssignExpr):
+            self.error(
+                self.peek(),
+                "To avoid bugs, it's required to compare the result of an assignment here",
+                throw=False,
+            )
         then = self.peek()
         if not self.matchKeyword("its"):
             self.error(self.peek(), "expecting 'its' after if-expression-condition")
@@ -387,7 +402,11 @@ class Parser:
         return tree.FunctionExpr(name, params, body)
 
     def assignment(self):
-        # todo: I think I want assignment to be a statement
+        # todo: Assignment statements should get special rights that assignment expressions dont have:
+        # * a = b = c
+        # * a.b = c
+        # * a[b] = c
+
         # -> IDENTIFIER  "=" assignment | logicalOr
         expr = self.logicalOr()
         if self.match(TT.Equal):

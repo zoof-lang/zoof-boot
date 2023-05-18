@@ -1,2 +1,2 @@
-foo = func (a, b) its a + b
-print foo(2, 9)
+print 4 + (a = 2)
+print a
