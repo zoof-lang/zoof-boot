@@ -89,14 +89,22 @@ class ResolverVisitor:
         self.declare(stmt.name)
         self.unresolvedFunctions[stmt.name.lexeme] = stmt
 
+    def visitFunctionExpr(self, expr):
+        # Check it directly
+        self.unresolvedFunctions[""] = expr
+        self.checkFunction("")
+
     def checkFunction(self, name):
-        stmt = self.unresolvedFunctions.pop(name, None)
-        if stmt is not None:
+        declaration = self.unresolvedFunctions.pop(name, None)
+        if declaration is not None:
             self.beginScope()
-            for param in stmt.params:
+            for param in declaration.params:
                 self.declare(param)
-            self.resolve_statements(stmt.body)
-            stmt.freeVars = {
+            if isinstance(declaration.body, list):
+                self.resolve_statements(declaration.body)
+            else:
+                self.resolve(declaration.body)
+            declaration.freeVars = {
                 name: expr
                 for name, expr in self.scopes[-1].freeVars.items()
                 if expr.depth >= 1

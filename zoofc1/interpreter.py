@@ -76,12 +76,17 @@ class ZoofFunction(Callable):
         #     environment.set(name, value)
         for param, arg in zip(self.declaration.params, arguments):
             environment.set(param, arg)
-        try:
-            interpreter.executeBlock(self.declaration.body, environment)
-        except Return as ret:
-            return ret.value
+        if isinstance(self.declaration.body, list):
+            # Declaration function
+            try:
+                interpreter.executeBlock(self.declaration.body, environment)
+            except Return as ret:
+                return ret.value
+            else:
+                return None
         else:
-            return None
+            # A lambda / expression function
+            return interpreter.executeBlock(self.declaration.body, environment)
 
 
 BUILTINS = {}
@@ -147,14 +152,17 @@ class InterpreterVisitor:
         except Exception as err:
             raise err
 
-    def executeBlock(self, statements, environment):
+    def executeBlock(self, body, environment):
         # todo: only really used for functions!
         original_env = self.env
         self.env = environment
         self.maybeClosures.append([])
         try:
-            for stmt in statements:
-                self.execute(stmt)
+            if isinstance(body, list):
+                for stmt in body:
+                    self.execute(stmt)
+            else:
+                return self.evaluate(body)
         finally:
             if self.maybeClosures:
                 for func in self.maybeClosures.pop(-1):
@@ -285,6 +293,12 @@ class InterpreterVisitor:
             return self.evaluate(expr.thenExpr)
         else:
             return self.evaluate(expr.elseExpr)
+
+    def visitFunctionExpr(self, expr):
+        function = ZoofFunction(expr, self.env)
+        if self.maybeClosures:
+            self.maybeClosures[-1].append(function)
+        return function
 
     def visitGroupingExpr(self, expr):
         return self.evaluate(expr.expr)

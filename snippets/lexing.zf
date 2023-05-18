@@ -69,13 +69,13 @@ EOF '' at 2:1
 
 
 #### tokenize: EOF 1 - dedents
-if foo then
+if foo do
     a = 1
 #### output
 Keyword 'if' at 1:1
 Identifier 'foo' at 1:4
-Keyword 'then' at 1:8
-Newline '' at 1:12
+Keyword 'do' at 1:8
+Newline '' at 1:10
 Indent '    ' at 2:1
 Identifier 'a' at 2:5
 Equal '=' at 2:7
@@ -89,19 +89,19 @@ EOF '' at 3:1
 
 
 #### tokenize: EOF 1 - dedents
-if foo then
-    if bar then
+if foo do
+    if bar do
         a = 1
 #### output
 Keyword 'if' at 1:1
 Identifier 'foo' at 1:4
-Keyword 'then' at 1:8
-Newline '' at 1:12
+Keyword 'do' at 1:8
+Newline '' at 1:10
 Indent '    ' at 2:1
 Keyword 'if' at 2:5
 Identifier 'bar' at 2:8
-Keyword 'then' at 2:12
-Newline '' at 2:16
+Keyword 'do' at 2:12
+Newline '' at 2:14
 Indent '        ' at 3:1
 Identifier 'a' at 3:9
 Equal '=' at 3:11
@@ -117,7 +117,7 @@ EOF '' at 4:1
 
 #### tokenize: dedent and newlines
 # todo: would like to have the dedent right after the first newline
-if a then
+if a do
    1
 
 2
@@ -126,8 +126,8 @@ Comment '# todo: would like to have the dedent right after the first newline' at
 Newline '' at 1:68
 Keyword 'if' at 2:1
 Identifier 'a' at 2:4
-Keyword 'then' at 2:6
-Newline '' at 2:10
+Keyword 'do' at 2:6
+Newline '' at 2:8
 Indent '   ' at 3:1
 LiteralNumber '1' at 3:4
 Newline '' at 3:5
@@ -171,7 +171,7 @@ EOF '' at 3:1
 
 #### tokenize: invalid syntax
 foo $$ bar
-if a then
+if a do
     4
    3
 'asdasd
@@ -184,8 +184,8 @@ Identifier 'bar' at 1:8
 Newline '' at 1:11
 Keyword 'if' at 2:1
 Identifier 'a' at 2:4
-Keyword 'then' at 2:6
-Newline '' at 2:10
+Keyword 'do' at 2:6
+Newline '' at 2:8
 Indent '    ' at 3:1
 LiteralNumber '4' at 3:5
 Newline '' at 3:6

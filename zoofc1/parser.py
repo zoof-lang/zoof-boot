@@ -331,20 +331,22 @@ class Parser:
     # Note: as soon as I have proper tests and benchmarks, lets try to replace this with precedense climbing https://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing
 
     def expression(self):
-        # -> ifExpr
-        expr = self.ifExpr()
-        return expr
+        # -> ifExpr | funcExpr | assignment
+        if self.match(TT.Keyword):
+            lexeme = self.previous().lexeme
+            if lexeme == "if":
+                return self.ifExpr()
+            elif lexeme == "func":
+                return self.funcExpr()
+        return self.assignment()
 
     def ifExpr(self):
         # -> 'if' assignment 'its' assignment 'else' assignment
-        if self.matchKeyword("if"):
-            condition = self.assignment()
-            then = self.peek()
-            if not self.matchKeyword("its"):
-                self.error(self.peek(), "expecting 'its' after if-expression-condition")
-            return self.ifExpAfterIts(condition, then)
-        else:
-            return self.assignment()
+        condition = self.assignment()
+        then = self.peek()
+        if not self.matchKeyword("its"):
+            self.error(self.peek(), "expecting 'its' after if-expression-condition")
+        return self.ifExpAfterIts(condition, then)
 
     def ifExpAfterIts(self, condition, then):
         if self.matchEos():
@@ -357,6 +359,32 @@ class Parser:
             )
         elseExpression = self.assignment()
         return tree.IfExpr(then, condition, thenExpression, elseExpression)
+
+    def funcExpr(self):
+        # -> 'func' assignment
+        self.consume(TT.LeftParen, "Expect '(' after ananymous 'func'")
+        params = []
+        if not self.match(TT.RightParen):
+            while True:
+                params.append(self.consume(TT.Identifier, "Expect parameter name"))
+                if len(params) > 250:
+                    self.error(self.peek(), "Cannot have more than 250 parameters.")
+                hasComma = self.match(TT.Comma)
+                if self.match(TT.RightParen):
+                    break
+                if not hasComma:
+                    self.error(self.peek(), "Expecting ',' or ')' after argument.")
+
+        if not self.matchKeyword("its"):
+            self.error(
+                self.peek(), "expect 'its' after signature of anonynous function"
+            )
+        if self.matchEos():
+            self.error(self.peek(), "a function expression must be on a single line")
+        body = self.expression()
+
+        name = ""  # in theory we could allow lambdas to have a name
+        return tree.FunctionExpr(name, params, body)
 
     def assignment(self):
         # todo: I think I want assignment to be a statement

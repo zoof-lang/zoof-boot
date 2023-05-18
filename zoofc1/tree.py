@@ -62,10 +62,10 @@ class ExpressionStmt(Stmt):
 
 
 class FunctionStmt(Stmt):
-    def __init__(self, name, params, body):
+    def __init__(self, name, params, statements):
         self.name = name
         self.params = params
-        self.body = body
+        self.body = statements
 
 
 class ReturnStmt(Stmt):
@@ -87,6 +87,13 @@ class IfExpr(Expr):
         self.condition = condition
         self.thenExpr = thenExpr
         self.elseExpr = elseExpr
+
+
+class FunctionExpr(Expr):
+    def __init__(self, name, params, expr):
+        self.name = name
+        self.params = params
+        self.body = expr
 
 
 class AssignExpr(Expr):

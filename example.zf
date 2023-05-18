@@ -1,10 +1,2 @@
-# Not sure yet what to do here!
-a = 'global'
-func main() do
-  func showA() do
-    print a
-
-  showA()
-  a = 'block'
-  showA()
-main()
+foo = func (a, b) its a + b
+print foo(2, 9)
