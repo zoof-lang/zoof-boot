@@ -98,6 +98,7 @@ while a < 100 do
 #### exec: break in wrong place 1 - fail
 break
 #### output
+In 'snippet', line 1
 RuntimeError: Can only break inside a for-loop or while-loop. at 'break' (Keyword)
 
 1| break

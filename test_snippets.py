@@ -63,7 +63,7 @@ def action_repl(snippet):
 
     m.compiler.stdout = stdout = io.StringIO()
 
-    s = Source(fname, snippet.linenr, snippet.source)
+    s = Source(fname, snippet.linenr + 1, snippet.source)
     m.execute(s)
     return stdout.getvalue().rstrip()
 

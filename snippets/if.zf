@@ -51,6 +51,7 @@ if a > 2 do
         print 'yes'
   b = 2
 #### output
+In 'snippet', line 4
 SyntaxError: Expected expression. at '  ' (InvalidIndentation)
 
 4|   b = 2
@@ -86,6 +87,7 @@ print foo
 #### exec: statement not on single line - fail
 if true do a = 3
 #### output
+In 'snippet', line 1
 SyntaxError: After 'if ... do' further statements are expected on a new (indented) line. at 'a' (Identifier)
 
 1| if true do a = 3
@@ -98,6 +100,7 @@ SyntaxError: After 'if ... do' further statements are expected on a new (indente
 if true its
     a = 3
 #### output
+In 'snippet', line 1
 SyntaxError: An if-expression must be on a single line at 'its' (Keyword)
 
 1| if true its

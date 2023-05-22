@@ -1,9 +1,10 @@
 #### repl: use a - fail
 print a + 2
 #### output
-SyntaxError: Undefined variable at 'a' (Identifier)
+In 'snippets/interactive.zf', line 2
+NameError: Undefined variable at 'a' (Identifier)
 
-1| print a + 2
+2| print a + 2
          ^
 #### end
 
@@ -30,10 +31,11 @@ print a + 2
 func foo() do
     print b
 #### output
-SyntaxError: Undefined variable at 'b' (Identifier)
+In 'snippets/interactive.zf', line 32
+NameError: Undefined variable at 'b' (Identifier)
 
-2|     print b
-             ^
+32|     print b
+              ^
 #### end
 
 
@@ -67,10 +69,11 @@ foo()
 #### repl: define lambda
 bar = func () its c
 #### output
-SyntaxError: Undefined variable at 'c' (Identifier)
+In 'snippets/interactive.zf', line 70
+NameError: Undefined variable at 'c' (Identifier)
 
-1| bar = func () its c
-                     ^
+70| bar = func () its c
+                      ^
 #### end
 
 

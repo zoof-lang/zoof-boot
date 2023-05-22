@@ -86,6 +86,7 @@ a = 42.0
 if b = a do
   print 1
 #### output
+In 'snippet', line 3
 SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
 
 3| if b = a do
@@ -100,6 +101,7 @@ a = true
 if b = a do
   print 1
 #### output
+In 'snippet', line 3
 SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
 
 3| if b = a do
@@ -114,6 +116,7 @@ a = true
 if (b = a) do
   print 1
 #### output
+In 'snippet', line 3
 SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
 
 3| if (b = a) do

@@ -100,7 +100,7 @@ class Module:
 
     def tokenize(self, source):
         assert isinstance(source, Source)
-        return list(tokenize(source.lines))
+        return list(tokenize(source.lines, source.lineOffset))
 
     def parse(self, source):
         assert isinstance(source, Source)
@@ -114,7 +114,7 @@ class Module:
         assert isinstance(source, Source)
         program = self.parse(source)
 
-        if self.compiler.ehandler.hadSyntaxError:
+        if self.compiler.ehandler.hadError:
             return
 
         # printer = PrinterVisitor()
@@ -123,7 +123,7 @@ class Module:
 
         self.resolver.resolveProgram(program)
         # todo: distiguish between different kinds of errors
-        if self.compiler.ehandler.hadSyntaxError:
+        if self.compiler.ehandler.hadError:
             return
 
         self.interpreter.interpret(program)
@@ -161,17 +161,17 @@ class ZoofCompiler:
         source = Source(path, 1, text)
         module = self.createModule("main")
         module.execute(source)
-        if self.ehandler.hadSyntaxError:
-            sys.exit(65)
-        elif self.ehandler.hadRuntimeError:
+        if self.ehandler.hadRuntimeError:
             sys.exit(70)
+        elif self.ehandler.hadError:
+            sys.exit(65)
 
     def runPrompt(self):
         mainModule = self.createModule("main")
-        inputCount = 1
+        inputCount = 0
         while True:
-            line = input(f"zf-{inputCount} > ")
             inputCount += 1
+            line = input(f"zf-{inputCount} > ")
             if not line:
                 break
             source = Source(f"input {inputCount}", 1, line)

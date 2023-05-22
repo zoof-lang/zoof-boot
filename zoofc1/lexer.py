@@ -11,9 +11,9 @@ def splitSource(source):
     return lines
 
 
-def tokenize(lines):
+def tokenize(lines, lineOffset=1):
     assert isinstance(lines, list)
-    lexer = Lexer(0)
+    lexer = Lexer(lineOffset)
     for line in lines:
         yield from lexer.processLine(line)
     yield from lexer.finish()
@@ -24,8 +24,8 @@ class Lexer:
     It won't ever show errors, though it can emit failure tokens.
     """
 
-    def __init__(self, lineOffset=0):
-        self.lineNr = lineOffset
+    def __init__(self, lineOffset=1):
+        self.lineNr = lineOffset - 1
         self.wcs = []  # whitespace counts (for indentation)
 
     def processLine(self, line):

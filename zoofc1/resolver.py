@@ -31,7 +31,7 @@ class ResolverVisitor:
         self.beginScope()
 
     def error(self, token, message):
-        self.ehandler.syntaxError(token, message)
+        self.ehandler.nameError(token, message)
 
     def resolveProgram(self, program):
         """Resolve the names in the given program.

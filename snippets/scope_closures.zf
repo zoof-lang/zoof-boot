@@ -86,6 +86,7 @@ func outer() do
 f = outer()
 f()
 #### output
+In 'snippet', line 5
 RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
 
 5|         print a
@@ -179,6 +180,7 @@ f()
 #### output
 2.0
 3.0
+In 'snippet', line 5
 RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
 
 5|      print a
@@ -241,6 +243,7 @@ f = make1()
 a = 42
 f()
 #### output
+In 'snippet', line 9
 RuntimeError: Closures are not supported at the moment. at 'c' (Identifier)
 
 9|       print c
@@ -262,6 +265,7 @@ func make1() do
 f = make1()
 f()
 #### output
+In 'snippet', line 7
 RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
 
 7|       print a

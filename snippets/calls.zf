@@ -12,6 +12,7 @@ func foo(a) do
 
 foo()
 #### output
+In 'snippet', line 4
 RuntimeError: Expected 1 arguments, but got 0 at ')' (RightParen)
 
 4| foo()
@@ -26,6 +27,7 @@ func foo(a) do
 
 foo(1, 2)
 #### output
+In 'snippet', line 4
 RuntimeError: Expected 1 arguments, but got 2 at ')' (RightParen)
 
 4| foo(1, 2)
@@ -51,6 +53,7 @@ func foo(a) do
 
 foo(1 2)
 #### output
+In 'snippet', line 4
 SyntaxError: Expecting ',' or ')' after argument. at '2' (LiteralNumber)
 
 4| foo(1 2)

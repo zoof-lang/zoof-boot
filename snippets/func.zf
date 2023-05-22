@@ -87,7 +87,8 @@ print foo(9)
 #### expected output
 109.0
 #### actual output
-SyntaxError: Undefined variable at 'a' (Identifier)
+In 'snippet', line 3
+NameError: Undefined variable at 'a' (Identifier)
 
 3| foo = func (b) its a + b
                       ^
