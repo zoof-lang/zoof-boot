@@ -6,14 +6,14 @@ import zoofc1
 from zoofc1 import main, Source, ZoofCompiler
 
 # main(["example.zf"])
-main([])
+# main([])
 
 c = ZoofCompiler()
 m = c.createModule("main")
 
-s1 = Source("i1", 1, "func foo() do\n  print b")
-s2 = Source("i2", 3, "b = 2")
-s3 = Source("i3", 4, "foo()")
+s1 = Source("i1", 1, "print 4 + (a = b = 2 + 3)")
+# s2 = Source("i2", 3, "b = 2")
+# s3 = Source("i3", 4, "foo()")
 
 m.execute(s1)
 # m.execute(s2)

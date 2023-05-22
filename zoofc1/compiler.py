@@ -113,7 +113,6 @@ class Module:
 
         assert isinstance(source, Source)
         program = self.parse(source)
-
         if self.compiler.ehandler.hadError:
             return
 
@@ -122,7 +121,6 @@ class Module:
         #     printer.print(stmt)
 
         self.resolver.resolveProgram(program)
-        # todo: distiguish between different kinds of errors
         if self.compiler.ehandler.hadError:
             return
 

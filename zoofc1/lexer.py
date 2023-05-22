@@ -37,7 +37,6 @@ class Lexer:
         # Find the first token
         token = self.findToken()
 
-        # todo: also handle whole source being indented
         # Handle indent / dedent
         if token.type not in (TT.Newline, TT.Comment):
             wc = token.column - 1

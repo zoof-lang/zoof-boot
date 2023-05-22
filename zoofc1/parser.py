@@ -88,7 +88,6 @@ class Parser:
     # %%
 
     def matchEos(self):
-        # todo: we can drop the check for eof in many places, because its always preceded by an eol
         # End Of Statement
         self.match(TT.Comment)
         if self.check(TT.Newline):
@@ -413,16 +412,25 @@ class Parser:
         return tree.FunctionExpr(name, params, body)
 
     def assignment(self):
-        # todo: Assignment statements should get special rights that assignment expressions dont have:
+        # Note: Assignment statements have special rights that assignment expressions dont have:
         # * a = b = c
         # * a.b = c
         # * a[b] = c
+
+        is_assignment = True  # todo: get that info down here, but first refactor to use a precedence table
 
         # -> IDENTIFIER  "=" assignment | logicalOr
         expr = self.logicalOr()
         if self.match(TT.Equal):
             equalsToken = self.previous()
             value = self.expression()
+            if not is_assignment and isinstance(value, tree.AssignExpr):
+                self.error(
+                    equalsToken,
+                    "Can only stack assignments in assignment statements (not in expressions).",
+                    throw=False,
+                )
+            # Handle the assignment target
             if isinstance(expr, tree.VariableExpr):
                 # Convert r-value expr into l-value assignment
                 name = expr.name
@@ -513,7 +521,7 @@ class Parser:
 
     def unary(self):
         # -> ( "!" | "-" ) primary | call
-        # todo: can I only allow unary at the start of a nuneric expression?
+        # todo: can I only allow unary at the start of a numeric expression?
         if self.match(TT.Plus, TT.Minus):
             op = self.previous()
             right = self.primary()  # only allow one unary
