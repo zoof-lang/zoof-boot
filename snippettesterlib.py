@@ -286,5 +286,5 @@ class Snippet:
         if self.action not in ACTIONS:
             raise RuntimeError(f"Unknown action: {self.action}")
         fun = ACTIONS[self.action]
-        self.result = fun(self.source)
+        self.result = fun(self)
         return (self.expect or "") == self.result

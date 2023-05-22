@@ -19,21 +19,21 @@ config.pattern = "*.zf"
 
 
 @addAction("noop")
-def action_noop(source):
+def action_noop(snippet):
     return ""
 
 
 @addAction("repr")
-def action_repr(source):
+def action_repr(snippet):
     # Really just for testing the snippet mechanics
-    return repr(source)
+    return repr(snippet.source)
 
 
 @addAction("tokenize")
-def action_tokenize(source):
+def action_tokenize(snippet):
     c = ZoofCompiler()
     m = c.createModule("main")
-    s = Source("snippet", 1, source)
+    s = Source("snippet", 1, snippet.source)
     lines = []
     for token in m.tokenize(s):
         lines.append(
@@ -43,13 +43,32 @@ def action_tokenize(source):
 
 
 @addAction("exec")
-def action_exec(source):
+def action_exec(snippet):
     file = io.StringIO()
     c = ZoofCompiler(file)
-    s = Source("snippet", 1, source)
+    s = Source("snippet", 1, snippet.source)
     m = c.createModule("main")
     m.execute(s)
     return file.getvalue().rstrip()
+
+
+@addAction("repl")
+def action_repl(snippet):
+    fname = os.path.relpath(snippet.filename, config.rootDir)
+    m = MODULES.get(fname, None)
+    if m is None:
+        c = ZoofCompiler()
+        m = c.createModule("main")
+        MODULES[fname] = m
+
+    m.compiler.stdout = stdout = io.StringIO()
+
+    s = Source(fname, snippet.linenr, snippet.source)
+    m.execute(s)
+    return stdout.getvalue().rstrip()
+
+
+MODULES = {}
 
 
 # %% Can run this file with pytest

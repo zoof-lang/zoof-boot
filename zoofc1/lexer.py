@@ -26,7 +26,7 @@ class Lexer:
 
     def __init__(self, lineOffset=0):
         self.lineNr = lineOffset
-        self.wcs = [0]  # whitespace counts (for indentation)
+        self.wcs = []  # whitespace counts (for indentation)
 
     def processLine(self, line):
         self.source = line
@@ -41,12 +41,15 @@ class Lexer:
         # Handle indent / dedent
         if token.type not in (TT.Newline, TT.Comment):
             wc = token.column - 1
-            if wc > self.wcs[-1]:
+            if len(self.wcs) == 0:
+                # Init indentation level, dont emit an indent token
+                self.wcs.append(wc)
+            elif wc > self.wcs[-1]:
                 self.wcs.append(wc)
                 yield Token(TT.Indent, self.source[:wc], self.lineNr, 1)
             elif wc < self.wcs[-1]:
                 dedentCount = 0
-                while wc < self.wcs[-1]:
+                while len(self.wcs) > 1 and wc < self.wcs[-1]:
                     self.wcs.pop(-1)
                     dedentCount += 1
                 if wc == self.wcs[-1]:

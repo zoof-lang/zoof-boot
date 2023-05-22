@@ -11,11 +11,11 @@ else
 
 
 #### exec: basic if 2
-a = 1
-if a > 2 do
-    print 'yes'
-else
-    print 'no'
+    a = 1
+    if a > 2 do
+        print 'yes'
+    else
+        print 'no'
 #### output
 'no'
 #### end
@@ -36,16 +36,11 @@ if a < 9 do
 
 
 #### exec: base indentation
-    a = 3
-    if a > 2 do
-        print 'yes'
-#### expected output
+a = 3
+if a > 2 do
+    print 'yes'
+#### output
 'yes'
-#### actual output
-SyntaxError: Expected expression. at '    ' (Indent)
-
-1|     a = 3
-   ^^^^
 #### end
 
 
@@ -55,16 +50,7 @@ SyntaxError: Expected expression. at '    ' (Indent)
     if a > 2 do
         print 'yes'
   b = 2
-#### expected output
-SyntaxError: Expected expression. at '    ' (Indent)
-
-4|   b = 2
-   ^^
-#### actual output
-SyntaxError: Expected expression. at '    ' (Indent)
-
-1|     a = 3
-   ^^^^
+#### output
 SyntaxError: Expected expression. at '  ' (InvalidIndentation)
 
 4|   b = 2

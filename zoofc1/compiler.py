@@ -93,8 +93,10 @@ class Module:
     def __init__(self, name, compiler):
         self.name = name
         self.compiler = compiler
-        self.sources = []
-        self.environment = None
+
+        self.parser = Parser(compiler.ehandler)
+        self.resolver = ResolverVisitor(compiler.ehandler)
+        self.interpreter = InterpreterVisitor(compiler.print, compiler.ehandler)
 
     def tokenize(self, source):
         assert isinstance(source, Source)
@@ -103,10 +105,12 @@ class Module:
     def parse(self, source):
         assert isinstance(source, Source)
         tokens = self.tokenize(source)
-        statements = self.compiler.parser.parse(source, tokens)
+        statements = self.parser.parse(source, tokens)
         return Program(source, statements)
 
     def execute(self, source):
+        self.compiler.ehandler.resetErrors()
+
         assert isinstance(source, Source)
         program = self.parse(source)
 
@@ -117,12 +121,12 @@ class Module:
         # for stmt in statements:
         #     printer.print(stmt)
 
-        self.compiler.resolver.resolve_program(program)
+        self.resolver.resolveProgram(program)
         # todo: distiguish between different kinds of errors
         if self.compiler.ehandler.hadSyntaxError:
             return
 
-        self.compiler.interpreter.interpret(program)
+        self.interpreter.interpret(program)
 
 
 class ZoofCompiler:
@@ -137,14 +141,14 @@ class ZoofCompiler:
     program's state and adjust it as new code is run.
     """
 
-    def __init__(self, file=None):
+    def __init__(self, stdout=None):
         self.modules = {}
 
-        self.print = partial(print, file=file)
+        self.stdout = stdout or sys.stdout
         self.ehandler = ErrorHandler(self.print)
-        self.parser = Parser(self.ehandler)
-        self.resolver = ResolverVisitor(self.ehandler)
-        self.interpreter = InterpreterVisitor(self.print, self.ehandler)
+
+    def print(self, *values):
+        print(*values, file=self.stdout)
 
     def createModule(self, name):
         module = Module(name, self)
@@ -163,18 +167,15 @@ class ZoofCompiler:
             sys.exit(70)
 
     def runPrompt(self):
-        mainModule = createModule("main")
+        mainModule = self.createModule("main")
         inputCount = 1
         while True:
-            line = input(f"zf {inputCount}> ")
+            line = input(f"zf-{inputCount} > ")
             inputCount += 1
             if not line:
                 break
             source = Source(f"input {inputCount}", 1, line)
             mainModule.execute(source)
-            # todo: add a reset method of some kind?
-            self.ehandler.hadSyntaxError = False
-            self.ehandler.hadRuntimeError = False
 
 
 def main(argv):

@@ -2,13 +2,16 @@ class ErrorHandler:
     def __init__(self, print):
         self.print = print
         self.source = None
-        self.hadSyntaxError = False
-        self.hadRuntimeError = False
+        self.resetErrors()
 
     def swapSource(self, source):
         prev = self.source
         self.source = source
         return prev
+
+    def resetErrors(self):
+        self.hadSyntaxError = False
+        self.hadRuntimeError = False
 
     def syntaxError(self, token, message):
         """An error due to invalid syntax."""

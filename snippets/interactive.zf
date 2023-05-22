@@ -1,0 +1,103 @@
+#### repl: use a - fail
+print a + 2
+#### output
+SyntaxError: Undefined variable at 'a' (Identifier)
+
+1| print a + 2
+         ^
+#### end
+
+
+
+#### repl: define a
+a = 7
+nil
+#### output
+
+#### end
+
+
+
+#### repl: use a again
+print a + 2
+#### output
+9.0
+#### end
+
+
+
+#### repl: define function
+func foo() do
+    print b
+#### output
+SyntaxError: Undefined variable at 'b' (Identifier)
+
+2|     print b
+             ^
+#### end
+
+
+
+#### repl: define b
+b = 8
+nil
+#### output
+
+#### end
+
+
+
+#### repl: define function again
+func foo() do
+    print b
+#### output
+
+#### end
+
+
+
+#### repl: use function
+foo()
+#### output
+8.0
+#### end
+
+
+
+#### repl: define lambda
+bar = func () its c
+#### output
+SyntaxError: Undefined variable at 'c' (Identifier)
+
+1| bar = func () its c
+                     ^
+#### end
+
+
+
+#### repl: define c
+c = 9
+nil
+#### output
+
+#### end
+
+
+
+#### repl: define lambda again
+bar = func () its c
+nil
+#### output
+
+#### end
+
+
+
+#### repl: use lambda
+bar()
+#### output
+9.0
+#### end
+
+
+
