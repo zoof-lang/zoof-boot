@@ -45,9 +45,10 @@ class ArbitraryNumber(NativeCallable):
 
 
 class ZoofFunction(Callable):
-    def __init__(self, declaration, closure):
+    def __init__(self, declaration, closure, source):
         self.declaration = declaration
         self.closure = closure
+        self.source = source
         self.freeVars = self.declaration.freeVars.copy()
         self.captured = {}
 
@@ -76,17 +77,22 @@ class ZoofFunction(Callable):
         #     environment.set(name, value)
         for param, arg in zip(self.declaration.params, arguments):
             environment.set(param, arg)
-        if isinstance(self.declaration.body, list):
-            # Declaration function
-            try:
-                interpreter.executeBlock(self.declaration.body, environment)
-            except Return as ret:
-                return ret.value
+
+        prevSource = interpreter.ehandler.swapSource(self.source)
+        try:
+            if isinstance(self.declaration.body, list):
+                # Declaration function
+                try:
+                    interpreter.executeBlock(self.declaration.body, environment)
+                except Return as ret:
+                    return ret.value
+                else:
+                    return None
             else:
-                return None
-        else:
-            # A lambda / expression function
-            return interpreter.executeBlock(self.declaration.body, environment)
+                # A lambda / expression function
+                return interpreter.executeBlock(self.declaration.body, environment)
+        finally:
+            interpreter.ehandler.swapSource(prevSource)
 
 
 BUILTINS = {}
@@ -131,24 +137,28 @@ class Environment:
 
 
 class InterpreterVisitor:
-    def __init__(self, print, handler):
+    def __init__(self, print, ehandler):
         self.print = print
-        self.handler = handler
+        self.ehandler = ehandler
         builtins = Environment(None)
         builtins.map.update(BUILTINS)
         self.env = Environment(builtins)
         self.maybeClosures = []
 
-    def interpret(self, statements):
+    def interpret(self, program):
+        """Interpret the given program."""
+        # Init
+        self.ehandler.swapSource(program.source)
+
         try:
             val = None
-            for statement in statements:
+            for statement in program.statements:
                 val = self.execute(statement)
             # Print the last value if it was an expression-statement
             if val is not None:
                 self.print(self.stringify(val))
         except RuntimeErr as err:
-            self.handler.runtimeError(err.token, err.message)
+            self.ehandler.runtimeError(err.token, err.message)
         except Exception as err:
             raise err
 
@@ -264,7 +274,7 @@ class InterpreterVisitor:
         self.print(self.stringify(value))
 
     def visitFunctionStmt(self, stmt):
-        function = ZoofFunction(stmt, self.env)
+        function = ZoofFunction(stmt, self.env, self.ehandler.source)
         self.env.set(stmt.name, function)
         if self.maybeClosures:
             self.maybeClosures[-1].append(function)
@@ -295,7 +305,7 @@ class InterpreterVisitor:
             return self.evaluate(expr.elseExpr)
 
     def visitFunctionExpr(self, expr):
-        function = ZoofFunction(expr, self.env)
+        function = ZoofFunction(expr, self.env, self.ehandler.source)
         if self.maybeClosures:
             self.maybeClosures[-1].append(function)
         return function

@@ -4,7 +4,7 @@ import io
 
 from snippettesterlib import config, addAction, iterateSnippets, run, show
 import pytest
-from zoofc1 import ZoofCompiler
+from zoofc1 import ZoofCompiler, Source
 
 # when I run this in my IDE, load these in the env
 from zoofc1.tokens import TokenType as TT
@@ -32,8 +32,10 @@ def action_repr(source):
 @addAction("tokenize")
 def action_tokenize(source):
     c = ZoofCompiler()
+    m = c.createModule("main")
+    s = Source("snippet", 1, source)
     lines = []
-    for token in c.tokenize(source):
+    for token in m.tokenize(s):
         lines.append(
             f"{token.typename} {token.lexeme!r} at {token.line}:{token.column}"
         )
@@ -44,7 +46,9 @@ def action_tokenize(source):
 def action_exec(source):
     file = io.StringIO()
     c = ZoofCompiler(file)
-    c.run(source)
+    s = Source("snippet", 1, source)
+    m = c.createModule("main")
+    m.execute(s)
     return file.getvalue().rstrip()
 
 

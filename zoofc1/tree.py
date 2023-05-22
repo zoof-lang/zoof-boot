@@ -18,6 +18,11 @@ class Stmt(ExprOrStmt):
     pass
 
 
+class Program(Stmt):
+    def __init__(self, statements):
+        self.statements = statements
+
+
 class DoStmt(Stmt):
     def __init__(self, statements):
         self.statements = statements

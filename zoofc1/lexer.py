@@ -21,7 +21,7 @@ def tokenize(lines):
 
 class Lexer:
     """A scanner, lexer, tokenizer, call it what you want, but it gets the job done.
-    It wont't ever show errors, it will simply emit failure tokens.
+    It won't ever show errors, though it can emit failure tokens.
     """
 
     def __init__(self, lineOffset=0):

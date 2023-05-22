@@ -21,19 +21,25 @@ class Scope:
 
 
 class ResolverVisitor:
-    def __init__(self, interpreter, ehandler):
-        self.interpreter = interpreter
+    def __init__(self, ehandler):
         self.ehandler = ehandler
-        self.scopes = [Scope({name for name in BUILTINS.keys()})]
-        # We delay resolving functions until they're called or scope is left
+        self._builtin_scope = Scope({name for name in BUILTINS.keys()})
+        self.scopes = []
         self.unresolvedFunctions = {}
 
     def error(self, token, message):
         self.ehandler.syntaxError(token, message)
 
-    def resolve_program(self, statements):
+    def resolve_program(self, program):
+        """Resolve the names in the given program."""
+
+        # Init
+        self.ehandler.swapSource(program.source)
+        self.scopes = [self._builtin_scope]
+        self.unresolvedFunctions = {}
+
         self.beginScope()
-        self.resolve_statements(statements)
+        self.resolve_statements(program.statements)
         self.endScope()
 
     def resolve_statements(self, statements):

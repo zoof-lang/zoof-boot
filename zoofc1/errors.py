@@ -1,12 +1,14 @@
 class ErrorHandler:
     def __init__(self, print):
         self.print = print
-        self.lines = []
+        self.source = None
         self.hadSyntaxError = False
         self.hadRuntimeError = False
 
-    def setSourceLines(self, lines):
-        self.lines = lines
+    def swapSource(self, source):
+        prev = self.source
+        self.source = source
+        return prev
 
     def syntaxError(self, token, message):
         """An error due to invalid syntax."""
@@ -24,10 +26,11 @@ class ErrorHandler:
         self._show_error(token, "RuntimeError: " + message)
 
     def _show_error(self, token, message):
+        lines = self.source.lines
         tokenName = str(token.type).split(".")[-1]
         prefix = f"{token.line}| "
         squigle = "^" * len(token.lexeme)
         self.print(message + f" at {repr(token.lexeme)} ({tokenName})")
         self.print()
-        self.print(prefix + self.lines[token.line - 1])
+        self.print(prefix + lines[token.line - 1])
         self.print(" " * (len(prefix) + token.column - 1) + squigle)

@@ -19,11 +19,11 @@ print b
 
 
 #### exec: expression assignments, simple
-print 4 + (a=2)
+print 4 + (a = 2 + 3)
 print a
 #### output
-6.0
-2.0
+9.0
+5.0
 #### end
 
 
@@ -68,14 +68,24 @@ while (a = read_number()) > 0 do
 
 
 
+#### exec: expression assignment cannot stack - fail
+print 4 + (a = b = 2 + 3)
+print a
+#### expected output
+
+#### actual output
+9.0
+5.0
+#### end
+
+
+
 #### exec: force comparisons 1 - fail
 # Without implicit truethyness, this bug-case is avoided
 a = 42.0
 if b = a do
   print 1
-#### expected output
-
-#### actual output
+#### output
 SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
 
 3| if b = a do
@@ -89,9 +99,7 @@ SyntaxError: To avoid bugs, it's required to compare the result of an assignment
 a = true
 if b = a do
   print 1
-#### expected output
-
-#### actual output
+#### output
 SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
 
 3| if b = a do
@@ -105,9 +113,7 @@ SyntaxError: To avoid bugs, it's required to compare the result of an assignment
 a = true
 if (b = a) do
   print 1
-#### expected output
-
-#### actual output
+#### output
 SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
 
 3| if (b = a) do

@@ -1,1 +1,1 @@
-from .compiler import main, ZoofCompiler
+from .compiler import main, Source, ZoofCompiler

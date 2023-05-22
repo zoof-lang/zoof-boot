@@ -9,13 +9,24 @@ class ParseError(Exception):
 class Parser:
     """A recursive descent parser."""
 
-    def __init__(self, tokens, errorHandler):
+    def __init__(self, errorHandler):
         self.ehandler = errorHandler
+        self.tokens = []
+        self.current = 0
+
+    def parse(self, source, tokens):
+        """Parse a series of tokens and generate a list of statements.
+
+        The parser can be reused to parse different pieces of code, but
+        not concurrently (i.e. not thread safe).
+        """
+        # program -> statement* EOF
+
+        # Init
+        self.ehandler.swapSource(source)
         self.tokens = tokens
         self.current = 0
 
-    def parse(self):
-        # program -> statement* EOF
         self.matchEos()  # skip initial comments and newlines
         statements = self.statements()
         if not self.check(TT.EOF):
