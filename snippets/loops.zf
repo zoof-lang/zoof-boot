@@ -1,5 +1,5 @@
 #### exec: for-loop over range
-for i in 1..6 do
+for i in 1:6 do
     print i
 #### output
 1.0
@@ -12,7 +12,7 @@ for i in 1..6 do
 
 
 #### exec: for-loop over range of floats
-for i in 1.4..6..0.5 do
+for i in 1.4:6:0.5 do
     print i
 # todo: yuk!  ->  for i in 1.4 : 6 : 0.5  seems cleaner
 #### output
@@ -46,7 +46,7 @@ while i < 5 do
 
 
 #### exec: loop repeat n times
-for i in 0..4 do
+for i in 0:4 do
     print 42
 #### output
 42.0
@@ -109,7 +109,7 @@ RuntimeError: Can only break inside a for-loop or while-loop. at 'break' (Keywor
 
 #### exec: expression form
 # This does not do anything yet ...
-for i in 1..5 its i
+for i in 1:5 its i
 #### output
 
 #### end

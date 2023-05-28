@@ -29,12 +29,12 @@ print a + 2
 
 #### repl: define function
 func foo() do
-    print b
+    print b   # todo: maybe this should be allowed, being able to execute incomplete code ...
 #### output
 In 'snippets/interactive.zf', line 32
 NameError: Undefined variable at 'b' (Identifier)
 
-32|     print b
+32|     print b   # todo: maybe this should be allowed, being able to execute incomplete code ...
               ^
 #### end
 

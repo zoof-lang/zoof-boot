@@ -497,12 +497,12 @@ class Parser:
         return expr
 
     def litrange(self):
-        # -> power ".." power (".." power)?
+        # -> power ":" power (":" power)?
         expr = self.power()
         rangeOp = self.peek()
-        if self.match(TT.DotDot):
+        if self.match(TT.Colon):
             expr2 = self.power()
-            if self.match(TT.DotDot):
+            if self.match(TT.Colon):
                 expr3 = self.power()
             else:
                 nilToken = Token(TT.LiteralNil, "nil", rangeOp.line, rangeOp.column)

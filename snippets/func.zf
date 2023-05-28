@@ -42,7 +42,7 @@ func fib(n) do
       return n
   return fib(n - 2) + fib(n - 1)
 
-for i in 0..10 do
+for i in 0:10 do
   print fib(i)
 #### output
 0.0
@@ -84,9 +84,7 @@ print foo(9)
 foo = func (b) its a + b
 a = 100
 print foo(9)
-#### expected output
-109.0
-#### actual output
+#### output
 In 'snippet', line 3
 NameError: Undefined variable at 'a' (Identifier)
 
