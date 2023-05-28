@@ -115,26 +115,39 @@ def run():
     nsnippets = sum(len(file.snippets) for file in collection.files)
     print(f"Found {nfiles} files with a total of {nsnippets} snippets.\n")
 
+    missing = []
     fails = []
 
     for snippet in collection.iterSnippets():
         ok = snippet.run()
-        oks = "ok  " if ok else "FAIL"
-        print(f"    {oks} {snippet.repr(False)}")
+        res = "ok  " if ok else "FAIL"
+        print(f"    {res} {snippet.repr(False)}")
         if not ok:
-            fails.append(snippet)
+            if snippet.expect is None:
+                missing.append(snippet)
+            else:
+                fails.append(snippet)
+    print()
 
     for file in collection.files:
         file.save()
 
+    if missing:
+        print(f"Missing expected output for {len(missing)}/{nsnippets} snippets:")
+        for snippet in missing:
+            print("    " + snippet.repr(True, clickableFilename=True))
+        print()
     if fails:
-        print(f"\nFailed {len(fails)}/{nsnippets} snippets :(")
+        print(f"Failed {len(fails)}/{nsnippets} snippets:")
         for snippet in fails:
             print("    " + snippet.repr(True, clickableFilename=True))
         print()
+
+    if missing or fails:
         return False
     else:
-        print(f"\nAll {nsnippets} snippets passed :)")
+        print(f"All {nsnippets} snippets passed :)")
+        print()
         return True
 
 

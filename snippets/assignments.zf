@@ -71,12 +71,7 @@ while (a = read_number()) > 0 do
 #### exec: expression assignment cannot stack - fail
 print 4 + (a = b = 2 + 3)
 print a
-#### expected output
-
-#### actual output
-9.0
-5.0
-#### end
+#### end (missing expected output)
 
 
 

@@ -199,12 +199,8 @@ func make() do
   a = 3
   foo()
 make()
-#### expected output
-this must fail! I think, also See Roberts snippet above
-#### actual output
-2.0
-3.0
-#### end
+# this must fail! I think, also See Roberts snippet above
+#### end (missing expected output)
 
 
 
