@@ -134,7 +134,7 @@ class Parser:
             return self.forStatement()
         elif self.matchKeyword("while"):
             return self.whileStatement()
-        elif self.matchKeyword("break"):
+        elif self.matchKeyword("break"):  # we'll do 'continue' later
             token = self.previous()
             self.consumeEos()
             return tree.BreakStmt(token)
@@ -346,22 +346,162 @@ class Parser:
 
     # %%
 
-    # Note: Wren lists a nice precedence table here: https://wren.io/syntax.html
-    # Note: as soon as I have proper tests and benchmarks, lets try to replace this with precedense climbing https://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing
+    OPINFO_MAP = {
+        # Assignment
+        TT.Equal: (1, "R", tree.AssignExpr),
+        # Logical
+        TT.LogicalOr: (2, "R", tree.LogicalExpr),
+        TT.LogicalAnd: (3, "R", tree.LogicalExpr),
+        # Equality
+        TT.BangEqual: (4, "L", tree.BinaryExpr),
+        TT.EqualEqual: (4, "L", tree.BinaryExpr),
+        # Type test 'is'
+        # Comparisons
+        TT.Greater: (10, "L", tree.BinaryExpr),
+        TT.GreaterEqual: (10, "L", tree.BinaryExpr),
+        TT.Less: (10, "L", tree.BinaryExpr),
+        TT.LessEqual: (10, "L", tree.BinaryExpr),
+        # Range
+        TT.Colon: (11, "L", tree.RangeExpr),
+        # Bitwise ops, bitshifts
+        # Basic math
+        TT.Minus: (20, "L", tree.BinaryExpr),
+        TT.Plus: (20, "L", tree.BinaryExpr),
+        TT.Star: (21, "L", tree.BinaryExpr),
+        TT.Slash: (21, "L", tree.BinaryExpr),
+        TT.Caret: (22, "R", tree.BinaryExpr),
+        # Unary, and the rest are handled with recursive descent in expressionUnit
+    }
 
-    def expression(self):
-        # -> ifExpr | funcExpr | assignment
+    def expression(self, min_prec=0):
+        # Read tokens to produce an expression.
+        # This implements precedense climbing,
+        # see e.g. https://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing
+        # In this method we handle all binary operators.
+
+        atom_lhs = self.expressionUnit()
+
+        while True:
+            # Detect token for binary op
+            token = self.peek()
+            if token.type not in self.OPINFO_MAP:
+                break
+            prec, assoc, TreeCls = self.OPINFO_MAP[token.type]
+            if prec < min_prec:
+                break
+            self.advance()  # ok, accept it!
+
+            # Recurse. This here is the magic part of precedence climbing.
+            atom_rhs = self.expression(prec + 1 if assoc == "L" else prec)
+
+            # Update lhs with the new value
+            if TreeCls is tree.AssignExpr:
+                atom_lhs = self.handleAssign(atom_lhs, token, atom_rhs)
+            elif TreeCls is tree.RangeExpr:
+                if isinstance(atom_lhs, tree.RangeExpr):
+                    if atom_lhs.step is not None:
+                        self.error(
+                            token,
+                            "Cannot stack colon operators more than twice",
+                            throw=False,
+                        )
+                    atom_lhs = tree.RangeExpr(atom_lhs.start, atom_lhs.stop, atom_rhs)
+                else:
+                    atom_lhs = tree.RangeExpr(atom_lhs, atom_rhs, None)
+            else:
+                atom_lhs = TreeCls(atom_lhs, token, atom_rhs)
+
+        return atom_lhs
+
+    def expressionUnit(self):
+        # An expression that can be of either side of a binary expression.
+        # We enter recursive descent mode again, although we've grouped some things
+        # to make it easier to read.
+
+        # Stuff in front - unary operators
+        if self.match(TT.Plus, TT.Minus):
+            op = self.previous()
+            right = self.expressionUnit()
+            if isinstance(right, tree.UnaryExpr):
+                self.error(right.op, "Unaries do not stack")
+            expr = tree.UnaryExpr(op, right)
+        else:
+            expr = self.expressionWithKeyword()
+
+        # Stuff behind - calls, subscript, attributes
+        while True:
+            if self.match(TT.LeftParen):
+                expr = self.finishCall(expr)
+            else:
+                break
+
+        return expr
+
+    def expressionWithKeyword(self):
         if self.match(TT.Keyword):
             lexeme = self.previous().lexeme
             if lexeme == "if":
                 return self.ifExpr()
             elif lexeme == "func":
                 return self.funcExpr()
-        return self.assignment()
+        return self.primaryExpression()
+
+    def primaryExpression(self):
+        if self.match(TT.LeftParen):
+            expr = self.expression()
+            self.consume(TT.RightParen, "Expect ')' after expression.")
+            return tree.GroupingExpr(expr)
+        elif self.match(
+            TT.LiteralFalse,
+            TT.LiteralTrue,
+            TT.LiteralNil,
+            TT.LiteralNumber,
+            TT.LiteralString,
+        ):
+            return tree.LiteralExpr(self.previous())
+        elif self.match(TT.Identifier):
+            return tree.VariableExpr(self.previous())
+        else:
+            self.error(self.peek(), "Expected expression.")
+
+    def handleAssign(self, atom_lhs, equalsToken, atom_rhs):
+        is_statement = True
+        if not is_statement and isinstance(atom_rhs, tree.AssignExpr):
+            self.error(
+                equalsToken,
+                "Can only stack assignments in assignment statements (not in expressions).",
+                throw=False,
+            )
+        # Handle the assignment target
+        if isinstance(atom_lhs, tree.VariableExpr):
+            # Convert r-value expr into l-value assignment
+            name = atom_lhs.name
+            return tree.AssignExpr(name, atom_rhs)
+        else:
+            # Error, but no need to unwind, because we're not in a confused state
+            self.error(equalsToken, "Invalid assignment target.", throw=False)
+            return atom_lhs
+
+    def finishCall(self, callee):
+        arguments = []
+        if self.match(TT.RightParen):
+            pass  # no args
+        else:
+            while True:
+                arguments.append(self.expression())
+                if len(arguments) > 250:
+                    self.error(self.peek(), "Cannot have more than 250 arguments.")
+                hasComma = self.match(TT.Comma)
+                if self.match(TT.RightParen):
+                    break
+                if not hasComma:
+                    self.error(self.peek(), "Expecting ',' or ')' after argument.")
+
+        return tree.CallExpr(callee, self.previous(), arguments)
 
     def ifExpr(self):
         # -> 'if' assignment 'its' assignment 'else' assignment
-        condition = self.assignment()
+        condition = self.expression()
         if isinstance(condition, tree.AssignExpr):
             self.error(
                 self.peek(),
@@ -376,13 +516,13 @@ class Parser:
     def ifExpAfterIts(self, condition, then):
         if self.matchEos():
             self.error(then, "An if-expression must be on a single line")
-        thenExpression = self.assignment()
+        thenExpression = self.expression()
         if not self.matchKeyword("else"):
             self.error(
                 then,
                 "In single-line if-expression, an else-expression is required.",
             )
-        elseExpression = self.assignment()
+        elseExpression = self.expression()
         return tree.IfExpr(then, condition, thenExpression, elseExpression)
 
     def funcExpr(self):
@@ -410,170 +550,3 @@ class Parser:
 
         name = ""  # in theory we could allow lambdas to have a name
         return tree.FunctionExpr(name, params, body)
-
-    def assignment(self):
-        # Note: Assignment statements have special rights that assignment expressions dont have:
-        # * a = b = c
-        # * a.b = c
-        # * a[b] = c
-
-        is_assignment = True  # todo: get that info down here, but first refactor to use a precedence table
-
-        # -> IDENTIFIER  "=" assignment | logicalOr
-        expr = self.logicalOr()
-        if self.match(TT.Equal):
-            equalsToken = self.previous()
-            value = self.expression()
-            if not is_assignment and isinstance(value, tree.AssignExpr):
-                self.error(
-                    equalsToken,
-                    "Can only stack assignments in assignment statements (not in expressions).",
-                    throw=False,
-                )
-            # Handle the assignment target
-            if isinstance(expr, tree.VariableExpr):
-                # Convert r-value expr into l-value assignment
-                name = expr.name
-                return tree.AssignExpr(name, value)
-            else:
-                # Error, but no need to unwind, because we're not in a confused state
-                self.error(equalsToken, "Invalid assignment target.", throw=False)
-        return expr
-
-    def logicalOr(self):
-        # -> logicalAnd "or" logicalAnd
-        expr = self.logicalAnd()
-        while self.matchKeyword("or"):
-            operator = self.previous()
-            right = self.logicalAnd()
-            expr = tree.LogicalExpr(expr, operator, right)
-        return expr
-
-    def logicalAnd(self):
-        # -> equality "and" equality
-        expr = self.equality()
-        while self.matchKeyword("and"):
-            operator = self.previous()
-            right = self.equality()
-            expr = tree.LogicalExpr(expr, operator, right)
-        return expr
-
-    def equality(self):
-        # -> comparison ( ( "==" | "!=" ) comparison )*
-        expr = self.comparison()
-        while self.match(TT.BangEqual, TT.EqualEqual):
-            op = self.previous()
-            right = self.comparison()
-            expr = tree.BinaryExpr(expr, op, right)
-        return expr
-
-    def comparison(self):
-        # -> sum ( ( "<" | "<=" | ">" | ">=") sum )*
-        expr = self.sum()
-        while self.match(TT.Greater, TT.GreaterEqual, TT.Less, TT.LessEqual):
-            op = self.previous()
-            right = self.sum()
-            expr = tree.BinaryExpr(expr, op, right)
-        return expr
-
-    def sum(self):
-        # aka term
-        # -> product ( ( "-" | "+" ) product )* ;
-        expr = self.product()
-        while self.match(TT.Minus, TT.Plus):
-            op = self.previous()
-            right = self.product()
-            expr = tree.BinaryExpr(expr, op, right)
-        return expr
-
-    def product(self):
-        # aka factor
-        # -> litrange ( ( "/" | "*" ) litrange )* ;
-        expr = self.litrange()
-        while self.match(TT.Slash, TT.Star):
-            op = self.previous()
-            right = self.litrange()
-            expr = tree.BinaryExpr(expr, op, right)
-        return expr
-
-    def litrange(self):
-        # -> power ":" power (":" power)?
-        expr = self.power()
-        rangeOp = self.peek()
-        if self.match(TT.Colon):
-            expr2 = self.power()
-            if self.match(TT.Colon):
-                expr3 = self.power()
-            else:
-                nilToken = Token(TT.LiteralNil, "nil", rangeOp.line, rangeOp.column)
-                expr3 = tree.LiteralExpr(nilToken)
-            expr = tree.RangeExpr(expr, expr2, expr3)
-        return expr
-
-    def power(self):
-        # -> unary ( "^" unary )* ;
-        expr = self.unary()
-        if self.match(TT.Caret):
-            op = self.previous()
-            right = self.power()
-            expr = tree.BinaryExpr(expr, op, right)
-        return expr
-
-    def unary(self):
-        # -> ( "!" | "-" ) primary | call
-        # todo: can I only allow unary at the start of a numeric expression?
-        if self.match(TT.Plus, TT.Minus):
-            op = self.previous()
-            right = self.primary()  # only allow one unary
-            return tree.UnaryExpr(op, right)
-        else:
-            return self.call()
-
-    def call(self):
-        # -> primary ( "(" arguments? ")" )*
-        # arguments -> expression ( "," expression )* ","?
-        # Bit weird way to spell this, but will make sense when we add attr access
-        expr = self.primary()
-        while True:
-            if self.match(TT.LeftParen):
-                expr = self.finishCall(expr)
-            else:
-                break
-        return expr
-
-    def finishCall(self, callee):
-        arguments = []
-        if self.match(TT.RightParen):
-            pass  # no args
-        else:
-            while True:
-                arguments.append(self.expression())
-                if len(arguments) > 250:
-                    self.error(self.peek(), "Cannot have more than 250 arguments.")
-                hasComma = self.match(TT.Comma)
-                if self.match(TT.RightParen):
-                    break
-                if not hasComma:
-                    self.error(self.peek(), "Expecting ',' or ')' after argument.")
-
-        return tree.CallExpr(callee, self.previous(), arguments)
-
-    def primary(self):
-        # -> NUMBER | STRING | "true" | "false" | "nil" | "(" expression ")" ;
-        if self.match(
-            TT.LiteralFalse,
-            TT.LiteralTrue,
-            TT.LiteralNil,
-            TT.LiteralNumber,
-            TT.LiteralString,
-        ):
-            # return tree.LiteralExpr(self.peek())
-            return tree.LiteralExpr(self.previous())
-        elif self.match(TT.Identifier):
-            return tree.VariableExpr(self.previous())
-        elif self.match(TT.LeftParen):
-            expr = self.expression()
-            self.consume(TT.RightParen, "Expect ')' after expression.")
-            return tree.GroupingExpr(expr)
-        else:
-            self.error(self.peek(), "Expected expression.")

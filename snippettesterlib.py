@@ -142,6 +142,9 @@ def run():
         for snippet in fails:
             print("    " + snippet.repr(True, clickableFilename=True))
         print()
+    else:
+        print("No failed snippets.")
+        print()
 
     if missing or fails:
         return False

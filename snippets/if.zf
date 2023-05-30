@@ -84,6 +84,16 @@ print foo
 
 
 
+#### exec: one-line if's are greedy
+print if false its 10 else 100 + 2
+print if true its 10 else 100 + 2
+#### output
+102.0
+10.0
+#### end
+
+
+
 #### exec: statement not on single line - fail
 if true do a = 3
 #### output

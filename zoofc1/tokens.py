@@ -21,6 +21,9 @@ class TokenType(enum.Enum):
     Slash = 34
     Caret = 35
 
+    LogicalOr = 38
+    LogicalAnd = 39
+
     BangEqual = 42
     Equal = 43
     EqualEqual = 44
@@ -61,8 +64,11 @@ KEYWORDS = (
     "import",
     "from",
     "as",
-    "and",
-    "or",
+    # "and",  these are not really keywords
+    # "or",
+    # "true",
+    # "false",
+    # "nil",
     "func",
     "proc",
     "return",
@@ -79,7 +85,13 @@ KEYWORDS = (
     "break",
     "continue",
 )
-RESERVED = "super", "this", "swicth", "match"
+RESERVED = (
+    "super",
+    "this",
+    "swicth",
+    "match",
+    "step",
+)
 
 
 class Token:

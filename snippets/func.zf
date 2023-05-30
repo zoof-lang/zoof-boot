@@ -78,6 +78,14 @@ print foo(9)
 
 
 
+#### exec: lambda 2
+print (func () its 42)()
+#### output
+42.0
+#### end
+
+
+
 #### exec: lambda 3 - fail
 # It's harder to track when a lambda is called in the same scope,
 # so we don't support late binding for lambdas

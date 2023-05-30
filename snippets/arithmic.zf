@@ -40,6 +40,29 @@
 
 
 
+#### exec: unary binds loser than e.g. indexing
+# This should be `- (ob.foo)`,  not `(-ob).foo`
+- ob.foo
+#### end (missing expected output)
+
+
+
+#### exec: unary binds loser than e.g. if-expressions
+- if true its 4 else 5
+#### output
+-4.0
+#### end
+
+
+
+#### exec: stack
+3 + 4 + 5
+#### output
+12.0
+#### end
+
+
+
 #### exec: multiply first
 3 + 4 * 2
 #### output
@@ -80,6 +103,28 @@ print (4 ^ 3) ^ 2
 4 ^ - 2
 #### output
 0.0625
+#### end
+
+
+
+#### exec: unaries can be used inside expressions
+print 3 + - 1
+print 3 * -2
+#### output
+2.0
+-6.0
+#### end
+
+
+
+#### exec: unaries do not stack - FAIL
+print - - 3
+#### output
+In 'snippet', line 1
+SyntaxError: Unaries do not stack at '-' (Minus)
+
+1| print - - 3
+           ^
 #### end
 
 

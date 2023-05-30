@@ -1,0 +1,31 @@
+#### exec: simple 1
+true or false
+#### output
+true
+#### end
+
+
+
+#### exec: simple 2
+true and false
+#### output
+false
+#### end
+
+
+
+#### exec: yeah this is a bit weird
+# and has higher precedence than or
+print true or (false and false)
+print (true or false) and false
+print true or false and false
+print false and false or true
+#### output
+true
+false
+true
+true
+#### end
+
+
+

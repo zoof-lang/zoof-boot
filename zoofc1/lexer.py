@@ -222,6 +222,10 @@ class Lexer:
             return TT.LiteralFalse
         elif name == "nil":
             return TT.LiteralNil
+        elif name == "or":
+            return TT.LogicalOr
+        elif name == "and":
+            return TT.LogicalAnd
         else:
             return TT.Identifier
 

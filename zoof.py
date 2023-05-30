@@ -3,7 +3,7 @@ Little script to run from my IDE for rapid proototyping.
 """
 
 import zoofc1
-from zoofc1 import main, Source, ZoofCompiler
+from zoofc1 import main, Source, ZoofCompiler, tree
 
 # main(["example.zf"])
 # main([])
@@ -11,7 +11,7 @@ from zoofc1 import main, Source, ZoofCompiler
 c = ZoofCompiler()
 m = c.createModule("main")
 
-s1 = Source("i1", 1, "print 4 + (a = b = 2 + 3)")
+s1 = Source("i1", 1, "3:4:2")
 # s2 = Source("i2", 3, "b = 2")
 # s3 = Source("i3", 4, "foo()")
 

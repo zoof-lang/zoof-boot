@@ -322,7 +322,7 @@ class InterpreterVisitor:
         return ZoofRange(
             self.evaluate(expr.start),
             self.evaluate(expr.stop),
-            self.evaluate(expr.step),
+            None if expr.step is None else self.evaluate(expr.step),
         )
 
     def visitLiteralExpr(self, expr):

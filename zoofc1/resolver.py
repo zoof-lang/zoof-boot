@@ -191,7 +191,8 @@ class ResolverVisitor:
     def visitRangeExpr(self, expr):
         self.resolve(expr.start)
         self.resolve(expr.stop)
-        self.resolve(expr.step)
+        if expr.step is not None:
+            self.resolve(expr.step)
 
     def visitGroupingExpr(self, expr):
         self.resolve(expr.expr)
