@@ -327,20 +327,20 @@ class Parser:
         keyword = self.previous()
         value = None
         if not self.matchEos():
-            value = self.expression()
+            value = self.expression(allow_kw=True)
         if not self.matchEos():
             self.error(keyword, "Expected newline after return value")
         return tree.ReturnStmt(keyword, value)
 
     def printStatement(self):
         # -> "print" expression "\n"
-        value = self.expression()
+        value = self.expression(allow_kw=True)
         self.consumeEos()
         return tree.PrintStmt(value)
 
     def expressionStatement(self):
         # -> expression "\n"
-        expr = self.expression()
+        expr = self.expression(is_statement=True, allow_kw=True)
         self.consumeEos()
         return tree.ExpressionStmt(expr)
 
@@ -373,13 +373,13 @@ class Parser:
         # Unary, and the rest are handled with recursive descent in expressionUnit
     }
 
-    def expression(self, min_prec=0):
+    def expression(self, min_prec=0, *, is_statement=False, allow_kw=False):
         # Read tokens to produce an expression.
         # This implements precedense climbing,
         # see e.g. https://eli.thegreenplace.net/2012/08/02/parsing-expressions-by-precedence-climbing
         # In this method we handle all binary operators.
 
-        atom_lhs = self.expressionUnit()
+        leftExpr = self.expressionUnit(allow_kw=allow_kw)
 
         while True:
             # Detect token for binary op
@@ -392,28 +392,31 @@ class Parser:
             self.advance()  # ok, accept it!
 
             # Recurse. This here is the magic part of precedence climbing.
-            atom_rhs = self.expression(prec + 1 if assoc == "L" else prec)
+            rightExpr = self.expression(
+                prec + 1 if assoc == "L" else prec,
+                allow_kw=allow_kw and token.type == TT.Equal,
+            )
 
-            # Update lhs with the new value
+            # Update left with the new value
             if TreeCls is tree.AssignExpr:
-                atom_lhs = self.handleAssign(atom_lhs, token, atom_rhs)
+                leftExpr = self.handleAssign(leftExpr, token, rightExpr, is_statement)
             elif TreeCls is tree.RangeExpr:
-                if isinstance(atom_lhs, tree.RangeExpr):
-                    if atom_lhs.step is not None:
+                if isinstance(leftExpr, tree.RangeExpr):
+                    if leftExpr.step is not None:
                         self.error(
                             token,
                             "Cannot stack colon operators more than twice",
                             throw=False,
                         )
-                    atom_lhs = tree.RangeExpr(atom_lhs.start, atom_lhs.stop, atom_rhs)
+                    leftExpr = tree.RangeExpr(leftExpr.start, leftExpr.stop, rightExpr)
                 else:
-                    atom_lhs = tree.RangeExpr(atom_lhs, atom_rhs, None)
+                    leftExpr = tree.RangeExpr(leftExpr, rightExpr, None)
             else:
-                atom_lhs = TreeCls(atom_lhs, token, atom_rhs)
+                leftExpr = TreeCls(leftExpr, token, rightExpr)
 
-        return atom_lhs
+        return leftExpr
 
-    def expressionUnit(self):
+    def expressionUnit(self, *, allow_kw=False):
         # An expression that can be of either side of a binary expression.
         # We enter recursive descent mode again, although we've grouped some things
         # to make it easier to read.
@@ -426,7 +429,7 @@ class Parser:
                 self.error(right.op, "Unaries do not stack")
             expr = tree.UnaryExpr(op, right)
         else:
-            expr = self.expressionWithKeyword()
+            expr = self.expressionWithKeyword(allow_kw=allow_kw)
 
         # Stuff behind - calls, subscript, attributes
         while True:
@@ -437,18 +440,27 @@ class Parser:
 
         return expr
 
-    def expressionWithKeyword(self):
+    def expressionWithKeyword(self, *, allow_kw=False):
         if self.match(TT.Keyword):
             lexeme = self.previous().lexeme
-            if lexeme == "if":
+            if not allow_kw:
+                self.error(
+                    self.previous(),
+                    f"{lexeme}-expression not allowed here, try wrapping it in parentheses: `(...)`",
+                )
+            elif lexeme == "if":
                 return self.ifExpr()
+            elif lexeme == "for":
+                self.error(self.previous(), "For-expressions will be implemened later.")
             elif lexeme == "func":
                 return self.funcExpr()
+            else:
+                self.error(self.previous(), "Unexpected keyword in expression.")
         return self.primaryExpression()
 
     def primaryExpression(self):
         if self.match(TT.LeftParen):
-            expr = self.expression()
+            expr = self.expression(allow_kw=True)
             self.consume(TT.RightParen, "Expect ')' after expression.")
             return tree.GroupingExpr(expr)
         elif self.match(
@@ -464,23 +476,22 @@ class Parser:
         else:
             self.error(self.peek(), "Expected expression.")
 
-    def handleAssign(self, atom_lhs, equalsToken, atom_rhs):
-        is_statement = True
-        if not is_statement and isinstance(atom_rhs, tree.AssignExpr):
+    def handleAssign(self, leftExpr, equalsToken, rightExpr, is_statement):
+        if not is_statement and isinstance(rightExpr, tree.AssignExpr):
             self.error(
                 equalsToken,
                 "Can only stack assignments in assignment statements (not in expressions).",
                 throw=False,
             )
         # Handle the assignment target
-        if isinstance(atom_lhs, tree.VariableExpr):
+        if isinstance(leftExpr, tree.VariableExpr):
             # Convert r-value expr into l-value assignment
-            name = atom_lhs.name
-            return tree.AssignExpr(name, atom_rhs)
+            name = leftExpr.name
+            return tree.AssignExpr(name, rightExpr)
         else:
             # Error, but no need to unwind, because we're not in a confused state
             self.error(equalsToken, "Invalid assignment target.", throw=False)
-            return atom_lhs
+            return leftExpr
 
     def finishCall(self, callee):
         arguments = []
@@ -488,7 +499,7 @@ class Parser:
             pass  # no args
         else:
             while True:
-                arguments.append(self.expression())
+                arguments.append(self.expression(allow_kw=True))
                 if len(arguments) > 250:
                     self.error(self.peek(), "Cannot have more than 250 arguments.")
                 hasComma = self.match(TT.Comma)

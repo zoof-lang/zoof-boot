@@ -71,7 +71,13 @@ while (a = read_number()) > 0 do
 #### exec: expression assignment cannot stack - fail
 print 4 + (a = b = 2 + 3)
 print a
-#### end (missing expected output)
+#### output
+In 'snippet', line 1
+SyntaxError: Can only stack assignments in assignment statements (not in expressions). at '=' (Equal)
+
+1| print 4 + (a = b = 2 + 3)
+                ^
+#### end
 
 
 

@@ -78,10 +78,40 @@ print foo(9)
 
 
 
-#### exec: lambda 2
+#### exec: lambda direct call 1
 print (func () its 42)()
 #### output
 42.0
+#### end
+
+
+
+#### exec: lambda direct call 2
+print (func () its (func () its 42))()()
+#### output
+42.0
+#### end
+
+
+
+#### exec: lambda with if-expression
+f = func () its (if false its 3 else 4)
+f()
+#### output
+4.0
+#### end
+
+
+
+#### exec: lambda with if-expression needs parentheses - fail
+f = func () its if false its 3 else 4
+f()
+#### output
+In 'snippet', line 1
+SyntaxError: if-expression not allowed here, try wrapping it in parentheses: `(...)` at 'if' (Keyword)
+
+1| f = func () its if false its 3 else 4
+                   ^^
 #### end
 
 

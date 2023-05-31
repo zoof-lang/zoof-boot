@@ -84,13 +84,30 @@ print foo
 
 
 
-#### exec: one-line if's are greedy
+#### exec: one-line ifs are greedy
 print if false its 10 else 100 + 2
 print if true its 10 else 100 + 2
 #### output
 102.0
 10.0
 #### end
+
+
+
+#### exec: one-line ifs don't stack
+if false its if false its 3 else 4 else 5
+if false its 3 else if false its 4 else 5
+In 'snippet', line 1
+SyntaxError: if-expression not allowed here, try wrapping it in parentheses: `(...)` at 'if' (Keyword)
+
+1| if false its if false its 3 else 4 else 5
+                ^^
+In 'snippet', line 2
+SyntaxError: if-expression not allowed here, try wrapping it in parentheses: `(...)` at 'if' (Keyword)
+
+2| if false its 3 else if false its 4 else 5
+                       ^^
+#### end (missing expected output)
 
 
 

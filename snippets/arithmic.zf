@@ -48,7 +48,8 @@
 
 
 #### exec: unary binds loser than e.g. if-expressions
-- if true its 4 else 5
+# But still, we don't allow it for readability, use parentheses!
+- (if true its 4 else 5)
 #### output
 -4.0
 #### end
