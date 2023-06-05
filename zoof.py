@@ -11,7 +11,8 @@ from zoofc1 import main, Source, ZoofCompiler, tree
 c = ZoofCompiler()
 m = c.createModule("main")
 
-s1 = Source("i1", 1, "3:4:2")
+s1 = Source("i1", 1, "while true do\n  4\nelse\nd  4")
+# s1 = Source("i1", 1, "  print 3 + 4\n  print 42\n3")
 # s2 = Source("i2", 3, "b = 2")
 # s3 = Source("i3", 4, "foo()")
 

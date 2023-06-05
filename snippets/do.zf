@@ -45,3 +45,34 @@ do
 
 
 
+#### exec: do fail
+do 3 + 4
+
+#### expected output
+
+#### actual output
+-- SyntaxError (E1003) ----------------------------------------------- snippet:1
+
+Expected newline after 'do'.
+
+1| do 3 + 4
+      ^
+After '{context}', further statements are expected on a new indented line.
+Perhaps you meant:
+
+    do
+        3 + 4
+-- SyntaxError (E1004) ----------------------------------------------- snippet:1
+
+Expected an indented block after 'do'
+
+0| 
+1| do 3 + 4
+      ^
+The code-block after a 'do' or 'else' keyword must be indented, so that
+both the compiler and human readers can follow the structure of the code.
+If you don't want the block after 'do' to do anything, use 'nil'.
+#### end
+
+
+

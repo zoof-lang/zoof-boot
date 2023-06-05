@@ -11,9 +11,16 @@ func foo(a) do
     a + 1
 
 foo()
-#### output
+#### expected output
 In 'snippet', line 4
 RuntimeError: Expected 1 arguments, but got 0 at ')' (RightParen)
+
+4| foo()
+       ^
+#### actual output
+-- RuntimeError (E8000) ---------------------------------------------- snippet:4
+
+Expected 1 arguments, but got 0
 
 4| foo()
        ^
@@ -26,9 +33,16 @@ func foo(a) do
     a + 1
 
 foo(1, 2)
-#### output
+#### expected output
 In 'snippet', line 4
 RuntimeError: Expected 1 arguments, but got 2 at ')' (RightParen)
+
+4| foo(1, 2)
+           ^
+#### actual output
+-- RuntimeError (E8000) ---------------------------------------------- snippet:4
+
+Expected 1 arguments, but got 2
 
 4| foo(1, 2)
            ^
@@ -52,9 +66,16 @@ func foo(a) do
     a + 1
 
 foo(1 2)
-#### output
+#### expected output
 In 'snippet', line 4
 SyntaxError: Expecting ',' or ')' after argument. at '2' (LiteralNumber)
+
+4| foo(1 2)
+         ^
+#### actual output
+-- SyntaxError (E1019) ----------------------------------------------- snippet:4
+
+Expecting ',' or ')' after argument.
 
 4| foo(1 2)
          ^

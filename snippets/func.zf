@@ -29,9 +29,20 @@ func islargerthan5(a) do
 
 print islargerthan5(3)
 print islargerthan5(6)
-#### output
+#### expected output
 false
 true
+#### actual output
+-- SyntaxError (E1003) ----------------------------------------------- snippet:5
+
+Expected newline after 'if-else'.
+
+5|         return false
+   ^^^^^^^^
+After '{context}', further statements are expected on a new indented line.
+Perhaps you meant:
+
+    return false
 #### end
 
 
@@ -78,6 +89,33 @@ print foo(9)
 
 
 
+#### exec: lambda 4
+# This lambda starts out as a statement, so the code path is a bit different.
+# Not very useful, but in a repl it will be printed, and maybe we'll something
+# like Python's '_' to get the last result.
+func () its 42
+#### expected output
+<function bla>
+#### actual output
+-- SyntaxError (E1014) ----------------------------------------------- snippet:4
+
+Expected function name
+
+4| func () its 42
+        ^
+
+The syntax for creating functions has two forms. The (multi-line) statement form, e.g.:
+
+    func foo() do
+        print 'hello!'
+
+And the (single-line) expression form, e.g.:
+
+    foo = func() its 'hello!'
+#### end
+
+
+
 #### exec: lambda direct call 1
 print (func () its 42)()
 #### output
@@ -106,12 +144,20 @@ f()
 #### exec: lambda with if-expression needs parentheses - fail
 f = func () its if false its 3 else 4
 f()
-#### output
+#### expected output
 In 'snippet', line 1
 SyntaxError: if-expression not allowed here, try wrapping it in parentheses: `(...)` at 'if' (Keyword)
 
 1| f = func () its if false its 3 else 4
                    ^^
+#### actual output
+-- SyntaxError (E1014) ----------------------------------------------- snippet:1
+
+The if-expression not allowed here.
+
+1| f = func () its if false its 3 else 4
+                                       ^
+Try wrapping it in parentheses: `(...)`.
 #### end
 
 
@@ -122,9 +168,16 @@ SyntaxError: if-expression not allowed here, try wrapping it in parentheses: `(.
 foo = func (b) its a + b
 a = 100
 print foo(9)
-#### output
+#### expected output
 In 'snippet', line 3
 NameError: Undefined variable at 'a' (Identifier)
+
+3| foo = func (b) its a + b
+                      ^
+#### actual output
+-- NameError (E2000) ------------------------------------------------- snippet:3
+
+Undefined variable
 
 3| foo = func (b) its a + b
                       ^

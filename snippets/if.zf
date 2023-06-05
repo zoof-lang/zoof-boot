@@ -4,8 +4,19 @@ if a > 2 do
     print 'yes'
 else
     print 'no'
-#### output
+#### expected output
 'yes'
+#### actual output
+-- SyntaxError (E1003) ----------------------------------------------- snippet:5
+
+Expected newline after 'if-else'.
+
+5|     print 'no'
+   ^^^^
+After '{context}', further statements are expected on a new indented line.
+Perhaps you meant:
+
+    print 'no'
 #### end
 
 
@@ -16,8 +27,19 @@ else
         print 'yes'
     else
         print 'no'
-#### output
+#### expected output
 'no'
+#### actual output
+-- SyntaxError (E1003) ----------------------------------------------- snippet:5
+
+Expected newline after 'if-else'.
+
+5|         print 'no'
+   ^^^^^^^^
+After '{context}', further statements are expected on a new indented line.
+Perhaps you meant:
+
+    print 'no'
 #### end
 
 
@@ -50,12 +72,22 @@ if a > 2 do
     if a > 2 do
         print 'yes'
   b = 2
-#### output
+#### expected output
 In 'snippet', line 4
 SyntaxError: Expected expression. at '  ' (InvalidIndentation)
 
 4|   b = 2
    ^^
+#### actual output
+-- SyntaxError (E1005) ----------------------------------------------- snippet:4
+
+Unindent does not match any outer indentation level.
+
+2|     if a > 2 do
+3|         print 'yes'
+4|   b = 2
+     ^
+The indentation level does not match that of the previous lines.
 #### end
 
 
@@ -113,12 +145,36 @@ SyntaxError: if-expression not allowed here, try wrapping it in parentheses: `(.
 
 #### exec: statement not on single line - fail
 if true do a = 3
-#### output
+#### expected output
 In 'snippet', line 1
 SyntaxError: After 'if ... do' further statements are expected on a new (indented) line. at 'a' (Identifier)
 
 1| if true do a = 3
               ^
+#### actual output
+-- SyntaxError (E1003) ----------------------------------------------- snippet:1
+
+Expected newline after 'if-do'.
+
+1| if true do a = 3
+              ^
+After '{context}', further statements are expected on a new indented line.
+Perhaps you meant:
+
+    if true do
+        a = 3
+
+Or perhaps you intended to use the expression form using 'its'.
+-- SyntaxError (E1004) ----------------------------------------------- snippet:1
+
+Expected an indented block after 'if-do'
+
+0| 
+1| if true do a = 3
+              ^
+The code-block after a 'do' or 'else' keyword must be indented, so that
+both the compiler and human readers can follow the structure of the code.
+If you don't want the block after 'do' to do anything, use 'nil'.
 #### end
 
 
@@ -126,12 +182,20 @@ SyntaxError: After 'if ... do' further statements are expected on a new (indente
 #### exec: expression not on multiple lines - fail
 if true its
     a = 3
-#### output
+#### expected output
 In 'snippet', line 1
 SyntaxError: An if-expression must be on a single line at 'its' (Keyword)
 
 1| if true its
            ^^^
+#### actual output
+-- SyntaxError (E1022) ----------------------------------------------- snippet:2
+
+An if-expression must be on a single line
+
+1| if true its
+2|     a = 3
+   ^^^^
 #### end
 
 

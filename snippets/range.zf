@@ -61,12 +61,19 @@ for i in 0.1:3:0.5 do
 
 #### exec: no more than 3 - fail
 1:10:2:3
-#### output
+#### expected output
 In 'snippet', line 1
 SyntaxError: Cannot stack colon operators more than twice at ':' (Colon)
 
 1| 1:10:2:3
          ^
+#### actual output
+-- SyntaxError (E1099) ----------------------------------------------- snippet:1
+
+Cannot stack colon operators more than twice
+
+1| 1:10:2:3
+   ^^^^^^
 #### end
 
 

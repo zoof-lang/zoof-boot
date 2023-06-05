@@ -85,9 +85,16 @@ func outer() do
     return inner
 f = outer()
 f()
-#### output
+#### expected output
 In 'snippet', line 5
 RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
+
+5|         print a
+                 ^
+#### actual output
+-- RuntimeError (E8000) ---------------------------------------------- snippet:5
+
+Closures are not supported at the moment.
 
 5|         print a
                  ^
@@ -177,11 +184,20 @@ func make() do
   return foo
 f = make()
 f()
-#### output
+#### expected output
 2.0
 3.0
 In 'snippet', line 5
 RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
+
+5|      print a
+              ^
+#### actual output
+2.0
+3.0
+-- RuntimeError (E8000) ---------------------------------------------- snippet:5
+
+Closures are not supported at the moment.
 
 5|      print a
               ^
@@ -238,9 +254,16 @@ func make1() do
 f = make1()
 a = 42
 f()
-#### output
+#### expected output
 In 'snippet', line 9
 RuntimeError: Closures are not supported at the moment. at 'c' (Identifier)
+
+9|       print c
+               ^
+#### actual output
+-- RuntimeError (E8000) ---------------------------------------------- snippet:9
+
+Closures are not supported at the moment.
 
 9|       print c
                ^
@@ -260,9 +283,16 @@ func make1() do
   return make2()
 f = make1()
 f()
-#### output
+#### expected output
 In 'snippet', line 7
 RuntimeError: Closures are not supported at the moment. at 'a' (Identifier)
+
+7|       print a
+               ^
+#### actual output
+-- RuntimeError (E8000) ---------------------------------------------- snippet:7
+
+Closures are not supported at the moment.
 
 7|       print a
                ^

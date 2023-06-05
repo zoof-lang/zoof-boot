@@ -83,7 +83,8 @@ class ReturnStmt(Stmt):
 
 
 class Expr(ExprOrStmt):
-    pass
+    def location(self):
+        raise NotImplementedError()
 
 
 class IfExpr(Expr):
@@ -93,24 +94,48 @@ class IfExpr(Expr):
         self.thenExpr = thenExpr
         self.elseExpr = elseExpr
 
+    def location(self):
+        loc1 = self.token.line, self.token.column
+        loc2 = self.elseExpr.location()[1]
+        return loc1, loc2
+
 
 class FunctionExpr(Expr):
-    def __init__(self, name, params, expr):
+    def __init__(self, token, name, params, expr):
+        self.token = token
         self.name = name
         self.params = params
         self.body = expr
 
+    def location(self):
+        loc1 = self.token.line, self.token.column
+        loc2 = self.body.location()[1]
+        return loc1, loc2
+
 
 class AssignExpr(Expr):
     def __init__(self, name, value):
-        self.name = name
+        self.name = name  # a token
         self.value = value  # Can be None
+
+    def location(self):
+        loc1 = self.name.line, self.name.column
+        if self.value is None:
+            loc2 = loc1[0], loc1[1] + len(self.name.lexeme)
+        else:
+            loc2 = self.value.location()[1]
+        return loc1, loc2
 
 
 class VariableExpr(Expr):
     def __init__(self, name):
         self.name = name
         self.depth = -9  # set by resolver
+
+    def location(self):
+        loc1 = self.name.line, self.name.column
+        loc2 = loc1[0], loc1[1] + len(self.name.lexeme)
+        return loc1, loc2
 
 
 class LogicalExpr(Expr):
@@ -119,6 +144,11 @@ class LogicalExpr(Expr):
         self.op = op
         self.right = right
 
+    def location(self):
+        loc1 = self.left.location()[0]
+        loc2 = self.right.location()[1]
+        return loc1, loc2
+
 
 class BinaryExpr(Expr):
     def __init__(self, left, op, right):
@@ -126,10 +156,18 @@ class BinaryExpr(Expr):
         self.op = op
         self.right = right
 
+    def location(self):
+        loc1 = self.left.location()[0]
+        loc2 = self.right.location()[1]
+        return loc1, loc2
+
 
 class GroupingExpr(Expr):
     def __init__(self, expr):
         self.expr = expr
+
+    def location(self):
+        return self.expr.location()
 
 
 class RangeExpr(Expr):
@@ -139,6 +177,14 @@ class RangeExpr(Expr):
         self.stop = stop
         self.step = step
 
+    def location(self):
+        loc1 = self.start.location()[0]
+        if self.step is None:
+            loc2 = self.stop.location()[1]
+        else:
+            loc2 = self.step.location()[1]
+        return loc1, loc2
+
 
 class CallExpr(Expr):
     def __init__(self, callee, paren, arguments):
@@ -146,13 +192,28 @@ class CallExpr(Expr):
         self.paren = paren  # the closing one
         self.arguments = arguments
 
+    def location(self):
+        loc1 = self.callee.location()[0]
+        loc2 = self.paren.line, self.paren.column
+        return loc1, loc2
+
 
 class LiteralExpr(Expr):
     def __init__(self, token):
         self.token = token
+
+    def location(self):
+        loc1 = self.token.line, self.token.column
+        loc2 = loc1[0], loc1[1] + len(self.token.lexeme)
+        return loc1, loc2
 
 
 class UnaryExpr(Expr):
     def __init__(self, op, right):
         self.op = op
         self.right = right
+
+    def location(self):
+        loc1 = self.op.line, self.op.column
+        loc2 = self.right.location()[1]
+        return loc1, loc2

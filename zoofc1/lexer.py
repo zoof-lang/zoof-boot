@@ -44,9 +44,11 @@ class Lexer:
                 # Init indentation level, dont emit an indent token
                 self.wcs.append(wc)
             elif wc > self.wcs[-1]:
+                # Indent
                 self.wcs.append(wc)
                 yield Token(TT.Indent, self.source[:wc], self.lineNr, 1)
             elif wc < self.wcs[-1]:
+                # Dedent
                 dedentCount = 0
                 while len(self.wcs) > 1 and wc < self.wcs[-1]:
                     self.wcs.pop(-1)
