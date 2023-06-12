@@ -123,33 +123,6 @@ The indentation level does not match that of the previous lines.
 
 
 
-#### exec: plain kw
-# I want this to give me help on how to use the kw
-if
-#### output
--- SyntaxError (E1388) ----------------------------------------------- snippet:2
-
-Found a lonely 'if' keyword.
-
-2| if
-   ^^
-
-The syntax for 'if' has two forms. The (multi-line) statement form, e.g.:
-
-    if a == 42 do
-        b = true
-        print 'yes!'
-    else
-       print 'no'
-
-
-And the (single-line) expression form, e.g.:
-
-    print if a == 42 its 'yes!' else 'no'
-#### end
-
-
-
 #### exec: code after kw
 if true do
    4
@@ -211,6 +184,92 @@ Unexpected code after expression.
          ^^
 It is unclear how 'if' relates to the expression before it.
 Perhaps you meant to add an operator, or put it on a new line?
+#### end
+
+
+
+#### exec: unexpected keyword
+in 3
+#### output
+-- SyntaxError (E1125) ----------------------------------------------- snippet:1
+
+Unexpected keyword in expression.
+
+1| in 3
+   ^^
+An expression was expected, but found the 'in' keyword,
+which cannot be used to start an expression.
+#### end
+
+
+
+#### exec: unexpected code after return value
+func foo() do
+   return 42 53
+#### output
+-- SyntaxError (E1027) ----------------------------------------------- snippet:2
+
+Unexpected code after expression.
+
+2|    return 42 53
+                ^^
+It is unclear how '53' relates to the expression before it.
+Perhaps you meant to add an operator, or put it on a new line?
+#### end
+
+
+
+#### exec: expected expression 1
+3 + and
+#### output
+-- SyntaxError (E1422) ----------------------------------------------- snippet:1
+
+Expected expression after '+'.
+
+1| 3 + and
+       ^^^
+An expression was expected, but got 'and'.
+#### end
+
+
+
+#### exec: expected expression 2
+if and
+-- SyntaxError (E1422) ----------------------------------------------- snippet:1
+
+Expected expression after if.
+
+1| if and
+      ^^^
+An expression was expected, but got 'and'.
+#### end (missing expected output)
+
+
+
+#### exec: expected expression 3
+and
+#### output
+-- SyntaxError (E1422) ----------------------------------------------- snippet:1
+
+Expected expression.
+
+1| and
+   ^^^
+An expression was expected, but got 'and'.
+#### end
+
+
+
+#### exec: unclosed group
+a = (3 + 4
+#### output
+-- SyntaxError (E1895) ----------------------------------------------- snippet:1
+
+Expected ')' after group-expression.
+
+1| a = (3 + 4
+        ^^^^^
+The matching closing brace could not be found.
 #### end
 
 

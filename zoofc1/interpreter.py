@@ -262,7 +262,7 @@ class InterpreterVisitor:
         self.exececuteMultiple(stmt.statements)
 
     def visitIfStmt(self, stmt):
-        if self.isTruethy(self.evaluate(stmt.condition), stmt.token):
+        if self.isTruethy(self.evaluate(stmt.condition), stmt.condition):
             self.exececuteMultiple(stmt.thenBranch)
         else:
             self.exececuteMultiple(stmt.elseBranch)
@@ -270,7 +270,7 @@ class InterpreterVisitor:
     def visitWhileStmt(self, stmt):
         self.env.loopStack.append(True)
         try:
-            while self.isTruethy(self.evaluate(stmt.condition), stmt.token):
+            while self.isTruethy(self.evaluate(stmt.condition), stmt.condition):
                 self.exececuteMultiple(stmt.statements)
         except Break:
             pass
@@ -330,7 +330,7 @@ class InterpreterVisitor:
         return env.get(expr.name)
 
     def visitIfExpr(self, expr):
-        if self.isTruethy(self.evaluate(expr.condition), None):
+        if self.isTruethy(self.evaluate(expr.condition), expr.condition):
             return self.evaluate(expr.thenExpr)
         else:
             return self.evaluate(expr.elseExpr)
@@ -394,11 +394,11 @@ class InterpreterVisitor:
         left = self.evaluate(expr.left)
         opname = expr.op.lexeme
         if opname == "or":
-            if self.isTruethy(left, expr.op):
+            if self.isTruethy(left, expr.left):
                 return left
             return self.evaluate(expr.right)
         elif opname == "and":
-            if not self.isTruethy(left, expr.op):
+            if not self.isTruethy(left, expr.right):
                 return left
             return self.evaluate(expr.right)
         else:

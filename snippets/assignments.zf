@@ -143,6 +143,50 @@ it's required to compare the result of an assignment here.
 
 
 
+#### exec: cannot assign to a non-variable - fail
+3 = 4
+#### output
+-- SyntaxError (E1320) ----------------------------------------------- snippet:1
+
+Invalid assignment target.
+
+1| 3 = 4
+   ^
+Cannot assign a value to this expression.
+#### end
+
+
+
+#### exec: cannot assign in an if-expression - fail
+a = if b=3 its 1 else 2
+#### output
+-- SyntaxError (E1162) ----------------------------------------------- snippet:1
+
+Bare assignment not allowed here.
+
+1| a = if b=3 its 1 else 2
+          ^^^
+To avoid the bug that '=' is used when '==' was intended,
+it's required to compare the result of an assignment here.
+#### end
+
+
+
+#### exec: cannot assign in an if-expression - fail
+a = if (b=3) its 1 else 2
+#### output
+-- SyntaxError (E1162) ----------------------------------------------- snippet:1
+
+Bare assignment not allowed here.
+
+1| a = if (b=3) its 1 else 2
+           ^^^
+To avoid the bug that '=' is used when '==' was intended,
+it's required to compare the result of an assignment here.
+#### end
+
+
+
 #### noop: notes
 # We need to check that assignment statements can assign to attributes and indices,
 # while assignment expressions cannot.

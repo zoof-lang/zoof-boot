@@ -53,7 +53,22 @@ foo(1, 2, )
 
 
 
-#### exec: comma is needed
+#### exec: need param name - fail
+func foo(3) do
+    a + 1
+#### output
+-- SyntaxError (E1846) ----------------------------------------------- snippet:1
+
+Expected parameter name.
+
+1| func foo(3) do
+            ^
+The parameters of a function expression should be identifiers.
+#### end
+
+
+
+#### exec: comma is needed - fail
 func foo(a) do
     a + 1
 

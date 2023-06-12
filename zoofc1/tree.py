@@ -96,7 +96,12 @@ class IfExpr(Expr):
 
     def location(self):
         loc1 = self.token.line, self.token.column
-        loc2 = self.elseExpr.location()[1]
+        if self.elseExpr is None:
+            # this should not happen in theory, but when it does
+            # the error handler uses this code path :)
+            loc2 = self.thenExpr.location()[1]
+        else:
+            loc2 = self.elseExpr.location()[1]
         return loc1, loc2
 
 

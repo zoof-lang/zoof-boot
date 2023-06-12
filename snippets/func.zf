@@ -1,3 +1,25 @@
+#### exec: the compiler helps - fail
+func
+#### output
+-- SyntaxError (E1110) ----------------------------------------------- snippet:1
+
+Found a lonely 'func' keyword.
+
+1| func
+   ^^^^
+
+The syntax for creating functions has two forms. The (multi-line) statement form, e.g.:
+
+    func foo() do
+        print 'hello!'
+
+And the (single-line) expression form, e.g.:
+
+    foo = func() its 'hello!'
+#### end
+
+
+
 #### exec: simple
 func foo(a, b) do
     return a + b
@@ -115,6 +137,74 @@ f()
 
 
 
+#### exec: func statement needs a name - fail
+func (a) do
+  print(a)
+#### output
+-- SyntaxError (E1959) ----------------------------------------------- snippet:1
+
+Expected function name
+
+1| func (a) do
+   ^^^^
+Lambda's (function expressions) can be anonymous, but normal functions cannot.'
+#### end
+
+
+
+#### exec: lambda must be on one line - fail
+f = func () its
+  3
+#### output
+-- SyntaxError (E1449) ----------------------------------------------- snippet:2
+
+A function expression must be on a single line.
+
+1| f = func () its
+2|   3
+   ^^
+You should probably move the function's body directly after 'its'.
+#### end
+
+
+
+#### exec: lambda must not have a name 1 - fail
+f = func foo () its 3
+#### output
+-- SyntaxError (E1862) ----------------------------------------------- snippet:1
+
+Function expressions cannot have a name.
+
+1| f = func foo () its 3
+            ^^^
+The expression form of function definitions are anonymous (a.ka. lambdas).
+The name must be omitted.
+#### end
+
+
+
+#### exec: lambda must not have a name 2 - fail
+f = func 3 () its 3
+#### output
+-- SyntaxError (E1783) ----------------------------------------------- snippet:1
+
+Expected '(' directly after 'func' in expression-form.
+
+1| f = func 3 () its 3
+            ^
+
+The syntax for creating functions has two forms. The (multi-line) statement form, e.g.:
+
+    func foo() do
+        print 'hello!'
+
+And the (single-line) expression form, e.g.:
+
+    foo = func() its 'hello!'
+#### end
+
+
+
 #### exec: lambda with if-expression needs parentheses - fail
 f = func () its if false its 3 else 4
 f()
@@ -144,6 +234,56 @@ Undefined variable.
 3| foo = func (b) its a + b
                       ^
 This variable name is used before it is defined.
+#### end
+
+
+
+#### exec: func need do or its - fail
+func foo() not
+   nil
+#### output
+-- SyntaxError (E1653) ----------------------------------------------- snippet:1
+
+Expected 'do' or 'its' after function signature.
+
+1| func foo() not
+              ^^^
+#### end
+
+
+
+#### exec: lambda needs its - fail
+f = func () do 3
+#### output
+-- SyntaxError (E1074) ----------------------------------------------- snippet:1
+
+Expected 'its' after signature of anonynous function
+
+1| f = func () do 3
+               ^^
+#### end
+
+
+
+#### exec: need params - fail
+func foo do
+  return 42
+#### output
+-- SyntaxError (E1286) ----------------------------------------------- snippet:1
+
+Expected '(' to start function signature.
+
+1| func foo do
+            ^^
+
+The syntax for creating functions has two forms. The (multi-line) statement form, e.g.:
+
+    func foo() do
+        print 'hello!'
+
+And the (single-line) expression form, e.g.:
+
+    foo = func() its 'hello!'
 #### end
 
 

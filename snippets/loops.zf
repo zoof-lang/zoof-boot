@@ -1,3 +1,50 @@
+#### exec: the compiler helps - fail
+for
+#### output
+-- SyntaxError (E1461) ----------------------------------------------- snippet:1
+
+Found a lonely 'for' keyword.
+
+1| for
+   ^^^
+
+For-loops in Zoof always iterate a variable over a sequence.
+
+The syntax for 'for' has two forms. The (multi-line) statement form, e.g.:
+
+    for i in 0:10 do
+        print i
+
+And the (single-line) expression form, e.g.:
+
+    # Note that this form is still a work in progress
+    print for i in 0:10 its i
+#### end
+
+
+
+#### exec: the compiler helps - fail
+while
+#### output
+-- SyntaxError (E1174) ----------------------------------------------- snippet:1
+
+Found a lonely 'while' keyword.
+
+1| while
+   ^^^^^
+
+The syntax for 'while' loops is similar to other languages, e.g.:
+
+    i = 0
+    while i < 10 do
+        i = i + 1
+        print i
+
+There is *no* (single-line) expression form for while loops.
+#### end
+
+
+
 #### exec: for-loop over range
 for i in 1:6 do
     print i
@@ -113,6 +160,106 @@ Can only use break inside a for-loop or while-loop.
 for i in 1:5 its i
 #### output
 
+#### end
+
+
+
+#### exec: invalid syntax 1 - fail
+for i 1:10 do
+    print i
+#### output
+-- SyntaxError (E1208) ----------------------------------------------- snippet:1
+
+Expected 'in' after the loop iterable.
+
+1| for i 1:10 do
+         ^
+For-loops in Zoof always iterate a variable over a sequence.
+The 'in' keyword separates the two.
+#### end
+
+
+
+#### exec: invalid syntax 2 - fail
+for 3 in 1:10 do
+    print i
+#### output
+-- SyntaxError (E1802) ----------------------------------------------- snippet:1
+
+Expected the loop iterable to be a variable.
+
+1| for 3 in 1:10 do
+       ^
+In 'for x in y', 'x' must be a variable name.
+#### end
+
+
+
+#### exec: invalid syntax 3 - fail
+for i in 1:10 nil
+    print i
+#### output
+-- SyntaxError (E1436) ----------------------------------------------- snippet:1
+
+Expected 'do' or 'its' to define a for-loop.
+
+1| for i in 1:10 nil
+                 ^^^
+
+For-loops in Zoof always iterate a variable over a sequence.
+
+The syntax for 'for' has two forms. The (multi-line) statement form, e.g.:
+
+    for i in 0:10 do
+        print i
+
+And the (single-line) expression form, e.g.:
+
+    # Note that this form is still a work in progress
+    print for i in 0:10 its i
+#### end
+
+
+
+#### exec: invalid syntax 4 - fail
+for i in 1:10 its i else 2
+#### output
+-- SyntaxError (E1788) ----------------------------------------------- snippet:1
+
+In single-line for-expressions, the else-clause is forbidden.
+
+1| for i in 1:10 its i else 2
+                       ^^^^
+#### end
+
+
+
+#### exec: for-else is not yet supported - fail
+for i in 1:10 do
+   nil
+else
+  print "nah"
+#### output
+-- SyntaxError (E1259) ----------------------------------------------- snippet:3
+
+for-else not (yet?) supported
+
+3| else
+   ^^^^
+#### end
+
+
+
+#### exec: while needs do - fail
+while true its 42
+#### output
+-- SyntaxError (E1901) ----------------------------------------------- snippet:1
+
+Expected 'do' to define a while-loop.
+
+1| while true its 42
+              ^^^
+Also, the while-loop does not support an expression form using 'its'.
 #### end
 
 

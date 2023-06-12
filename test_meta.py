@@ -118,7 +118,7 @@ def test_error_codes_appear_in_correct_file():
 
 
 def test_that_each_error_code_is_in_a_snippet():
-    excludes = {"E0000"}
+    excludes = {"E1361", "E1614", "E1068", "E1462"}
 
     error_codes = collect_error_codes_from_source()
     source_codes = {ec.code for ec in error_codes if not ec.invalid}

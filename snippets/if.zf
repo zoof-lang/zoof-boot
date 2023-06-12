@@ -1,3 +1,29 @@
+#### exec: the compiler helps - fail
+if
+#### output
+-- SyntaxError (E1388) ----------------------------------------------- snippet:1
+
+Found a lonely 'if' keyword.
+
+1| if
+   ^^
+
+The syntax for 'if' has two forms. The (multi-line) statement form, e.g.:
+
+    if a == 42 do
+        b = true
+        print 'yes!'
+    else
+       print 'no'
+
+
+And the (single-line) expression form, e.g.:
+
+    print if a == 42 its 'yes!' else 'no'
+#### end
+
+
+
 #### exec: basic if 1
 a = 3
 if a > 2 do
@@ -101,17 +127,38 @@ print if true its 10 else 100 + 2
 #### exec: one-line ifs don't stack
 if false its if false its 3 else 4 else 5
 if false its 3 else if false its 4 else 5
-In 'snippet', line 1
-SyntaxError: if-expression not allowed here, try wrapping it in parentheses: `(...)` at 'if' (Keyword)
+#### output
+-- SyntaxError (E1321) ----------------------------------------------- snippet:1
+
+This if-expression is not allowed here.
 
 1| if false its if false its 3 else 4 else 5
-                ^^
-In 'snippet', line 2
-SyntaxError: if-expression not allowed here, try wrapping it in parentheses: `(...)` at 'if' (Keyword)
+                ^^^^^^^^^^^^^^^^^^^^^
+To keep code readable, you must wrap it in parentheses: `(...)`.
+-- SyntaxError (E1321) ----------------------------------------------- snippet:2
+
+This if-expression is not allowed here.
 
 2| if false its 3 else if false its 4 else 5
-                       ^^
-#### end (missing expected output)
+                       ^^^^^^^^^^^^^^^^^^^^^
+To keep code readable, you must wrap it in parentheses: `(...)`.
+#### end
+
+
+
+#### exec: expression needs an else - fail
+a = 1
+a = if true  its 3
+#### output
+-- SyntaxError (E1870) ----------------------------------------------- snippet:2
+
+In an if-expression, the else-expression is required.
+
+2| a = if true  its 3
+       ^^^^^^^^^^^^^^
+An if-expression produces a value (that's what it means to be an expression).
+Therefore, both branches must be defined.
+#### end
 
 
 
@@ -147,6 +194,61 @@ An if-expression must be on a single line
 2|     a = 3
    ^^^^
 Place the body right after `its`. Or replace `its` with `do` to make this an if-statement`.
+#### end
+
+
+
+#### exec: invalid syntax 1
+a = if true do 3 else 2
+#### output
+-- SyntaxError (E1730) ----------------------------------------------- snippet:1
+
+Expected 'its' keyword, not 'do'.
+
+1| a = if true do 3 else 2
+                  ^
+The 'do' keyword is for if-statements, but this is an expression.
+#### end
+
+
+
+#### exec: invalid syntax 2
+a = if true 3 else 2
+#### output
+-- SyntaxError (E1844) ----------------------------------------------- snippet:1
+
+Expected 'its' keyword.
+
+1| a = if true 3 else 2
+               ^
+In an if-expression, the condition-expression must be followed with 'its'.
+#### end
+
+
+
+#### exec: invalid syntax 3
+if true else
+   a = 2
+#### output
+-- SyntaxError (E1558) ----------------------------------------------- snippet:1
+
+Expected 'do' or 'its' after if-condition.
+
+1| if true else
+           ^^^^
+
+The syntax for 'if' has two forms. The (multi-line) statement form, e.g.:
+
+    if a == 42 do
+        b = true
+        print 'yes!'
+    else
+       print 'no'
+
+
+And the (single-line) expression form, e.g.:
+
+    print if a == 42 its 'yes!' else 'no'
 #### end
 
 
