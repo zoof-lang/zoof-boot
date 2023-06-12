@@ -41,13 +41,13 @@ class ErrorHandler:
     def nameError(self, token, message):
         """An error generated while resolving names."""
         self.hadAnalysisError = True
-        self._show_error("NameError", "E2000", message, token, "")
+        self._show_error("NameError", "E2706", message, token, "")
 
     def runtimeError(self, token, message):
         """An error generated at runtime."""
         # self.print(f"[line {token.line}] Error : {message}")
         self.hadRuntimeError = True
-        self._show_error("RuntimeError", "E8000", message, token, "")
+        self._show_error("RuntimeError", "E8703", message, token, "")
 
     def _show_error(
         self,

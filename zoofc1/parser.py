@@ -84,7 +84,7 @@ class Parser:
 
         if not self.check(TT.EOF):
             self.error(
-                "E1999",
+                "E1361",
                 "Parsing ended before EOF (end of file).",
                 self.peek(),
                 "The compiler did not expect more code. This is an internal parser error that should not occur in practice.",
@@ -160,7 +160,7 @@ class Parser:
             kw = self.previous().lexeme
             token = self.peek()
             self.error(
-                "E1001",
+                "E1087",
                 f"Expected newline after '{kw}'.",
                 token,
                 f"No code is allowed after the {kw} keyword.",
@@ -171,7 +171,7 @@ class Parser:
         if not self.matchEos():
             token = self.peek()
             self.error(
-                "E1002",
+                "E1027",
                 f"Expected newline after expression.",
                 token,
                 f"The compiler cannot relate '{token.lexeme}' to the expression before it.",
@@ -202,7 +202,7 @@ class Parser:
             if couldAlsoHaveUsedIts:
                 explanation += "\n\nOr perhaps you intended to use the expression form using 'its'."
             self.error(
-                "E1003",
+                "E1829",
                 f"Expected newline after '{context}'.",
                 self.peek(),
                 explanation,
@@ -211,7 +211,7 @@ class Parser:
 
         if not self.match(TT.Indent):
             self.error(
-                "E1004",
+                "E1515",
                 f"Expected an indented block after '{context}'",
                 self.peek(),
                 f"The code-block after a 'do' or 'else' keyword must be indented, so that",
@@ -231,7 +231,7 @@ class Parser:
                 break
             elif self.match(TT.InvalidIndentation):
                 self.error(
-                    "E1005",
+                    "E1616",
                     "Unindent does not match any outer indentation level.",
                     self.peek(),
                     "The indentation level does not match that of the previous lines.",
@@ -282,7 +282,7 @@ class Parser:
             condition = condition.expr
         if isinstance(condition, tree.AssignExpr):
             self.error(
-                "E1021",
+                "E1366",
                 "Bare assignment not allowed here.",
                 self.peek(),
                 "To avoid the bug that '=' is used when '==' was intended,",
@@ -314,7 +314,7 @@ class Parser:
             return tree.ExpressionStmt(expr)
         else:
             self.error(
-                "E1007",
+                "E1558",
                 "Expected 'do' or 'its' after if-condition.",
                 self.peek(),
                 HINT_IF,
@@ -330,7 +330,7 @@ class Parser:
         # Turn the expression into an assignment expression.
         if not isinstance(var, tree.VariableExpr):
             self.error(
-                "E1008",
+                "E1802",
                 "Expected the loop iterable to be a variable.",
                 var,
                 "In 'for x in y', 'x' must be a variable.",
@@ -340,7 +340,7 @@ class Parser:
         # The in-keywords separates iter and iterable
         if not self.matchKeyword("in"):
             self.error(
-                "E1009",
+                "E1208",
                 "Expected 'in' after the loop iterable.",
                 self.peek(),
                 HINT_FOR,
@@ -354,7 +354,7 @@ class Parser:
 
         if not self.matchKeyword("do", "its"):
             self.error(
-                "E1010",
+                "E1436",
                 "Expected 'do' or 'its' to define a for-loop.",
                 self.peek(),
                 HINT_FOR,
@@ -366,7 +366,7 @@ class Parser:
             statements = self.indentedStatements("for-do", False)
             if self.matchKeyword("else"):
                 self.error(
-                    "E1011",
+                    "E1259",
                     "for-else not (yet?) supported",
                     self.previous(),
                     throw=False,
@@ -387,7 +387,7 @@ class Parser:
             expr = self.expression()
             if self.matchKeyword("else"):
                 self.error(
-                    "E1012",
+                    "E1788",
                     "In single-line for-expressions, the else-clause is forbidden.",
                     self.previous(),
                 )
@@ -404,7 +404,7 @@ class Parser:
 
         if not self.matchKeyword("do"):
             self.error(
-                "E1013",
+                "E1901",
                 "Expected 'do' to define a while-loop.",
                 self.peek(),
                 "Also, the while-loop does not support an expression form using 'its'.",
@@ -420,7 +420,7 @@ class Parser:
 
         if not self.match(TT.Identifier):
             self.error(
-                "E1014",
+                "E1959",
                 f"Expected {kind} name",
                 self.peek(),
                 HINT_FUNC,
@@ -429,7 +429,7 @@ class Parser:
 
         if not self.match(TT.LeftParen):
             self.error(
-                "E1015",
+                "E1286",
                 f"Expected '(' after {kind} name.",
                 self.peek(),
                 HINT_FUNC,
@@ -445,7 +445,7 @@ class Parser:
             statements = [self.expression()]
         else:
             self.error(
-                "E1019",
+                "E1653",
                 "Expected 'do' or 'its' after function signature.",
                 self.peek(),
             )
@@ -463,7 +463,7 @@ class Parser:
         if not self.matchEos():
             after = "return value" if has_value else "return"
             self.error(
-                "E1020",
+                "E1536",
                 "Expected newline after {after}.",
                 keyword,
                 "The return keyword can be followed by 0 or 1 expression.",
@@ -542,7 +542,7 @@ class Parser:
                 if isinstance(leftExpr, tree.RangeExpr):
                     if leftExpr.step is not None:
                         self.error(
-                            "E1099",
+                            "E1951",
                             "Cannot stack colon operators more than twice",
                             leftExpr,
                             throw=False,
@@ -566,7 +566,7 @@ class Parser:
             right = self.expressionUnit()
             if isinstance(right, tree.UnaryExpr):
                 self.error(
-                    "E1011",
+                    "E1035",
                     "Unaries do not stack.",
                     right,
                     "You can do '-4', but not '--4'.",
@@ -594,7 +594,7 @@ class Parser:
                 result = self.funcExpr(self.previous())
             elif lexeme == "for":
                 self.error(
-                    "E1012",
+                    "E1614",
                     "For-expressions will be implemened later.",
                     self.previous(),
                 )
@@ -603,7 +603,7 @@ class Parser:
                 if lexeme == "do":
                     hint += "\nPerhaps part of the statement before 'do' is missing?"
                 self.error(
-                    "E1013",
+                    "E1125",
                     "Unexpected keyword in expression.",
                     self.previous(),
                     hint,
@@ -611,7 +611,7 @@ class Parser:
             # Only produce result if keywords were actually allowed
             if not allow_kw:
                 self.error(
-                    "E1014",
+                    "E1321",
                     f"The {lexeme}-expression not allowed here.",
                     self.previous(),
                     f"Try wrapping it in parentheses: `(...)`.",
@@ -624,7 +624,7 @@ class Parser:
             expr = self.expression(allow_kw=True)
             if not self.match(TT.RightParen):
                 self.error(
-                    "E1015",
+                    "E1895",
                     "Expect ')' after expression.",
                     self.peek(),
                     "The matching closing brace could not be found.",
@@ -645,21 +645,21 @@ class Parser:
             if prev.type == TT.Keyword:
                 if prev.lexeme == "if":
                     self.error(
-                        "E1201",
+                        "E1388",
                         f"Found a lonely 'if' keyword.",
                         prev,
                         HINT_IF,
                     )
                 elif prev.lexeme == "for":
                     self.error(
-                        "E1202",
+                        "E1461",
                         f"Found a lonely 'for' keyword.",
                         prev,
                         HINT_FOR,
                     )
                 elif prev.lexeme == "while":
                     self.error(
-                        "E1202",
+                        "E1174",
                         f"Found a lonely 'while' keyword.",
                         prev,
                         HINT_WHILE,
@@ -667,7 +667,7 @@ class Parser:
 
             # Else ...
             self.error(
-                "E1200",
+                "E1422",
                 f"Expected expression after {self.previous().lexeme}.",
                 prev,
                 f"An expression was expected, but got '{self.peek().lexeme}'.",
@@ -676,7 +676,7 @@ class Parser:
     def handleAssign(self, leftExpr, equalsToken, rightExpr, is_statement):
         if not is_statement and isinstance(rightExpr, tree.AssignExpr):
             self.error(
-                "E1016",
+                "E1178",
                 "Cannot stack expression-assignment.",
                 leftExpr,
                 "You can do this in a statement:\n\n     a = b = c = 8\n",
@@ -691,7 +691,7 @@ class Parser:
         else:
             # Error, but no need to unwind, because we're not in a confused state
             self.error(
-                "E1017",
+                "E1320",
                 "Invalid assignment target.",
                 leftExpr,
                 "Cannot assign a value to this expression.",
@@ -708,7 +708,7 @@ class Parser:
                 arguments.append(self.expression(allow_kw=True))
                 if len(arguments) > 250:
                     self.error(
-                        "E1018",
+                        "E1068",
                         "Cannot have more than 250 arguments.",
                         self.peek(),
                         "For practical reasons, function calls cannot use more than 250 arguments.",
@@ -718,7 +718,7 @@ class Parser:
                     break
                 if not hasComma:
                     self.error(
-                        "E1019",
+                        "E1543",
                         "Expecting ',' or ')' after argument.",
                         self.peek(),
                     )
@@ -731,7 +731,7 @@ class Parser:
         condition = self.expression()
         if isinstance(condition, tree.AssignExpr):
             self.error(
-                "E1020" "Bare assignment not allowed here.",
+                "E1162" "Bare assignment not allowed here.",
                 condition,
                 "To avoid the bug that '=' is used when '==' was intended,",
                 f"it's required to compare the result of an assignment here.",
@@ -739,7 +739,7 @@ class Parser:
             )
         if not self.matchKeyword("its"):
             self.error(
-                "E1021",
+                "E1844",
                 "Expected 'its' keyword.",
                 self.peek(),
                 "In an if-expression, the condition-expression must be followed with 'its'.",
@@ -749,7 +749,7 @@ class Parser:
     def ifExpAfterIts(self, ifToken, condition):
         if self.matchEos():
             self.error(
-                "E1022",
+                "E1140",
                 "An if-expression must be on a single line",
                 self.peek(),
                 linesBefore=1,
@@ -758,7 +758,7 @@ class Parser:
         expr = tree.IfExpr(ifToken, condition, thenExpression, None)
         if not self.matchKeyword("else"):
             self.error(
-                "E1023",
+                "E1870",
                 "In an if-expression, the else-expression is required.",
                 expr,
                 "An if-expression produces a value (that's what it means to be an expression).",
@@ -772,7 +772,7 @@ class Parser:
         # todo: can I reuse this in funcStatement
         if not self.match(TT.LeftParen):
             self.error(
-                "E1024",
+                "E1862",
                 "Expected '(' directly after 'func' in expression-form.",
                 self.peek(),
                 "The expression form of function definitions are anonymous (a.ka. lambdas).",
@@ -782,13 +782,13 @@ class Parser:
 
         if not self.matchKeyword("its"):
             self.error(
-                "E1028",
+                "E1074",
                 "Expected 'its' after signature of anonynous function",
                 self.peek(),
             )
         if self.matchEos():
             self.error(
-                "E1029",
+                "E1449",
                 "A function expression must be on a single line.",
                 self.peek(),
             )
@@ -803,7 +803,7 @@ class Parser:
             while True:
                 if not self.match(TT.Identifier):
                     self.error(
-                        "E1026",
+                        "E1846",
                         "Expected parameter name.",
                         self.peek(),
                         "The parameters of a function expression should be identifiers.",
@@ -811,7 +811,7 @@ class Parser:
                 params.append(self.previous())
                 if len(params) > 250:
                     self.error(
-                        "E1027",
+                        "E1462",
                         "Cannot have more than 250 parameters.",
                         self.previous(),
                         "This is a practical limitation, sorry!",
