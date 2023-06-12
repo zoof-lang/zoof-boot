@@ -61,19 +61,15 @@ for i in 0.1:3:0.5 do
 
 #### exec: no more than 3 - fail
 1:10:2:3
-#### expected output
-In 'snippet', line 1
-SyntaxError: Cannot stack colon operators more than twice at ':' (Colon)
+#### output
+-- SyntaxError (E1951) ----------------------------------------------- snippet:1
 
-1| 1:10:2:3
-         ^
-#### actual output
--- SyntaxError (E1099) ----------------------------------------------- snippet:1
-
-Cannot stack colon operators more than twice
+Cannot use colon operators more than twice in a row.
 
 1| 1:10:2:3
    ^^^^^^
+A range can be created with e.g. `0:9`. Add a step with e.g. `0:9:2`
+but adding more `:` operators does not make sense.
 #### end
 
 

@@ -1,0 +1,217 @@
+#### exec: gibberish 1
+bla bla bla
+#### output
+-- SyntaxError (E1027) ----------------------------------------------- snippet:1
+
+Unexpected code after expression.
+
+1| bla bla bla
+       ^^^
+It is unclear how 'bla' relates to the expression before it.
+Perhaps you meant to add an operator, or put it on a new line?
+#### end
+
+
+
+#### exec: indent 1
+if true do
+4
+#### output
+-- SyntaxError (E1515) ----------------------------------------------- snippet:2
+
+Expected an indented block after 'if-do'
+
+1| if true do
+2| 4
+   ^
+The code-block after a 'do' or 'else' keyword must be indented, so that
+both the compiler and human readers can follow the structure of the code.
+
+If this code was meant to be in the body of the if-do block, you should indent it.
+If you don't want the body to do anything, add an indented line that just says 'nil'.
+#### end
+
+
+
+#### exec: indent 2
+a = 3
+b = 4
+  c = 5
+#### output
+-- SyntaxError (E1572) ----------------------------------------------- snippet:3
+
+Unexpected indentation.
+
+3|   c = 5
+   ^^
+Code can only be indented after `do`  and `else`.
+#### end
+
+
+
+#### exec: indent 3
+    a = 3
+    b = 4
+  c = 5
+#### output
+-- SyntaxError (E1616) ----------------------------------------------- snippet:3
+
+Unindent does not match any outer indentation level.
+
+1|     a = 3
+2|     b = 4
+3|   c = 5
+     ^
+The indentation level does not match that of the previous lines.
+#### end
+
+
+
+#### exec: indent 4
+if true do
+    a = 3
+    b = 4
+      c = 5
+#### output
+-- SyntaxError (E1572) ----------------------------------------------- snippet:4
+
+Unexpected indentation.
+
+4|       c = 5
+   ^^^^^^
+Code can only be indented after `do`  and `else`.
+#### end
+
+
+
+#### exec: indent 5
+if true do
+    a = 3
+    b = 4
+  c = 5
+#### output
+-- SyntaxError (E1616) ----------------------------------------------- snippet:4
+
+Unindent does not match any outer indentation level.
+
+2|     a = 3
+3|     b = 4
+4|   c = 5
+     ^
+The indentation level does not match that of the previous lines.
+#### end
+
+
+
+#### exec: indent 6
+if true do
+    if true do
+        a = 3
+        b = 4
+  c = 5
+#### output
+-- SyntaxError (E1616) ----------------------------------------------- snippet:5
+
+Unindent does not match any outer indentation level.
+
+3|         a = 3
+4|         b = 4
+5|   c = 5
+     ^
+The indentation level does not match that of the previous lines.
+#### end
+
+
+
+#### exec: plain kw
+# I want this to give me help on how to use the kw
+if
+#### output
+-- SyntaxError (E1388) ----------------------------------------------- snippet:2
+
+Found a lonely 'if' keyword.
+
+2| if
+   ^^
+
+The syntax for 'if' has two forms. The (multi-line) statement form, e.g.:
+
+    if a == 42 do
+        b = true
+        print 'yes!'
+    else
+       print 'no'
+
+
+And the (single-line) expression form, e.g.:
+
+    print if a == 42 its 'yes!' else 'no'
+#### end
+
+
+
+#### exec: code after kw
+if true do
+   4
+else 4
+#### output
+-- SyntaxError (E1829) ----------------------------------------------- snippet:3
+
+Unexpected code after 'if-else'.
+
+3| else 4
+        ^
+After 'if-else', further statements are expected on a new indented line.
+Perhaps you meant:
+
+    else
+        4
+#### end
+
+
+
+#### exec: code after kw
+break 4
+#### output
+-- SyntaxError (E1087) ----------------------------------------------- snippet:1
+
+Unexpected code after 'break'.
+
+1| break 4
+         ^
+No code is allowed after the break keyword.
+Perhaps you meant to write this on a new line?
+#### end
+
+
+
+#### exec: code after expression
+4 + 4 5
+#### output
+-- SyntaxError (E1027) ----------------------------------------------- snippet:1
+
+Unexpected code after expression.
+
+1| 4 + 4 5
+         ^
+It is unclear how '5' relates to the expression before it.
+Perhaps you meant to add an operator, or put it on a new line?
+#### end
+
+
+
+#### exec: code after expression
+4 + 4 if true 3 else 2
+#### output
+-- SyntaxError (E1027) ----------------------------------------------- snippet:1
+
+Unexpected code after expression.
+
+1| 4 + 4 if true 3 else 2
+         ^^
+It is unclear how 'if' relates to the expression before it.
+Perhaps you meant to add an operator, or put it on a new line?
+#### end
+
+
+

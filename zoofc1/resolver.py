@@ -30,8 +30,9 @@ class ResolverVisitor:
         # Start main scope
         self.beginScope()
 
-    def error(self, token, message):
-        self.ehandler.nameError(token, message)
+    def error(self, errorCode, token, message, *explanation, throw=True, **kwargs):
+        explanation = "\n".join(explanation)
+        self.ehandler.nameError(errorCode, token, message, explanation, **kwargs)
 
     def resolveProgram(self, program):
         """Resolve the names in the given program.
@@ -66,7 +67,12 @@ class ResolverVisitor:
             if scope.contains(name.lexeme):
                 expr.depth = depth
         if expr.depth == -1:
-            self.error(name, f"Undefined variable")
+            self.error(
+                "E2359",
+                f"Undefined variable.",
+                name,
+                "This variable name is used before it is defined.",
+            )
         elif expr.depth == len(self.scopes) - 1:
             pass  # a local
         else:
@@ -87,8 +93,13 @@ class ResolverVisitor:
         if name.lexeme in self.scopes[-1].freeVars:
             expr = self.scopes[-1].freeVars[name.lexeme]
             self.error(
+                "E2446",
+                "Variable is used before it's declared in this scope.",
                 expr.name,
-                "Variable is used before it's defined in this scope (cannot use a variable that is shadowed in the same scope).",
+                "There is a variable in an outer scope with the same name,",
+                "but it is also defined later in the current scope (i.e. shadowed).",
+                "You must either rename the latter, to avoid shadowing, or define",
+                "the local variable before it is used here.",
             )
 
         self.scopes[-1].add(name.lexeme)

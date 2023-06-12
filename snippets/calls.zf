@@ -11,19 +11,15 @@ func foo(a) do
     a + 1
 
 foo()
-#### expected output
-In 'snippet', line 4
-RuntimeError: Expected 1 arguments, but got 0 at ')' (RightParen)
+#### output
+-- RuntimeError (E8960) ---------------------------------------------- snippet:4
+
+Callee Expected 1 arguments, but the call has 0.
 
 4| foo()
        ^
-#### actual output
--- RuntimeError (E8000) ---------------------------------------------- snippet:4
-
-Expected 1 arguments, but got 0
-
-4| foo()
-       ^
+The callable object cannot be called this way. You should probably
+double-check the signature.
 #### end
 
 
@@ -33,19 +29,15 @@ func foo(a) do
     a + 1
 
 foo(1, 2)
-#### expected output
-In 'snippet', line 4
-RuntimeError: Expected 1 arguments, but got 2 at ')' (RightParen)
+#### output
+-- RuntimeError (E8960) ---------------------------------------------- snippet:4
+
+Callee Expected 1 arguments, but the call has 2.
 
 4| foo(1, 2)
            ^
-#### actual output
--- RuntimeError (E8000) ---------------------------------------------- snippet:4
-
-Expected 1 arguments, but got 2
-
-4| foo(1, 2)
-           ^
+The callable object cannot be called this way. You should probably
+double-check the signature.
 #### end
 
 
@@ -66,19 +58,14 @@ func foo(a) do
     a + 1
 
 foo(1 2)
-#### expected output
-In 'snippet', line 4
-SyntaxError: Expecting ',' or ')' after argument. at '2' (LiteralNumber)
+#### output
+-- SyntaxError (E1543) ----------------------------------------------- snippet:4
+
+Expected ',' or ')' after argument.
 
 4| foo(1 2)
          ^
-#### actual output
--- SyntaxError (E1019) ----------------------------------------------- snippet:4
-
-Expecting ',' or ')' after argument.
-
-4| foo(1 2)
-         ^
+It looks like you forgot a comma in between two arguments.Perhaps you meant
 #### end
 
 

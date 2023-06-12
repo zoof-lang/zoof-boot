@@ -109,19 +109,14 @@ foo()
 
 #### exec: fail notexist 1
 a
-#### expected output
-In 'snippet', line 1
-NameError: Undefined variable at 'a' (Identifier)
+#### output
+-- NameError (E2359) ------------------------------------------------- snippet:1
+
+Undefined variable.
 
 1| a
    ^
-#### actual output
--- NameError (E2000) ------------------------------------------------- snippet:1
-
-Undefined variable
-
-1| a
-   ^
+This variable name is used before it is defined.
 #### end
 
 
@@ -129,19 +124,14 @@ Undefined variable
 #### exec: fail notexist 2
 a = 1
 c = b
-#### expected output
-In 'snippet', line 2
-NameError: Undefined variable at 'b' (Identifier)
+#### output
+-- NameError (E2359) ------------------------------------------------- snippet:2
+
+Undefined variable.
 
 2| c = b
        ^
-#### actual output
--- NameError (E2000) ------------------------------------------------- snippet:2
-
-Undefined variable
-
-2| c = b
-       ^
+This variable name is used before it is defined.
 #### end
 
 
@@ -150,19 +140,14 @@ Undefined variable
 func foo() do
   print(b)
 foo()
-#### expected output
-In 'snippet', line 2
-NameError: Undefined variable at 'b' (Identifier)
+#### output
+-- NameError (E2359) ------------------------------------------------- snippet:2
+
+Undefined variable.
 
 2|   print(b)
            ^
-#### actual output
--- NameError (E2000) ------------------------------------------------- snippet:2
-
-Undefined variable
-
-2|   print(b)
-           ^
+This variable name is used before it is defined.
 #### end
 
 
@@ -172,19 +157,14 @@ Undefined variable
 # Maybe only for procedures, not for funcs?
 func foo() do
   print(b)
-#### expected output
-In 'snippet', line 4
-NameError: Undefined variable at 'b' (Identifier)
+#### output
+-- NameError (E2359) ------------------------------------------------- snippet:4
+
+Undefined variable.
 
 4|   print(b)
            ^
-#### actual output
--- NameError (E2000) ------------------------------------------------- snippet:4
-
-Undefined variable
-
-4|   print(b)
-           ^
+This variable name is used before it is defined.
 #### end
 
 
@@ -195,19 +175,14 @@ func foo() do
     print(b)
   bar()
 foo()
-#### expected output
-In 'snippet', line 3
-NameError: Undefined variable at 'b' (Identifier)
+#### output
+-- NameError (E2359) ------------------------------------------------- snippet:3
+
+Undefined variable.
 
 3|     print(b)
              ^
-#### actual output
--- NameError (E2000) ------------------------------------------------- snippet:3
-
-Undefined variable
-
-3|     print(b)
-             ^
+This variable name is used before it is defined.
 #### end
 
 
@@ -217,19 +192,14 @@ func foo() do
   func bar() do
     print(b)
 foo()
-#### expected output
-In 'snippet', line 3
-NameError: Undefined variable at 'b' (Identifier)
+#### output
+-- NameError (E2359) ------------------------------------------------- snippet:3
+
+Undefined variable.
 
 3|     print(b)
              ^
-#### actual output
--- NameError (E2000) ------------------------------------------------- snippet:3
-
-Undefined variable
-
-3|     print(b)
-             ^
+This variable name is used before it is defined.
 #### end
 
 
@@ -240,19 +210,17 @@ func foo() do
   print(a)
   a = 2
   print(a)
-#### expected output
-In 'snippet', line 3
-NameError: Variable is used before it's defined in this scope (cannot use a variable that is shadowed in the same scope). at 'a' (Identifier)
+#### output
+-- NameError (E2446) ------------------------------------------------- snippet:3
+
+Variable is used before it's declared in this scope.
 
 3|   print(a)
            ^
-#### actual output
--- NameError (E2000) ------------------------------------------------- snippet:3
-
-Variable is used before it's defined in this scope (cannot use a variable that is shadowed in the same scope).
-
-3|   print(a)
-           ^
+There is a variable in an outer scope with the same name,
+but it is also defined later in the current scope (i.e. shadowed).
+You must either rename the latter, to avoid shadowing, or define
+the local variable before it is used here.
 #### end
 
 

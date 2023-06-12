@@ -38,16 +38,22 @@ class ErrorHandler:
             "SyntaxError", errorCode, message, exprOrToken, explanation, **kwargs
         )
 
-    def nameError(self, token, message):
+    def nameError(self, errorCode, message, exprOrToken, explanation, **kwargs):
         """An error generated while resolving names."""
         self.hadAnalysisError = True
-        self._show_error("NameError", "E2706", message, token, "")
+        assert errorCode.startswith("E2") and len(errorCode) == 5
+        self._show_error(
+            "NameError", errorCode, message, exprOrToken, explanation, **kwargs
+        )
 
-    def runtimeError(self, token, message):
+    def runtimeError(self, errorCode, message, exprOrToken, explanation, **kwargs):
         """An error generated at runtime."""
         # self.print(f"[line {token.line}] Error : {message}")
         self.hadRuntimeError = True
-        self._show_error("RuntimeError", "E8703", message, token, "")
+        assert errorCode.startswith("E8") and len(errorCode) == 5
+        self._show_error(
+            "RuntimeError", errorCode, message, exprOrToken, explanation, **kwargs
+        )
 
     def _show_error(
         self,
@@ -90,7 +96,7 @@ class ErrorHandler:
         charsForLineNo = len(str(lineIndex2 + 1))
 
         # Get Header
-        link = f" {self.source.name}:{lineIndex1+1}"
+        link = f" {self.source.name}:{line1}"
         title = f"-- {errorType} ({errorCode}) "
         padding = 80 - max(0, len(title) + len(link))
         self.print(title + padding * "-" + link)

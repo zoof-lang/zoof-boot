@@ -120,14 +120,8 @@ print 3 * -2
 
 #### exec: unaries do not stack - FAIL
 print - - 3
-#### expected output
-In 'snippet', line 1
-SyntaxError: Unaries do not stack at '-' (Minus)
-
-1| print - - 3
-           ^
-#### actual output
--- SyntaxError (E1011) ----------------------------------------------- snippet:1
+#### output
+-- SyntaxError (E1035) ----------------------------------------------- snippet:1
 
 Unaries do not stack.
 

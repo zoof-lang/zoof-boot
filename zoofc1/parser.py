@@ -87,7 +87,7 @@ class Parser:
                 "E1361",
                 "Parsing ended before EOF (end of file).",
                 self.peek(),
-                "The compiler did not expect more code. This is an internal parser error that should not occur in practice.",
+                "Unexpected code after parsing was finished. This is an internal parser error that should not occur in practice.",
                 throw=False,
             )
 
@@ -161,7 +161,7 @@ class Parser:
             token = self.peek()
             self.error(
                 "E1087",
-                f"Expected newline after '{kw}'.",
+                f"Unexpected code after '{kw}'.",
                 token,
                 f"No code is allowed after the {kw} keyword.",
                 f"Perhaps you meant to write this on a new line?",
@@ -172,13 +172,10 @@ class Parser:
             token = self.peek()
             self.error(
                 "E1027",
-                f"Expected newline after expression.",
+                f"Unexpected code after expression.",
                 token,
-                f"The compiler cannot relate '{token.lexeme}' to the expression before it.",
+                f"It is unclear how '{token.lexeme}' relates to the expression before it.",
                 f"Perhaps you meant to add an operator, or put it on a new line?",
-                f"",
-                f"I cannot relate '{token.lexeme}' to the expression before it.",
-                f"I think you should either add an operator, or put it on a new line.",
             )
 
     def indentedStatements(self, context, couldAlsoHaveUsedIts):
@@ -191,22 +188,22 @@ class Parser:
 
         if not self.matchEos():
             line = self.ehandler.getLineOfToken(self.peek()).strip()
-            pieces = line.split("do")
+
+            pieces = line.split(token.lexeme)
             example1 = "\n".join(
-                "    " * i + (piece.strip() + " do").strip()
+                "    " * i + (piece.strip() + " " + token.lexeme).strip()
                 for i, piece in enumerate(pieces, 1)
             )
-            example1 = example1[:-3]
-            explanation = "After '{context}', further statements are expected on a new indented line.\n"
+            example1 = example1[: -len(token.lexeme) - 1]
+            explanation = f"After '{context}', further statements are expected on a new indented line.\n"
             explanation += "Perhaps you meant:\n\n" + example1
             if couldAlsoHaveUsedIts:
                 explanation += "\n\nOr perhaps you intended to use the expression form using 'its'."
             self.error(
                 "E1829",
-                f"Expected newline after '{context}'.",
+                f"Unexpected code after '{context}'.",
                 self.peek(),
                 explanation,
-                throw=False,
             )
 
         if not self.match(TT.Indent):
@@ -216,9 +213,10 @@ class Parser:
                 self.peek(),
                 f"The code-block after a 'do' or 'else' keyword must be indented, so that",
                 f"both the compiler and human readers can follow the structure of the code.",
-                f"If you don't want the block after 'do' to do anything, use 'nil'.",
+                f"",
+                f"If this code was meant to be in the body of the {context} block, you should indent it.",
+                "If you don't want the body to do anything, add an indented line that just says 'nil'.",
                 linesBefore=1,
-                throw=False,
             )
         return self.statements()
 
@@ -284,7 +282,7 @@ class Parser:
             self.error(
                 "E1366",
                 "Bare assignment not allowed here.",
-                self.peek(),
+                condition,
                 "To avoid the bug that '=' is used when '==' was intended,",
                 f"it's required to compare the result of an assignment here.",
                 throw=False,
@@ -302,14 +300,13 @@ class Parser:
                 if self.matchKeyword("if"):
                     elseStatements = [self.ifStatement()]
                 else:
-                    self.consumeEosAfterKeyword()
                     elseStatements = self.indentedStatements("if-else", False)
 
             return tree.IfStmt(ifToken, condition, thenStatements, elseStatements)
 
         elif self.matchKeyword("its"):
             # Expression form
-            expr = self.ifExpAfterIts(ifToken, condition)
+            expr = self.ifExpAfterIts(ifToken, condition, couldBeStatement=True)
             self.consumeEosAfterExpression()
             return tree.ExpressionStmt(expr)
         else:
@@ -417,20 +414,17 @@ class Parser:
         # -> "func" IDENTIFIER "(" parameters? ")" "do" EOS statement*
         # parameters -> IDENTIFIER ( "," IDENTIFIER )* ","?
         # todo: should we prohibit function/class declarations inside loops or ifs? E.g. only in the "root" of a scope?
+        funcToken = self.previous()
 
-        if not self.match(TT.Identifier):
-            self.error(
-                "E1959",
-                f"Expected {kind} name",
-                self.peek(),
-                HINT_FUNC,
-            )
-        name = self.previous()
+        if self.match(TT.Identifier):
+            name = self.previous()
+        else:
+            name = None
 
         if not self.match(TT.LeftParen):
             self.error(
                 "E1286",
-                f"Expected '(' after {kind} name.",
+                f"Expected '(' to start {kind} signature.",
                 self.peek(),
                 HINT_FUNC,
             )
@@ -439,10 +433,21 @@ class Parser:
 
         if self.matchKeyword("do"):
             # Statement-mode
+            if name is None:
+                self.error(
+                    "E1959",
+                    f"Expected {kind} name",
+                    self.peek(),
+                    HINT_FUNC,
+                )
             statements = self.indentedStatements("func-do", True)
         elif self.matchKeyword("its"):
             # Expression-mode
-            statements = [self.expression()]
+            body = self.expression()
+            self.consumeEosAfterExpression()
+            name = name or ""
+            expr = tree.FunctionExpr(funcToken, name, params, body)
+            return tree.ExpressionStmt(expr)
         else:
             self.error(
                 "E1653",
@@ -464,9 +469,9 @@ class Parser:
             after = "return value" if has_value else "return"
             self.error(
                 "E1536",
-                "Expected newline after {after}.",
+                "Unexpected code after {after}.",
                 keyword,
-                "The return keyword can be followed by 0 or 1 expression.",
+                "The return keyword can be followed by 0 or 1 expressions.",
             )
         return tree.ReturnStmt(keyword, value)
 
@@ -543,8 +548,10 @@ class Parser:
                     if leftExpr.step is not None:
                         self.error(
                             "E1951",
-                            "Cannot stack colon operators more than twice",
+                            "Cannot use colon operators more than twice in a row.",
                             leftExpr,
+                            "A range can be created with e.g. `0:9`. Add a step with e.g. `0:9:2`",
+                            "but adding more `:` operators does not make sense.",
                             throw=False,
                         )
                     leftExpr = tree.RangeExpr(leftExpr.start, leftExpr.stop, rightExpr)
@@ -612,9 +619,9 @@ class Parser:
             if not allow_kw:
                 self.error(
                     "E1321",
-                    f"The {lexeme}-expression not allowed here.",
-                    self.previous(),
-                    f"Try wrapping it in parentheses: `(...)`.",
+                    f"This {lexeme}-expression is not allowed here.",
+                    result,
+                    f"To keep code readable, you must wrap it in parentheses: `(...)`.",
                 )
             return result
         return self.primaryExpression()
@@ -641,44 +648,68 @@ class Parser:
         elif self.match(TT.Identifier):
             return tree.VariableExpr(self.previous())
         else:
-            prev = self.previous()
-            if prev.type == TT.Keyword:
-                if prev.lexeme == "if":
-                    self.error(
-                        "E1388",
-                        f"Found a lonely 'if' keyword.",
-                        prev,
-                        HINT_IF,
-                    )
-                elif prev.lexeme == "for":
-                    self.error(
-                        "E1461",
-                        f"Found a lonely 'for' keyword.",
-                        prev,
-                        HINT_FOR,
-                    )
-                elif prev.lexeme == "while":
-                    self.error(
-                        "E1174",
-                        f"Found a lonely 'while' keyword.",
-                        prev,
-                        HINT_WHILE,
-                    )
+            self.primaryExpressionError()
 
-            # Else ...
+    def primaryExpressionError(self):
+        # When we expect an expression but got something else, this
+        # could be for several reasons, this code tries to detect what's
+        # wrong, so we can give a better error message.
+        prev = self.previous()
+        cur = self.peek()
+        next = self.peekNext()
+
+        if prev.type == TT.Keyword:
+            if prev.lexeme == "if":
+                self.error(
+                    "E1388",
+                    f"Found a lonely 'if' keyword.",
+                    prev,
+                    HINT_IF,
+                )
+            elif prev.lexeme == "for":
+                self.error(
+                    "E1461",
+                    f"Found a lonely 'for' keyword.",
+                    prev,
+                    HINT_FOR,
+                )
+            elif prev.lexeme == "while":
+                self.error(
+                    "E1174",
+                    f"Found a lonely 'while' keyword.",
+                    prev,
+                    HINT_WHILE,
+                )
+            else:
+                self.error(
+                    "E1170",
+                    f"Unexpected keyword.",
+                    prev,
+                    "An expression was expected, but got '{prev.lexeme}'.",
+                )
+
+        elif cur.type == TT.Indent:
+            self.error(
+                "E1572",
+                f"Unexpected indentation.",
+                cur,
+                f"Code can only be indented after `do`  and `else`.",
+            )
+
+        else:
             self.error(
                 "E1422",
-                f"Expected expression after {self.previous().lexeme}.",
+                f"Expected expression after {prev.lexeme}.",
                 prev,
-                f"An expression was expected, but got '{self.peek().lexeme}'.",
+                f"An expression was expected, but got '{cur.lexeme}'.",
             )
 
     def handleAssign(self, leftExpr, equalsToken, rightExpr, is_statement):
         if not is_statement and isinstance(rightExpr, tree.AssignExpr):
             self.error(
                 "E1178",
-                "Cannot stack expression-assignment.",
-                leftExpr,
+                "Cannot multi-assign in expressions.",
+                equalsToken,
                 "You can do this in a statement:\n\n     a = b = c = 8\n",
                 "But not in an expression.\n\n   foo = 3 + (a = b = 8)  # forbidden",
                 throw=False,
@@ -719,8 +750,9 @@ class Parser:
                 if not hasComma:
                     self.error(
                         "E1543",
-                        "Expecting ',' or ')' after argument.",
+                        "Expected ',' or ')' after argument.",
                         self.peek(),
+                        "It looks like you forgot a comma in between two arguments.Perhaps you meant",
                     )
 
         return tree.CallExpr(callee, self.previous(), arguments)
@@ -746,12 +778,16 @@ class Parser:
             )
         return self.ifExpAfterIts(ifToken, condition)
 
-    def ifExpAfterIts(self, ifToken, condition):
+    def ifExpAfterIts(self, ifToken, condition, *, couldBeStatement=False):
         if self.matchEos():
+            hint = "Place the body right after `its`."
+            if couldBeStatement:
+                hint += " Or replace `its` with `do` to make this an if-statement`."
             self.error(
                 "E1140",
                 "An if-expression must be on a single line",
                 self.peek(),
+                hint,
                 linesBefore=1,
             )
         thenExpression = self.expression()
@@ -769,7 +805,7 @@ class Parser:
 
     def funcExpr(self, funcToken):
         # -> 'func' assignment
-        # todo: can I reuse this in funcStatement
+        # Note: cannot really re-use this in the funcStatement logic
         if not self.match(TT.LeftParen):
             self.error(
                 "E1862",

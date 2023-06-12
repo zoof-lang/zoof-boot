@@ -71,7 +71,11 @@ class ZoofFunction(Callable):
     def call(self, interpreter, arguments):
         if self.captured:
             expr = list(self.captured.values())[0]
-            raise RuntimeErr(expr.name, "Closures are not supported at the moment.")
+            raise RuntimeErr(
+                "E8135",
+                "Closures are not supported at the moment.",
+                expr.name,
+            )
         environment = Environment(self.closure)
         # for name, value in self.captured.items():
         #     environment.set(name, value)
@@ -103,10 +107,12 @@ BUILTINS["arbitraryNumber"] = ArbitraryNumber()
 
 
 class RuntimeErr(Exception):
-    def __init__(self, token, message):
+    def __init__(self, code, message, token, *explanation):
         super().__init__(message)
-        self.token = token
+        self.code = code
         self.message = message
+        self.token = token
+        self.explanation = "\n".join(explanation)
 
 
 class Return(Exception):
@@ -133,7 +139,12 @@ class Environment:
         try:
             return self.map[name.lexeme]
         except KeyError:
-            raise RuntimeErr(name, f"Undefined variable '{name.lexeme}'.")
+            raise RuntimeErr(
+                "E8774",
+                "Undefined variable.",
+                name,
+                "This variable name is used before it is defined.",
+            )
 
 
 class InterpreterVisitor:
@@ -158,7 +169,9 @@ class InterpreterVisitor:
             if val is not None:
                 self.print(self.stringify(val))
         except RuntimeErr as err:
-            self.ehandler.runtimeError(err.token, err.message)
+            self.ehandler.runtimeError(
+                err.code, err.message, err.token, err.explanation
+            )
         except Exception as err:
             raise err
 
@@ -196,22 +209,38 @@ class InterpreterVisitor:
             return True
         else:
             typename = value.__class__.__name__
-            raise RuntimeErr(token, f"Cannot convert {typename} to bool.")
+            raise RuntimeErr(
+                "E8295",
+                f"Cannot convert {typename} to bool.",
+                token,
+                "Zoof does not support implicit truethyness. You need to do an explicit",
+                "check that resolves to a boolean.",
+            )
 
     def checkNumberOperand(self, op, right):
         if not isinstance(right, float):
             classname = right.__class__.__name__
             raise RuntimeErr(
-                op.token, f"Unary operand must be a number, not '{classname}'"
+                "E8875",
+                f"Unary operand must be a number, not '{classname}'.",
+                op.token,
             )
 
     def checkNumberOperands(self, op, left, right):
         if not isinstance(left, float):
             classname = left.__class__.__name__
-            raise RuntimeErr(op, f"Left operand must be a number, not '{classname}'")
+            raise RuntimeErr(
+                "E8334",
+                f"Left operand must be a number, not '{classname}'.",
+                op,
+            )
         if not isinstance(right, float):
             classname = right.__class__.__name__
-            raise RuntimeErr(op, f"Right operand must be a number, not '{classname}'")
+            raise RuntimeErr(
+                "E8410",
+                f"Right operand must be a number, not '{classname}'.",
+                op,
+            )
 
     def isEqual(self, left, right):
         if left is None and right is None:
@@ -264,7 +293,9 @@ class InterpreterVisitor:
     def visitBreakStmt(self, stmt):
         if not self.env.loopStack:
             raise RuntimeErr(
-                stmt.token, "Can only break inside a for-loop or while-loop."
+                "E8311",
+                "Can only use break inside a for-loop or while-loop.",
+                stmt.token,
             )
         else:
             raise Break()
@@ -338,7 +369,11 @@ class InterpreterVisitor:
         elif t == TT.LiteralString:
             return expr.token.lexeme[1:-1]
         else:
-            raise RuntimeErr(expr.token, f"Unexpected literal: '{expr.token.lexeme}'")
+            raise RuntimeErr(
+                "E8821",
+                f"Unexpected literal: '{expr.token.lexeme}'.",
+                expr.token,
+            )
 
     def visitUnaryExpr(self, expr):
         right = self.evaluate(expr.right)
@@ -349,7 +384,11 @@ class InterpreterVisitor:
             self.checkNumberOperand(expr.op, right)
             return right
         else:
-            raise RuntimeErr(expr.op, f"Unexpected unary operation.")
+            raise RuntimeErr(
+                "E8259",
+                f"Unexpected unary operation.",
+                expr.op,
+            )
 
     def visitLogicalExpr(self, expr):
         left = self.evaluate(expr.left)
@@ -363,7 +402,11 @@ class InterpreterVisitor:
                 return left
             return self.evaluate(expr.right)
         else:
-            raise RuntimeErr(expr.op, f"Unexpected logical expr '{optype}'")
+            raise RuntimeErr(
+                "E8092",
+                f"Unexpected logical expression '{optype}'.",
+                expr.op,
+            )
 
     def visitBinaryExpr(self, expr):
         left = self.evaluate(expr.left)
@@ -391,7 +434,9 @@ class InterpreterVisitor:
                 classname1 = left.__class__.__name__
                 classname2 = right.__class__.__name__
                 raise RuntimeErr(
-                    expr.op, f"Cannot add '{classname1}' and '{classname2}'"
+                    "E8255",
+                    f"Cannot add '{classname1}' and '{classname2}' objects.",
+                    expr.op,
                 )
         # Comparisons
         elif optype == TT.Greater:
@@ -412,7 +457,11 @@ class InterpreterVisitor:
         elif optype == TT.BangEqual:
             return not self.isEqual(left, right)
         else:
-            raise RuntimeErr(expr.op, f"Unexpected binary expr '{optype}'")
+            raise RuntimeErr(
+                "E8701",
+                f"Unexpected binary expression '{optype}'.",
+                expr.op,
+            )
 
     def visitCallExpr(self, expr):
         callee = self.evaluate(expr.callee)
@@ -420,11 +469,20 @@ class InterpreterVisitor:
 
         # todo: error is bound to the closing paren :/
         if not isinstance(callee, Callable):
-            raise RuntimeErr(expr.paren, "not a callable object.")
+            raise RuntimeErr(
+                "E8247",
+                "Not a callable object.",
+                expr.paren,
+                "The code attempts to call an object that cannot be called.",
+                "Perhaps you thought this was a function, but it's not?",
+            )
         elif callee.arity() != len(arguments):
             raise RuntimeErr(
+                "E8960",
+                f"Callee Expected {callee.arity()} arguments, but the call has {len(arguments)}.",
                 expr.paren,
-                f"Expected {callee.arity()} arguments, but got {len(arguments)}",
+                "The callable object cannot be called this way. You should probably",
+                "double-check the signature.",
             )
 
         return callee.call(self, arguments)

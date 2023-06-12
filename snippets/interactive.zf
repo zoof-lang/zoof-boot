@@ -1,18 +1,13 @@
 #### repl: use a - fail
 print a + 2
-#### expected output
-In 'snippets/interactive.zf', line 2
-NameError: Undefined variable at 'a' (Identifier)
+#### output
+-- NameError (E2359) --------------------------------- snippets/interactive.zf:2
 
-2| print a + 2
-         ^
-#### actual output
--- NameError (E2000) --------------------------------- snippets/interactive.zf:1
-
-Undefined variable
+Undefined variable.
 
 1| print a + 2
          ^
+This variable name is used before it is defined.
 #### end
 
 
@@ -37,19 +32,14 @@ print a + 2
 #### repl: define function
 func foo() do
     print b   # todo: maybe this should be allowed, being able to execute incomplete code ...
-#### expected output
-In 'snippets/interactive.zf', line 32
-NameError: Undefined variable at 'b' (Identifier)
+#### output
+-- NameError (E2359) -------------------------------- snippets/interactive.zf:34
 
-32|     print b   # todo: maybe this should be allowed, being able to execute incomplete code ...
-              ^
-#### actual output
--- NameError (E2000) --------------------------------- snippets/interactive.zf:2
-
-Undefined variable
+Undefined variable.
 
 2|     print b   # todo: maybe this should be allowed, being able to execute incomplete code ...
              ^
+This variable name is used before it is defined.
 #### end
 
 
@@ -80,21 +70,17 @@ foo()
 
 
 
-#### repl: define lambda
+#### repl: define lambda - fail
+# Lambda binds at definition time for now
 bar = func () its c
-#### expected output
-In 'snippets/interactive.zf', line 70
-NameError: Undefined variable at 'c' (Identifier)
+#### output
+-- NameError (E2359) -------------------------------- snippets/interactive.zf:75
 
-70| bar = func () its c
-                      ^
-#### actual output
--- NameError (E2000) --------------------------------- snippets/interactive.zf:1
+Undefined variable.
 
-Undefined variable
-
-1| bar = func () its c
+2| bar = func () its c
                      ^
+This variable name is used before it is defined.
 #### end
 
 

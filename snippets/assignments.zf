@@ -71,19 +71,13 @@ while (a = read_number()) > 0 do
 #### exec: expression assignment cannot stack - fail
 print 4 + (a = b = 2 + 3)
 print a
-#### expected output
-In 'snippet', line 1
-SyntaxError: Can only stack assignments in assignment statements (not in expressions). at '=' (Equal)
+#### output
+-- SyntaxError (E1178) ----------------------------------------------- snippet:1
+
+Cannot multi-assign in expressions.
 
 1| print 4 + (a = b = 2 + 3)
                 ^
-#### actual output
--- SyntaxError (E1016) ----------------------------------------------- snippet:1
-
-Cannot stack expression-assignment.
-
-1| print 4 + (a = b = 2 + 3)
-              ^
 You can do this in a statement:
 
      a = b = c = 8
@@ -100,19 +94,13 @@ But not in an expression.
 a = 42.0
 if b = a do
   print 1
-#### expected output
-In 'snippet', line 3
-SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
-
-3| if b = a do
-            ^^
-#### actual output
--- SyntaxError (E1021) ----------------------------------------------- snippet:3
+#### output
+-- SyntaxError (E1366) ----------------------------------------------- snippet:3
 
 Bare assignment not allowed here.
 
 3| if b = a do
-            ^^
+      ^^^^^
 To avoid the bug that '=' is used when '==' was intended,
 it's required to compare the result of an assignment here.
 #### end
@@ -124,19 +112,13 @@ it's required to compare the result of an assignment here.
 a = true
 if b = a do
   print 1
-#### expected output
-In 'snippet', line 3
-SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
-
-3| if b = a do
-            ^^
-#### actual output
--- SyntaxError (E1021) ----------------------------------------------- snippet:3
+#### output
+-- SyntaxError (E1366) ----------------------------------------------- snippet:3
 
 Bare assignment not allowed here.
 
 3| if b = a do
-            ^^
+      ^^^^^
 To avoid the bug that '=' is used when '==' was intended,
 it's required to compare the result of an assignment here.
 #### end
@@ -148,19 +130,13 @@ it's required to compare the result of an assignment here.
 a = true
 if (b = a) do
   print 1
-#### expected output
-In 'snippet', line 3
-SyntaxError: To avoid bugs, it's required to compare the result of an assignment here at 'do' (Keyword)
-
-3| if (b = a) do
-              ^^
-#### actual output
--- SyntaxError (E1021) ----------------------------------------------- snippet:3
+#### output
+-- SyntaxError (E1366) ----------------------------------------------- snippet:3
 
 Bare assignment not allowed here.
 
 3| if (b = a) do
-              ^^
+       ^^^^^
 To avoid the bug that '=' is used when '==' was intended,
 it's required to compare the result of an assignment here.
 #### end

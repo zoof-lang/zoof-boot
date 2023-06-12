@@ -143,6 +143,15 @@ def test_that_each_error_code_is_in_a_snippet():
 
 def zero_out_all_codes():
     """Set all error codes to placeholder codes."""
+
+    # Don't make this too easy
+    res = input(
+        "Do you really want to nuke all current error codes? Type 'yes'  to confirm: "
+    )
+    if res != "yes":
+        print("cancelled")
+        return
+
     error_codes = collect_error_codes_from_source()
     assigned_count = 0
 
