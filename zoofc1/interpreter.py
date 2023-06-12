@@ -223,7 +223,7 @@ class InterpreterVisitor:
             raise RuntimeErr(
                 "E8875",
                 f"Unary operand must be a number, not '{classname}'.",
-                op.token,
+                op,
             )
 
     def checkNumberOperands(self, op, left, right):
@@ -378,10 +378,10 @@ class InterpreterVisitor:
     def visitUnaryExpr(self, expr):
         right = self.evaluate(expr.right)
         if expr.op.type == TT.Minus:
-            self.checkNumberOperand(expr.op, right)
+            self.checkNumberOperand(expr.right, right)
             return -right
         if expr.op.type == TT.Plus:
-            self.checkNumberOperand(expr.op, right)
+            self.checkNumberOperand(expr.right, right)
             return right
         else:
             raise RuntimeErr(
@@ -472,7 +472,7 @@ class InterpreterVisitor:
             raise RuntimeErr(
                 "E8247",
                 "Not a callable object.",
-                expr.paren,
+                expr,
                 "The code attempts to call an object that cannot be called.",
                 "Perhaps you thought this was a function, but it's not?",
             )

@@ -118,7 +118,17 @@ def test_error_codes_appear_in_correct_file():
 
 
 def test_that_each_error_code_is_in_a_snippet():
-    excludes = {"E1361", "E1614", "E1068", "E1462"}
+    excludes = {
+        "E1361",  # Parsing ended before EOF (end of file).
+        "E1614",  # For-expressions will be implemened later.
+        "E1068",  # Cannot have more than 250 arguments.
+        "E1462",  # Cannot have more than 250 parameters.
+        "E8259",  # Unexpected unary operation.
+        "E8701",  # Unexpected binary expression '{optype}'.
+        "E8092",  # Unexpected logical expression '{optype}'.
+        "E8821",  # Unexpected literal: '{expr.token.lexeme}'.
+        "E8774",  # Undefined variable. We already catch this in resolve step
+    }
 
     error_codes = collect_error_codes_from_source()
     source_codes = {ec.code for ec in error_codes if not ec.invalid}

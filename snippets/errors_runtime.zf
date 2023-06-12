@@ -1,0 +1,85 @@
+#### exec: unaries dont work on strings
+- 'foo'
+#### output
+-- RuntimeError (E8875) ---------------------------------------------- snippet:1
+
+Unary operand must be a number, not 'str'.
+
+1| - 'foo'
+     ^^^^^
+#### end
+
+
+
+#### exec: cannot call anything
+4()
+#### output
+-- RuntimeError (E8247) ---------------------------------------------- snippet:1
+
+Not a callable object.
+
+1| 4()
+   ^^
+The code attempts to call an object that cannot be called.
+Perhaps you thought this was a function, but it's not?
+#### end
+
+
+
+#### exec: invalid operands
+3 ^ 'bar'
+#### output
+-- RuntimeError (E8410) ---------------------------------------------- snippet:1
+
+Right operand must be a number, not 'str'.
+
+1| 3 ^ 'bar'
+     ^
+#### end
+
+
+
+#### exec: invalid operands
+'foo' ^ 3
+#### output
+-- RuntimeError (E8334) ---------------------------------------------- snippet:1
+
+Left operand must be a number, not 'str'.
+
+1| 'foo' ^ 3
+         ^
+#### end
+
+
+
+#### exec: invalid operands for add
+3 + false
+#### output
+-- RuntimeError (E8255) ---------------------------------------------- snippet:1
+
+Cannot add 'float' and 'bool' objects.
+
+1| 3 + false
+     ^
+#### end
+
+
+
+#### exec: no explicit truethy
+if 4 do
+  print 1
+else
+  print 2
+#### output
+-- RuntimeError (E8295) ---------------------------------------------- snippet:1
+
+Cannot convert float to bool.
+
+1| if 4 do
+      ^
+Zoof does not support implicit truethyness. You need to do an explicit
+check that resolves to a boolean.
+#### end
+
+
+
