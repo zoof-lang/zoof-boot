@@ -10,7 +10,9 @@ from .interpreter import BUILTINS
 
 class Scope:
     def __init__(self, names=None):
+        # Names of variables that exist in the current scope
         self.names = names or set()
+        # Names that are used in this scope but declared in an outer scope
         self.freeVars = {}
 
     def contains(self, name):
@@ -25,6 +27,7 @@ class ResolverVisitor:
         self.ehandler = ehandler
         builtin_scope = Scope({name for name in BUILTINS.keys()})
         self.scopes = [builtin_scope]
+        # To help support late binding
         self.unresolvedFunctions = {}
 
         # Start main scope
@@ -55,12 +58,18 @@ class ResolverVisitor:
         assert isinstance(stmt_or_expr, (Stmt, Expr))
         stmt_or_expr.accept(self)
 
+    def checkFunction(self, name):
+        declaration = self.unresolvedFunctions.pop(name, None)
+        if declaration is not None:
+            self.resolveFunction(declaration)
+
     def resolveRemainingFunctions(self):
-        for nameStr in list(self.unresolvedFunctions.keys()):
-            self.checkFunction(nameStr)
-        assert not self.unresolvedFunctions
+        for declaration in self.unresolvedFunctions.values():
+            self.resolveFunction(declaration)
+        self.unresolvedFunctions = {}
 
     def resolveLocal(self, expr):
+        """Resolve the local usage of a variable, determining its depth in the scope-stack."""
         name = expr.name
         expr.depth = -1
         for depth, scope in enumerate(self.scopes):
@@ -76,8 +85,8 @@ class ResolverVisitor:
         elif expr.depth == len(self.scopes) - 1:
             pass  # a local
         else:
-            # A free variable, in the liberal sense. It can still be a global or
-            # builtin, but for the logic in declare() we need to include *all* non-locals.
+            # A free variable, in the liberal sense: it can be a nonlocal, global or
+            # builtin. For the logic in declare() we need to include *all* non-locals.
             freeVars = self.scopes[-1].freeVars
             if name.lexeme not in freeVars:
                 freeVars[name.lexeme] = expr
@@ -90,8 +99,12 @@ class ResolverVisitor:
         self.scopes.pop(-1)
 
     def declare(self, name):
-        if name.lexeme in self.scopes[-1].freeVars:
-            expr = self.scopes[-1].freeVars[name.lexeme]
+        """Declare that a variable with the given name exists from this point on."""
+
+        # Check that the name is not already used and addresses a variable from an outer scope
+        freeVars = self.scopes[-1].freeVars
+        if name.lexeme in freeVars:
+            expr = freeVars[name.lexeme]
             self.error(
                 "E2446",
                 "Variable is used before it's declared in this scope.",
@@ -102,6 +115,7 @@ class ResolverVisitor:
                 "the local variable before it is used here.",
             )
 
+        # Declare the variable to exist in this scope
         self.scopes[-1].add(name.lexeme)
 
     # %% The interesting bits
@@ -109,31 +123,38 @@ class ResolverVisitor:
     def visitDoStmt(self, stmt):
         self.resolveStatements(stmt.statements)
 
+    def visitStructStmt(self, stmt):
+        self.declare(stmt.name)
+
+    def visitImplStmt(self, stmt):
+        for fn in stmt.functions:
+            self.resolveFunction(fn, extra_names=["self", "Self"])
+
     def visitFunctionStmt(self, stmt):
+        # todo: prevent defining the same funcion twice in the same source. But do alow re-defining in an interactive session.
         self.declare(stmt.name)
         self.unresolvedFunctions[stmt.name.lexeme] = stmt
 
     def visitFunctionExpr(self, expr):
-        # Check it directly
-        self.unresolvedFunctions[""] = expr
-        self.checkFunction("")
+        self.resolveFunction(expr)
 
-    def checkFunction(self, name):
-        declaration = self.unresolvedFunctions.pop(name, None)
-        if declaration is not None:
-            self.beginScope()
-            for param in declaration.params:
-                self.declare(param)
-            if isinstance(declaration.body, list):
-                self.resolveStatements(declaration.body)
-            else:
-                self.resolve(declaration.body)
-            declaration.freeVars = {
-                name: expr
-                for name, expr in self.scopes[-1].freeVars.items()
-                if expr.depth >= 1
-            }
-            self.endScope()
+    def resolveFunction(self, declaration, extra_names=()):
+        self.beginScope()
+        for name in extra_names:
+            self.scopes[-1].add(name)
+        for param in declaration.params:
+            self.declare(param)
+        if isinstance(declaration.body, list):
+            self.resolveStatements(declaration.body)
+        else:
+            self.resolve(declaration.body)
+        # Add freeVars to the AST node, so the interpreter can create precise closures
+        declaration.freeVars = {
+            name: expr
+            for name, expr in self.scopes[-1].freeVars.items()
+            if expr.depth >= 1
+        }
+        self.endScope()
 
     def visitAssignExpr(self, expr):
         if expr.value is not None:
@@ -182,6 +203,13 @@ class ResolverVisitor:
         self.resolve(stmt.expr)
 
     # %% The boring expr's
+
+    def visitGetExpr(self, expr):
+        self.resolve(expr.object)
+
+    def visitSetExpr(self, expr):
+        self.resolve(expr.value)
+        self.resolve(expr.object)
 
     def visitIfExpr(self, expr):
         self.resolve(expr.condition)
