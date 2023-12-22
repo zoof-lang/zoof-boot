@@ -800,7 +800,8 @@ class Parser:
                 else:
                     self.error(
                         "E1000",
-                        "Expected identifier after dot.".token,
+                        "Expected identifier after dotdot ('..').",
+                        token,
                         "Attribute getters must be identifiers (i.e. a name).",
                     )
             else:
@@ -929,6 +930,7 @@ class Parser:
             name = leftExpr.name
             return tree.AssignExpr(name, rightExpr)
         elif isinstance(leftExpr, tree.GetExpr):
+            # Convert getExpr into setExpr
             return tree.SetExpr(
                 leftExpr.token, leftExpr.object, leftExpr.name, rightExpr
             )

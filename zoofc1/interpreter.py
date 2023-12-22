@@ -110,10 +110,8 @@ class ZoofFunction(Callable):
 
 
 class ZoofStruct:
-    def __init__(self, declaration, closure, source):
+    def __init__(self, declaration):
         self.declaration = declaration
-        closure  # is not used (for now?)
-        self.source = source
 
         self.funcs = {}
         self.methods = {}
@@ -132,7 +130,7 @@ class ZoofStruct:
         elif kind == "method":
             self.methods[name] = fn
         else:
-            raise RuntimeError(f"Unforesoon function kind '{kind}'.")
+            raise RuntimeError(f"Unforeseen function kind '{kind}'.")
 
     def get(self, nameToken):
         name = nameToken.lexeme
@@ -460,7 +458,7 @@ class InterpreterVisitor:
             self.maybeClosures[-1].append(function)
 
     def visitStructStmt(self, stmt):
-        struct = ZoofStruct(stmt, self.env, self.ehandler.source)
+        struct = ZoofStruct(stmt)
         self.env.set(stmt.name, struct)
 
     def visitImplStmt(self, stmt):
