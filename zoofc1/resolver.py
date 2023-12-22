@@ -128,7 +128,7 @@ class ResolverVisitor:
 
     def visitImplStmt(self, stmt):
         for fn in stmt.functions:
-            self.resolveFunction(fn, extra_names=["self", "Self"])
+            self.resolveFunction(fn, extra_names=["this", "This"])
 
     def visitFunctionStmt(self, stmt):
         # todo: prevent defining the same funcion twice in the same source. But do alow re-defining in an interactive session.

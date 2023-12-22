@@ -19,22 +19,19 @@ struct Vector
 
 impl Vector
 
-    # func () its Self(x, y)
-
     func new(x, y) do
-        return Self(x, y)
+        return This(x, y)
 
-    getter x() do
-        return self..x
+    getter x() its this..x
     setter x(v) do
-        self..x = v
+        this..x = v
 
-    getter y() do
-        return self..y
+    getter y() its this..y
     setter y(v) do
-        self..y = v
+        this..y = v
 
-    getter length() its (self..x^2 + self..y^2) ^ 0.5
+    getter length() do
+        return (this..x^2 + this..y^2) ^ 0.5
 
 
 v = Vector.new(1, 2)

@@ -93,7 +93,6 @@ KEYWORDS = (
 )
 RESERVED = (
     "super",
-    "this",
     "swicth",
     "match",
     "step",

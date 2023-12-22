@@ -205,7 +205,7 @@ class ZoofInstance:
     def getProp(self, interpreter, nameToken):
         name = nameToken.lexeme
         fn = self.archetype.getters.get(name, None)
-        bindings = {"self": self}
+        bindings = {"this": self}
         if fn is not None:
             attr = fn.call(interpreter, [], bindings)
         else:
@@ -226,7 +226,7 @@ class ZoofInstance:
         name = nameToken.lexeme
         fn = self.archetype.setters.get(name, None)
         if fn is not None:
-            bindings = {"self": self}
+            bindings = {"this": self}
             fn.call(interpreter, [value], bindings)
         else:
             structName = self.archetype.declaration.name.lexeme
@@ -468,7 +468,7 @@ class InterpreterVisitor:
         if isinstance(ob, ZoofStruct):
             for funcStmt in stmt.functions:
                 fn = ZoofFunction(
-                    funcStmt, self.env, {"Self": ob}, self.ehandler.source
+                    funcStmt, self.env, {"This": ob}, self.ehandler.source
                 )
                 ob.addFunction(fn)
                 if self.maybeClosures:
@@ -664,7 +664,7 @@ class InterpreterVisitor:
         callee = self.evaluate(expr.callee)
         arguments = [self.evaluate(argExpr) for argExpr in expr.arguments]
 
-        if isinstance(callee, ZoofStruct) and callee is self.env.map.get("Self", None):
+        if isinstance(callee, ZoofStruct) and callee is self.env.map.get("This", None):
             return callee.instantiate(arguments)
 
         # todo: error is bound to the closing paren :/
