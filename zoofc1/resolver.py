@@ -64,9 +64,10 @@ class ResolverVisitor:
             self.resolveFunction(declaration)
 
     def resolveRemainingFunctions(self):
-        for declaration in self.unresolvedFunctions.values():
-            self.resolveFunction(declaration)
+        unresolvedFunctions = self.unresolvedFunctions
         self.unresolvedFunctions = {}
+        for declaration in unresolvedFunctions.values():
+            self.resolveFunction(declaration)
 
     def resolveLocal(self, expr):
         """Resolve the local usage of a variable, determining its depth in the scope-stack."""
@@ -105,7 +106,7 @@ class ResolverVisitor:
         # Check invalud names
         if name in ("this", "This"):
             self.error(
-                "E2000",
+                "E2860",
                 f"The name '{name}' is reserved.",
                 nameToken,
                 "Reserved names cannot be used as the name for variable, function etc.",

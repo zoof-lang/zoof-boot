@@ -1,0 +1,72 @@
+#### exec: simplest struct ever
+struct Foo
+    nil
+
+print Foo
+#### output
+<Struct Foo with 0 funcs, 0 methods, 0 getters, 0 setters>
+#### end
+
+
+
+#### exec: simple struct
+struct Foo
+    a F64
+    b F64
+
+impl Foo
+    func new() its This(1, 2)
+    method showHi() do
+        print 'hi'
+
+f = Foo.new()
+print Foo
+print f
+f.showHi()
+#### output
+<Struct Foo with 1 funcs, 1 methods, 0 getters, 0 setters>
+<Foo instance with 1 methods, 0 getters, 0 setters>
+'hi'
+#### end
+
+
+
+#### exec: Vector
+# A nice example that covers a lot of ground
+
+struct Vector
+    x F64
+    y F64
+
+impl Vector
+
+    func new(x, y) do
+        return This(x, y)
+
+    getter x() its this..x
+    setter x(v) do
+        this..x = v
+
+    getter y() its this..y
+    setter y(v) do
+        this..y = v
+
+    method length() do
+        return (this..x^2 + this..y^2) ^ 0.5
+
+v = Vector.new(1, 2)
+print v.x
+print v.y
+print v.length()
+
+v.x = 3
+print v.length()
+#### output
+1.0
+2.0
+2.23606797749979
+3.605551275463989
+#### end
+
+
+

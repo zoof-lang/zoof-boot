@@ -53,6 +53,10 @@ class ZoofFunction(Callable):
         self.freeVars = self.declaration.freeVars.copy()
         self.captured = {}
 
+    def __repr__(self):
+        kind = self.declaration.token.lexeme
+        return f"<{kind}>"
+
     def arity(self):
         return len(self.declaration.params)
 
@@ -118,6 +122,10 @@ class ZoofStruct:
         self.getters = {}
         self.setters = {}
 
+    def __repr__(self):
+        name = self.declaration.name.lexeme
+        return f"<Struct {name} with {len(self.funcs)} funcs, {len(self.methods)} methods, {len(self.getters)} getters, {len(self.setters)} setters>"
+
     def addFunction(self, fn):
         name = fn.declaration.name.lexeme
         kind = fn.declaration.token.lexeme
@@ -139,7 +147,7 @@ class ZoofStruct:
             return fn
         else:
             raise RuntimeErr(
-                "E8000",
+                "E8629",
                 f"Struct {self.declaration.name} does not have static function '{name}'.",
                 nameToken,
                 "",
@@ -164,7 +172,7 @@ class ZoofStruct:
     #         return ZoofInstance(self)
     #     else:
     #         raise RuntimeErr(
-    #             "E8000",
+    #             "E8213",
     #             f"Struct {self.declaration.name} does not have a 'new()' method.",
     #             self.declaration.token,
     #             "To instantiate (i.e. call) a struct object, it must have a method called 'new'.",
@@ -176,12 +184,17 @@ class ZoofInstance:
         self.archetype = archetype
         self.data = data
 
+    def __repr__(self):
+        t = self.archetype
+        name = t.declaration.name.lexeme
+        return f"<{name} instance with {len(t.methods)} methods, {len(t.getters)} getters, {len(t.setters)} setters>"
+
     def getData(self, nameToken):
         name = nameToken.lexeme
         if name not in self.data:
             structName = self.archetype.declaration.name.lexeme
             raise RuntimeErr(
-                "E8000",
+                "E8223",
                 f"Struct {structName} does not have a field '{name}' to get.",
                 nameToken,
                 "",
@@ -193,7 +206,7 @@ class ZoofInstance:
         if name not in self.data:
             structName = self.archetype.declaration.name.lexeme
             raise RuntimeErr(
-                "E8000",
+                "E8313",
                 f"Struct {structName} does not have a field'{name}' so set.",
                 nameToken,
                 "",
@@ -213,7 +226,7 @@ class ZoofInstance:
             else:
                 structName = self.archetype.declaration.name.lexeme
                 raise RuntimeErr(
-                    "E8000",
+                    "E8240",
                     f"Struct {structName} does not have a getter or method called '{name}'.",
                     nameToken,
                     "",
@@ -229,7 +242,7 @@ class ZoofInstance:
         else:
             structName = self.archetype.declaration.name.lexeme
             raise RuntimeErr(
-                "E8000",
+                "E8970",
                 f"Struct {structName} does not have a setter called '{name}'.",
                 nameToken,
                 "",
@@ -473,7 +486,7 @@ class InterpreterVisitor:
                     self.maybeClosures[-1].append(function)
         else:
             raise RuntimeErr(
-                "E8000",
+                "E8161",
                 f"Cannot impl '{stmt.target.lexeme}' because it is not a Struct or Trait.",
                 stmt.target,
             )
@@ -501,7 +514,7 @@ class InterpreterVisitor:
                 else:
                     breakpoint()
                     raise RuntimeErr(
-                        "E8000",
+                        "E8335",
                         "Invalid use of the field getter operator ('..').",
                         expr,
                         "Can only use the dotdot operator inside a method of an object of the same type.",
@@ -510,7 +523,7 @@ class InterpreterVisitor:
                 return ob.getProp(self, expr.name)
         else:
             raise RuntimeErr(
-                "E8000",
+                "E8466",
                 "Cannot use getter on this object. Not a struct.",
                 expr.object,
             )
@@ -524,7 +537,7 @@ class InterpreterVisitor:
                     ob.setData(expr.name, value)
                 else:
                     raise RuntimeErr(
-                        "E8000",
+                        "E8196",
                         "Invalid use of the field setter operator ('..').",
                         expr,
                         "Can only use `ob..field = value` inside a method of an object of the same type.",
@@ -534,7 +547,7 @@ class InterpreterVisitor:
             return value
         else:
             raise RuntimeErr(
-                "E8000",
+                "E8880",
                 "Cannot use getter on this object. Not a struct.",
                 expr.object,
             )

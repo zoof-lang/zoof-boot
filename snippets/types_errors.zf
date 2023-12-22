@@ -1,0 +1,293 @@
+#### exec: E1185
+struct
+#### output
+-- SyntaxError (E1185) ----------------------------------------------- snippet:1
+
+Found a lonely 'struct' keyword.
+
+1| struct
+   ^^^^^^
+
+The syntax for creating a struct is:
+
+    struct Foo
+        some: I32
+        fields: F64
+#### end
+
+
+
+#### exec: E1147
+impl
+#### output
+-- SyntaxError (E1147) ----------------------------------------------- snippet:1
+
+Found a lonely 'impl' keyword.
+
+1| impl
+   ^^^^
+
+The `impl` keyword is used to define functions on a struct, trait or multimethod,
+i.e. to *implement* it.
+
+    impl Foo
+
+        func some_method(self) do
+            return "hi"
+
+        getter someProp(self) do
+            return self.a
+#### end
+
+
+
+#### exec: E1550
+struct 3
+    nil
+#### output
+-- SyntaxError (E1550) ----------------------------------------------- snippet:1
+
+Unexpected token after 'struct'.
+
+1| struct 3
+   ^^^^^^
+#### end
+
+
+
+#### exec: xxxxx
+impl 3
+#### output
+-- SyntaxError (E1273) ----------------------------------------------- snippet:1
+
+The imple keyword must be followed by a name.
+
+1| impl 3
+   ^^^^
+#### end
+
+
+
+#### exec: E1940 - structs can only have fields
+struct Foo
+    3 + 4
+#### output
+-- SyntaxError (E1940) ----------------------------------------------- snippet:2
+
+Unexpected expression in struct definition.
+
+2|     3 + 4
+       ^
+
+The syntax for creating a struct is:
+
+    struct Foo
+        some: I32
+        fields: F64
+#### end
+
+
+
+#### exec: E1985 - structs can only have fields
+struct Foo
+    nil
+impl Foo
+    3 + 4
+#### output
+-- SyntaxError (E1985) ----------------------------------------------- snippet:4
+
+Unexpected expression in impl definition.
+
+4|     3 + 4
+       ^
+
+The `impl` keyword is used to define functions on a struct, trait or multimethod,
+i.e. to *implement* it.
+
+    impl Foo
+
+        func some_method(self) do
+            return "hi"
+
+        getter someProp(self) do
+            return self.a
+#### end
+
+
+
+#### exec: E1241 - no func on a struct
+struct Foo
+    func foo() its 42
+    method bar() its 42
+#### output
+-- SyntaxError (E1241) ----------------------------------------------- snippet:2
+
+Unexpected 'func' in struct definition.
+
+2|     func foo() its 42
+       ^^^^
+A struct only defines its fields (data). Its functions, methods, getters, and setters are defined in an `impl` block.
+-- SyntaxError (E1241) ----------------------------------------------- snippet:3
+
+Unexpected 'method' in struct definition.
+
+3|     method bar() its 42
+       ^^^^^^
+A struct only defines its fields (data). Its functions, methods, getters, and setters are defined in an `impl` block.
+#### end
+
+
+
+#### exec: E1736 - no methods outside impl
+method bar() its 42
+#### output
+-- SyntaxError (E1736) ----------------------------------------------- snippet:1
+
+Unexpected 'method'.
+
+1| method bar() its 42
+   ^^^^^^
+Methods, getters, and setters can only be defined in an `impl` block.
+#### end
+
+
+
+#### exec: E1671 - field type
+struct Foo
+    a 4
+#### output
+-- SyntaxError (E1671) ----------------------------------------------- snippet:2
+
+Unexpected expression after field name.
+
+2|     a 4
+         ^
+Struct fields must be of the form: 'name type'
+#### end
+
+
+
+#### exec: E1875
+struct Foo
+    a F64
+   b F64
+#### output
+-- SyntaxError (E1548) ----------------------------------------------- snippet:3
+
+Unindent does not match any outer indentation level.
+
+1| struct Foo
+2|     a F64
+3|    b F64
+      ^
+The indentation level does not match that of the previous lines.
+#### end
+
+
+
+#### exec: E1875
+struct Foo
+    nil
+impl Foo
+    method a() its 42
+   method b() its 52
+#### output
+-- SyntaxError (E1875) ----------------------------------------------- snippet:5
+
+Unindent does not match any outer indentation level.
+
+3| impl Foo
+4|     method a() its 42
+5|    method b() its 52
+      ^^^^^^
+The indentation level does not match that of the previous lines.
+#### end
+
+
+
+#### exec: E1101
+struct Foo
+    a F64
+    a F64
+#### output
+-- SyntaxError (E1101) ----------------------------------------------- snippet:3
+
+Field with the name 'a' is already defined on this struct.
+
+3|     a F64
+       ^
+Struct fields must be unique.
+#### end
+
+
+
+#### exec: E1876 - setter needs getter
+struct Foo
+    nil
+impl Foo
+    getter foo() its 42
+    setter foo(v) its nil
+    setter bar(v) its nil
+#### output
+-- SyntaxError (E1876) ----------------------------------------------- snippet:6
+
+Setter 'bar' needs its corresponding getter to be defined first.
+
+6|     setter bar(v) its nil
+              ^^^
+For consistency, each setter must have a matching getter.
+#### end
+
+
+
+#### exec: E1048 - no duplicate methods / getters
+struct Foo
+    nil
+impl Foo
+    getter foo() its 42
+    setter foo(v) its nil
+    getter foo(v) its nil
+#### output
+-- SyntaxError (E1048) ----------------------------------------------- snippet:6
+
+Function with the name 'foo' is already implemented.
+
+6|     getter foo(v) its nil
+              ^^^
+Struct functions/methods must be unique.
+#### end
+
+
+
+#### exec: E1556
+struct Foo
+    a F64
+
+impl Foo
+    method x() its self..
+#### output
+-- SyntaxError (E1556) ----------------------------------------------- snippet:5
+
+Expected identifier after dotdot ('..').
+
+5|     method x() its self..
+                          ^^
+Attribute getters must be identifiers (i.e. a name).
+#### end
+
+
+
+#### exec: E2860 - no assigning to this
+this = 2
+#### output
+-- NameError (E2860) ------------------------------------------------- snippet:1
+
+The name 'this' is reserved.
+
+1| this = 2
+   ^^^^
+Reserved names cannot be used as the name for variable, function etc.
+#### end
+
+
+

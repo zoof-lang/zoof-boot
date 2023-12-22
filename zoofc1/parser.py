@@ -299,7 +299,7 @@ class Parser:
         elif self.matchKeyword("method", "getter", "setter"):
             token = self.previous()
             self.error(
-                "E1000",
+                "E1736",
                 f"Unexpected '{token.lexeme}'.",
                 token,
                 "Methods, getters, and setters can only be defined in an `impl` block.",
@@ -479,19 +479,20 @@ class Parser:
         params = self.funcParameters()
 
         if name is None:
-            name = TT.Token(
-                TT.Identifier,
-                "",
-                funcToken.line,
-                funcToken.column + len(funcToken.lexeme),
-            )
-            # if self.peek().lexeme == "do":
-            #     self.error(
-            #         "E1959",
-            #         f"Expected {kind} name",
-            #         funcToken,
-            #         "Lambda's (function expressions) can be anonymous, but normal functions cannot.'",
-            #     )
+            if self.peek().lexeme == "do":
+                self.error(
+                    "E1959",
+                    f"Expected {kind} name.",
+                    funcToken,
+                    "Lambda's (function expressions) can be anonymous, but normal functions cannot.",
+                )
+            else:
+                name = Token(
+                    TT.Identifier,
+                    "",
+                    funcToken.line,
+                    funcToken.column + len(funcToken.lexeme),
+                )
 
         if self.matchKeyword("do"):
             # Statement-mode
@@ -528,7 +529,7 @@ class Parser:
 
         if self.matchEos():
             self.error(
-                "E1000",
+                "E1185",
                 f"Found a lonely 'struct' keyword.",
                 structToken,
                 HINT_STRUCT,
@@ -536,13 +537,10 @@ class Parser:
         elif self.match(TT.Identifier):
             name = self.previous()
         else:
-            name = None
-
-        if name is None:
             self.error(
-                "E1000",
-                f"Structs must have a name (cannot be anonymous)",
-                structToken,
+                "E1550",
+                f"Unexpected token after 'struct'.",
+                self.previous(),
                 "",
             )
 
@@ -556,7 +554,7 @@ class Parser:
                 break
             elif self.match(TT.InvalidIndentation):
                 self.error(
-                    "E1000",
+                    "E1548",
                     "Unindent does not match any outer indentation level.",
                     self.peek(),
                     "The indentation level does not match that of the previous lines.",
@@ -564,16 +562,19 @@ class Parser:
                     throw=False,
                 )
             try:
-                if self.matchKeyword("func", "method", "getter", "setter"):
+                if self.peek().lexeme == "nil":
+                    self.advance()
+                    self.matchEos()
+                elif self.matchKeyword("func", "method", "getter", "setter"):
                     token = self.previous()
                     self.error(
-                        "E1000",
+                        "E1241",
                         f"Unexpected '{token.lexeme}' in struct definition.",
                         token,
                         "A struct only defines its fields (data). "
                         "Its functions, methods, getters, and setters are defined in an `impl` block.",
                     )
-                if self.match(TT.Identifier):
+                elif self.match(TT.Identifier):
                     field = self.previous()
                     if self.match(TT.Identifier):
                         type = self.previous()
@@ -582,7 +583,7 @@ class Parser:
                             fields[fieldName] = (field, type)
                         else:
                             self.error(
-                                "E1000",
+                                "E1101",
                                 f"Field with the name '{fieldName}' is already defined on this struct.",
                                 field,
                                 "Struct fields must be unique.",
@@ -594,7 +595,7 @@ class Parser:
                         token2 = self.advance()
                         token = token1 if token2.type == TT.Newline else token2
                         self.error(
-                            "E1000",
+                            "E1671",
                             f"Unexpected expression after field name.",
                             token,
                             "Struct fields must be of the form: 'name type'",
@@ -602,7 +603,7 @@ class Parser:
                 else:
                     token = self.advance()
                     self.error(
-                        "E1000",
+                        "E1940",
                         f"Unexpected expression in struct definition.",
                         token,
                         HINT_STRUCT,
@@ -620,7 +621,7 @@ class Parser:
 
         if self.matchEos():
             self.error(
-                "E1000",
+                "E1147",
                 f"Found a lonely 'impl' keyword.",
                 implToken,
                 HINT_IMPL,
@@ -629,7 +630,7 @@ class Parser:
             name = self.previous()
         else:
             self.error(
-                "E1000",
+                "E1273",
                 f"The imple keyword must be followed by a name.",
                 implToken,
                 "",
@@ -647,7 +648,7 @@ class Parser:
                 break
             elif self.match(TT.InvalidIndentation):
                 self.error(
-                    "E1000",
+                    "E1875",
                     "Unindent does not match any outer indentation level.",
                     self.peek(),
                     "The indentation level does not match that of the previous lines.",
@@ -665,7 +666,7 @@ class Parser:
                             functions.append(fn)
                         else:
                             self.error(
-                                "E1000",
+                                "E1876",
                                 f"Setter '{funcName}' needs its corresponding getter to be defined first.",
                                 fn.name,
                                 "For consistency, each setter must have a matching getter.",
@@ -678,8 +679,8 @@ class Parser:
                             getterNames.add(funcName)
                     else:
                         self.error(
-                            "E1000",
-                            f"Function with the name '{funcName}' is already implemented on this struct.",
+                            "E1048",
+                            f"Function with the name '{funcName}' is already implemented.",
                             fn.name,
                             "Struct functions/methods must be unique.",
                             throw=False,
@@ -687,8 +688,8 @@ class Parser:
                 else:
                     token = self.advance()
                     self.error(
-                        "E1000",
-                        f"Unexpected expression in struct definition.",
+                        "E1985",
+                        f"Unexpected expression in impl definition.",
                         token,
                         HINT_IMPL,
                     )
@@ -816,7 +817,7 @@ class Parser:
                     expr = tree.GetExpr(token, expr, self.previous())
                 else:
                     self.error(
-                        "E1000",
+                        "E1556",
                         "Expected identifier after dotdot ('..').",
                         token,
                         "Attribute getters must be identifiers (i.e. a name).",
