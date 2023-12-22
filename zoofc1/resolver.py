@@ -98,13 +98,23 @@ class ResolverVisitor:
         self.resolveRemainingFunctions()
         self.scopes.pop(-1)
 
-    def declare(self, name):
+    def declare(self, nameToken):
         """Declare that a variable with the given name exists from this point on."""
+        name = nameToken.lexeme
+
+        # Check invalud names
+        if name in ("this", "This"):
+            self.error(
+                "E2000",
+                f"The name '{name}' is reserved.",
+                nameToken,
+                "Reserved names cannot be used as the name for variable, function etc.",
+            )
 
         # Check that the name is not already used and addresses a variable from an outer scope
         freeVars = self.scopes[-1].freeVars
-        if name.lexeme in freeVars:
-            expr = freeVars[name.lexeme]
+        if name in freeVars:
+            expr = freeVars[name]
             self.error(
                 "E2446",
                 "Variable is used before it's declared in this scope.",
@@ -116,7 +126,7 @@ class ResolverVisitor:
             )
 
         # Declare the variable to exist in this scope
-        self.scopes[-1].add(name.lexeme)
+        self.scopes[-1].add(name)
 
     # %% The interesting bits
 

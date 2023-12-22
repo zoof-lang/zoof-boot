@@ -496,8 +496,16 @@ class InterpreterVisitor:
             return ob.get(expr.name)
         elif isinstance(ob, ZoofInstance):
             if expr.token.lexeme == "..":
-                # todo: only allow in methods
-                return ob.getData(expr.name)
+                if ob.archetype is self.env.map.get("This", None):
+                    return ob.getData(expr.name)
+                else:
+                    breakpoint()
+                    raise RuntimeErr(
+                        "E8000",
+                        "Invalid use of the field getter operator ('..').",
+                        expr,
+                        "Can only use the dotdot operator inside a method of an object of the same type.",
+                    )
             else:
                 return ob.getProp(self, expr.name)
         else:
@@ -512,8 +520,15 @@ class InterpreterVisitor:
         if isinstance(ob, ZoofInstance):
             value = self.evaluate(expr.value)
             if expr.token.lexeme == "..":
-                # todo: only allow in methods
-                ob.setData(expr.name, value)
+                if ob.archetype is self.env.map.get("This", None):
+                    ob.setData(expr.name, value)
+                else:
+                    raise RuntimeErr(
+                        "E8000",
+                        "Invalid use of the field setter operator ('..').",
+                        expr,
+                        "Can only use `ob..field = value` inside a method of an object of the same type.",
+                    )
             else:
                 ob.setProp(self, expr.name, value)
             return value
@@ -665,7 +680,6 @@ class InterpreterVisitor:
         if isinstance(callee, ZoofStruct) and callee is self.env.map.get("This", None):
             return callee.instantiate(arguments)
 
-        # todo: error is bound to the closing paren :/
         if not isinstance(callee, Callable):
             raise RuntimeErr(
                 "E8247",
@@ -678,7 +692,7 @@ class InterpreterVisitor:
             raise RuntimeErr(
                 "E8960",
                 f"Callee Expected {callee.arity()} arguments, but the call has {len(arguments)}.",
-                expr.paren,
+                expr,
                 "The callable object cannot be called this way. You should probably",
                 "double-check the signature.",
             )

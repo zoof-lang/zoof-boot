@@ -296,6 +296,14 @@ class Parser:
             return self.implStatement()
         elif self.matchKeyword("struct"):
             return self.structStatement()
+        elif self.matchKeyword("method", "getter", "setter"):
+            token = self.previous()
+            self.error(
+                "E1000",
+                f"Unexpected '{token.lexeme}'.",
+                token,
+                "Methods, getters, and setters can only be defined in an `impl` block.",
+            )
         else:
             return self.expressionStatement()
 
@@ -556,6 +564,15 @@ class Parser:
                     throw=False,
                 )
             try:
+                if self.matchKeyword("func", "method", "getter", "setter"):
+                    token = self.previous()
+                    self.error(
+                        "E1000",
+                        f"Unexpected '{token.lexeme}' in struct definition.",
+                        token,
+                        "A struct only defines its fields (data). "
+                        "Its functions, methods, getters, and setters are defined in an `impl` block.",
+                    )
                 if self.match(TT.Identifier):
                     field = self.previous()
                     if self.match(TT.Identifier):

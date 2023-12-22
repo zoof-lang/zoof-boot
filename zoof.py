@@ -17,6 +17,7 @@ struct Vector
     x F64
     y F64
 
+
 impl Vector
 
     func new(x, y) do
@@ -43,6 +44,8 @@ print v.length
 v.x = 3
 print v.x
 print v.length
+
+
 """
 
 s1 = Source("i1", 1, source)
