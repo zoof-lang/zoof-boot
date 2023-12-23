@@ -3,7 +3,7 @@ import time
 from .tokens import TT, Token
 
 
-## Minilib
+# %% Minilib
 
 
 class ZoofRange:
@@ -124,7 +124,11 @@ class ZoofStruct:
 
     def __repr__(self):
         name = self.declaration.name.lexeme
-        return f"<Struct {name} with {len(self.funcs)} funcs, {len(self.methods)} methods, {len(self.getters)} getters, {len(self.setters)} setters>"
+        return (
+            f"<Struct {name} with {len(self.funcs)} funcs, "
+            f"{len(self.methods)} methods, {len(self.getters)} getters, "
+            f"{len(self.setters)} setters>"
+        )
 
     def addFunction(self, fn):
         name = fn.declaration.name.lexeme
@@ -236,7 +240,7 @@ BUILTINS = {}
 BUILTINS["clock"] = Clock()
 BUILTINS["arbitraryNumber"] = ArbitraryNumber()
 
-##
+# %%
 
 
 class RuntimeErr(Exception):
@@ -339,9 +343,9 @@ class InterpreterVisitor:
         return expr.accept(self)
 
     def isTruethy(self, value, token):
-        if value == False:
+        if value is False:
             return False
-        elif value == True:
+        elif value is True:
             return True
         else:
             typename = value.__class__.__name__
@@ -461,10 +465,10 @@ class InterpreterVisitor:
         ob = self.env.get(stmt.target)
         if isinstance(ob, ZoofStruct):
             for funcStmt in stmt.functions:
-                fn = ZoofFunction(
+                function = ZoofFunction(
                     funcStmt, self.env, {"This": ob}, self.ehandler.source
                 )
-                ob.addFunction(fn)
+                ob.addFunction(function)
                 if self.maybeClosures:
                     self.maybeClosures[-1].append(function)
         else:
@@ -607,6 +611,7 @@ class InterpreterVisitor:
                 return left
             return self.evaluate(expr.right)
         else:
+            optype = expr.op.type
             raise RuntimeErr(
                 "E8092",
                 f"Unexpected logical expression '{optype}'.",

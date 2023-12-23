@@ -1,8 +1,7 @@
 import sys
-from functools import partial
 
 from .lexer import splitSource, tokenize
-from .printer import PrinterVisitor
+from .printer import PrinterVisitor  # noqa
 from .parser import Parser
 from .resolver import ResolverVisitor
 from .interpreter import InterpreterVisitor

@@ -110,7 +110,8 @@ class Parser:
                 "E1361",
                 "Parsing ended before EOF (end of file).",
                 self.peek(),
-                "Unexpected code after parsing was finished. This is an internal parser error that should not occur in practice.",
+                "Unexpected code after parsing was finished. "
+                "This is an internal parser error that should not occur in practice.",
                 throw=False,
             )
 
@@ -520,6 +521,7 @@ class Parser:
             value = self.expression(allow_kw=True)
             has_value = True
             self.consumeEosAfterExpression()
+        has_value  # not used, os None enough?
         return tree.ReturnStmt(token, value)
 
     def structStatement(self):
@@ -893,7 +895,6 @@ class Parser:
         # wrong, so we can give a better error message.
         prev = self.previous()
         cur = self.peek()
-        next = self.peekNext()
 
         if prev.type == TT.Keyword and self.matchEos():
             if prev.lexeme == "if":

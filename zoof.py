@@ -2,8 +2,8 @@
 Little script to run from my IDE for rapid proototyping.
 """
 
-import zoofc1
-from zoofc1 import main, Source, ZoofCompiler, tree
+import zoofc1  # noqa
+from zoofc1 import main, Source, ZoofCompiler, tree  # noqa
 
 # main(["example.zf"])
 # main([])

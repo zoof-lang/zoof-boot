@@ -1,6 +1,6 @@
 import os
 import secrets
-from zoofc1.lexer import splitSource, tokenize, TT
+from zoofc1.lexer import splitSource, tokenize, TT  # noqa
 
 
 THIS_DIR = os.path.abspath(os.path.dirname(__file__))

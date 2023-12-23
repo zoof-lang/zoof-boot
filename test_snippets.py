@@ -7,7 +7,7 @@ import pytest
 from zoofc1 import ZoofCompiler, Source
 
 # when I run this in my IDE, load these in the env
-from zoofc1.tokens import TokenType as TT
+from zoofc1.tokens import TokenType as TT  # noqa
 
 
 # %% Configure

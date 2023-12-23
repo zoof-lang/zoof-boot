@@ -4,7 +4,7 @@ import sys
 this_dir = os.path.abspath(os.path.dirname(__file__))
 sys.path.insert(0, os.path.split(this_dir)[0])
 
-import zoofc1
+import zoofc1  # noqa
 
 
 if __name__ == "__main__":

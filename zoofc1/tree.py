@@ -1,8 +1,5 @@
 class ExprOrStmt:
     def accept(self, visitor):
-        raise NotImplementedError()
-
-    def accept(self, visitor):
         methodName = "visit" + self.__class__.__name__
         method = getattr(visitor, methodName, None)
         if method is None:

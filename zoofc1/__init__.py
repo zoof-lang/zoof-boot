@@ -1,1 +1,1 @@
-from .compiler import main, Source, ZoofCompiler
+from .compiler import main, Source, ZoofCompiler  # noqa

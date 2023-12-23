@@ -142,7 +142,8 @@ class ResolverVisitor:
             self.resolveFunction(fn, extra_names=["this", "This"])
 
     def visitFunctionStmt(self, stmt):
-        # todo: prevent defining the same funcion twice in the same source. But do alow re-defining in an interactive session.
+        # todo: prevent defining the same funcion twice in the same source.
+        # --> But do alow re-defining in an interactive session.
         self.declare(stmt.name)
         self.unresolvedFunctions[stmt.name.lexeme] = stmt
 
