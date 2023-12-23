@@ -148,7 +148,7 @@ class ZoofStruct:
         else:
             raise RuntimeErr(
                 "E8629",
-                f"Struct {self.declaration.name} does not have static function '{name}'.",
+                f"Struct {self.declaration.name.lexeme} does not have static function '{name}'.",
                 nameToken,
                 "",
             )
@@ -160,23 +160,6 @@ class ZoofStruct:
         for name, value in zip(names, arguments):
             data[name] = value
         return ZoofInstance(self, data)
-
-    # def arity(self):
-    #     if self.constructor:
-    #         return self.constructor.arity()
-    #     return 0
-    #
-    # def call(self, interpreter, arguments):
-    #     if self.constructor:
-    #         # return self.constructor.call(interpreter, arguments)
-    #         return ZoofInstance(self)
-    #     else:
-    #         raise RuntimeErr(
-    #             "E8213",
-    #             f"Struct {self.declaration.name} does not have a 'new()' method.",
-    #             self.declaration.token,
-    #             "To instantiate (i.e. call) a struct object, it must have a method called 'new'.",
-    #             )
 
 
 class ZoofInstance:
@@ -512,7 +495,6 @@ class InterpreterVisitor:
                 if ob.archetype is self.env.map.get("This", None):
                     return ob.getData(expr.name)
                 else:
-                    breakpoint()
                     raise RuntimeErr(
                         "E8335",
                         "Invalid use of the field getter operator ('..').",
@@ -548,7 +530,7 @@ class InterpreterVisitor:
         else:
             raise RuntimeErr(
                 "E8880",
-                "Cannot use getter on this object. Not a struct.",
+                "Cannot use setter on this object. Not a struct.",
                 expr.object,
             )
 

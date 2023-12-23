@@ -55,12 +55,13 @@ Unexpected token after 'struct'.
 
 
 
-#### exec: xxxxx
+#### exec: E1273
 impl 3
+  ^^^^
 #### output
 -- SyntaxError (E1273) ----------------------------------------------- snippet:1
 
-The imple keyword must be followed by a name.
+The impl keyword must be followed by a name.
 
 1| impl 3
    ^^^^
@@ -287,6 +288,184 @@ The name 'this' is reserved.
 1| this = 2
    ^^^^
 Reserved names cannot be used as the name for variable, function etc.
+#### end
+
+
+
+#### exec: E8161
+a = 4
+impl a
+    nil
+#### output
+-- RuntimeError (E8161) ---------------------------------------------- snippet:2
+
+Cannot impl 'a' because it is not a Struct or Trait.
+
+2| impl a
+        ^
+#### end
+
+
+
+#### exec: E8629 - invalid struct static method
+struct Foo
+    nil
+Foo.doesNotExist()
+#### output
+-- RuntimeError (E8629) ---------------------------------------------- snippet:3
+
+Struct Foo does not have static function 'doesNotExist'.
+
+3| Foo.doesNotExist()
+       ^^^^^^^^^^^^
+#### end
+
+
+
+#### exec: E8240 - invalid struct get
+struct Foo
+    a F64
+impl Foo
+    func new() its Foo(32)
+f = Foo.new()
+print f.a
+#### output
+-- RuntimeError (E8240) ---------------------------------------------- snippet:6
+
+Struct Foo does not have a getter or method called 'a'.
+
+6| print f.a
+           ^
+#### end
+
+
+
+#### exec: E8970 - invalid struct set
+struct Foo
+    a F64
+impl Foo
+    func new() its Foo(32)
+f = Foo.new()
+f.a = 3
+#### output
+-- RuntimeError (E8970) ---------------------------------------------- snippet:6
+
+Struct Foo does not have a setter called 'a'.
+
+6| f.a = 3
+     ^
+#### end
+
+
+
+#### exec: E8223 - invalid struct field get
+struct Foo
+    a F64
+impl Foo
+    func new() its Foo(32)
+    method bar() do
+        return this..b
+f = Foo.new()
+f.bar()
+#### output
+-- RuntimeError (E8223) ---------------------------------------------- snippet:6
+
+Struct Foo does not have a field 'b' to get.
+
+6|         return this..b
+                        ^
+#### end
+
+
+
+#### exec: E8313 - invalid struct field set
+struct Foo
+    a F64
+impl Foo
+    func new() its Foo(32)
+    method bar() do
+        this..b = 2
+f = Foo.new()
+f.bar()
+#### output
+-- RuntimeError (E8313) ---------------------------------------------- snippet:6
+
+Struct Foo does not have a field'b' so set.
+
+6|         this..b = 2
+                 ^
+#### end
+
+
+
+#### exec: E8466 - ob has no getter
+a = 4
+print a.b
+#### output
+-- RuntimeError (E8466) ---------------------------------------------- snippet:2
+
+Cannot use getter on this object. Not a struct.
+
+2| print a.b
+         ^
+#### end
+
+
+
+#### exec: E8880 - ob has no setter
+a = 4
+a.b = 3
+#### output
+-- RuntimeError (E8880) ---------------------------------------------- snippet:2
+
+Cannot use setter on this object. Not a struct.
+
+2| a.b = 3
+   ^
+#### end
+
+
+
+#### exec: E8335 - invalid use of dotdot get
+struct Foo
+    a F64
+impl Foo
+    func new() its Foo(32)
+
+f = Foo.new()
+func foo(x) do
+    return x..a
+print foo(f)
+#### output
+-- RuntimeError (E8335) ---------------------------------------------- snippet:8
+
+Invalid use of the field getter operator ('..').
+
+8|     return x..a
+              ^^^^
+Can only use the dotdot operator inside a method of an object of the same type.
+#### end
+
+
+
+#### exec: E8196 - invalid use of dotdot set
+struct Foo
+    a F64
+impl Foo
+    func new() its Foo(32)
+
+f = Foo.new()
+func foo(x) do
+    x..a = 2
+print foo(f)
+#### output
+-- RuntimeError (E8196) ---------------------------------------------- snippet:8
+
+Invalid use of the field setter operator ('..').
+
+8|     x..a = 2
+       ^^^^
+Can only use `ob..field = value` inside a method of an object of the same type.
 #### end
 
 

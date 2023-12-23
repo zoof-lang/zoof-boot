@@ -631,7 +631,7 @@ class Parser:
         else:
             self.error(
                 "E1273",
-                f"The imple keyword must be followed by a name.",
+                f"The impl keyword must be followed by a name.",
                 implToken,
                 "",
             )
@@ -685,6 +685,9 @@ class Parser:
                             "Struct functions/methods must be unique.",
                             throw=False,
                         )
+                elif self.peek().lexeme == "nil":
+                    self.advance()
+                    self.matchEos()
                 else:
                     token = self.advance()
                     self.error(

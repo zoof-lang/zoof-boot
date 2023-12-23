@@ -9,6 +9,19 @@ print Foo
 
 
 
+#### exec: simplest trait ever
+struct Foo
+    nil
+impl Foo
+    nil
+
+print Foo
+#### output
+<Struct Foo with 0 funcs, 0 methods, 0 getters, 0 setters>
+#### end
+
+
+
 #### exec: simple struct
 struct Foo
     a F64
