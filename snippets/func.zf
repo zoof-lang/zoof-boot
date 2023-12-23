@@ -143,11 +143,11 @@ func (a) do
 #### output
 -- SyntaxError (E1959) ----------------------------------------------- snippet:1
 
-Expected function name
+Expected func name.
 
 1| func (a) do
    ^^^^
-Lambda's (function expressions) can be anonymous, but normal functions cannot.'
+Lambda's (function expressions) can be anonymous, but normal functions cannot.
 #### end
 
 
@@ -244,7 +244,7 @@ func foo() not
 #### output
 -- SyntaxError (E1653) ----------------------------------------------- snippet:1
 
-Expected 'do' or 'its' after function signature.
+Expected 'do' or 'its' after func signature.
 
 1| func foo() not
               ^^^
@@ -271,7 +271,7 @@ func foo do
 #### output
 -- SyntaxError (E1286) ----------------------------------------------- snippet:1
 
-Expected '(' to start function signature.
+Expected '(' to start func signature.
 
 1| func foo do
             ^^

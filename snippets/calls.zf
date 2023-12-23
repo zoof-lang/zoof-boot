@@ -17,7 +17,7 @@ foo()
 Callee Expected 1 arguments, but the call has 0.
 
 4| foo()
-       ^
+   ^^^^
 The callable object cannot be called this way. You should probably
 double-check the signature.
 #### end
@@ -35,7 +35,7 @@ foo(1, 2)
 Callee Expected 1 arguments, but the call has 2.
 
 4| foo(1, 2)
-           ^
+   ^^^^^^^^
 The callable object cannot be called this way. You should probably
 double-check the signature.
 #### end

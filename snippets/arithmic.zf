@@ -42,8 +42,19 @@
 
 #### exec: unary binds loser than e.g. indexing
 # This should be `- (ob.foo)`,  not `(-ob).foo`
+
+struct Object
+    nil
+
+impl Object
+    func new() its This()
+    getter foo() its 42
+
+ob = Object.new()
 - ob.foo
-#### end (missing expected output)
+#### output
+-42.0
+#### end
 
 
 

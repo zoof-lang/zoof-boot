@@ -8,7 +8,7 @@ Unexpected code after expression.
 1| bla bla bla
        ^^^
 It is unclear how 'bla' relates to the expression before it.
-Perhaps you meant to add an operator, or put it on a new line?
+Perhaps you meant to add an operator, comma, or put it on a new line?
 #### end
 
 
@@ -168,7 +168,7 @@ Unexpected code after expression.
 1| 4 + 4 5
          ^
 It is unclear how '5' relates to the expression before it.
-Perhaps you meant to add an operator, or put it on a new line?
+Perhaps you meant to add an operator, comma, or put it on a new line?
 #### end
 
 
@@ -183,7 +183,7 @@ Unexpected code after expression.
 1| 4 + 4 if true 3 else 2
          ^^
 It is unclear how 'if' relates to the expression before it.
-Perhaps you meant to add an operator, or put it on a new line?
+Perhaps you meant to add an operator, comma, or put it on a new line?
 #### end
 
 
@@ -214,7 +214,7 @@ Unexpected code after expression.
 2|    return 42 53
                 ^^
 It is unclear how '53' relates to the expression before it.
-Perhaps you meant to add an operator, or put it on a new line?
+Perhaps you meant to add an operator, comma, or put it on a new line?
 #### end
 
 
@@ -235,14 +235,15 @@ An expression was expected, but got 'and'.
 
 #### exec: expected expression 2
 if and
+#### output
 -- SyntaxError (E1422) ----------------------------------------------- snippet:1
 
-Expected expression after if.
+Expected expression after 'if'.
 
 1| if and
       ^^^
 An expression was expected, but got 'and'.
-#### end (missing expected output)
+#### end
 
 
 

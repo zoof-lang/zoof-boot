@@ -58,6 +58,29 @@ And the (single-line) expression form, e.g.:
 """
 
 
+HINT_STRUCT = """
+The syntax for creating a struct is:
+
+    struct Foo
+        some: I32
+        fields: F64
+"""
+
+
+HINT_IMPL = """
+The `impl` keyword is used to define functions on a struct, trait or multimethod,
+i.e. to *implement* it.
+
+    impl Foo
+
+        func some_method(self) do
+            return "hi"
+
+        getter someProp(self) do
+            return self.a
+"""
+
+
 class Parser:
     """A recursive descent parser."""
 
@@ -178,15 +201,10 @@ class Parser:
                 f"Unexpected code after expression.",
                 token,
                 f"It is unclear how '{token.lexeme}' relates to the expression before it.",
-                f"Perhaps you meant to add an operator, or put it on a new line?",
+                f"Perhaps you meant to add an operator, comma, or put it on a new line?",
             )
 
-    def indentedStatements(self, context, couldAlsoHaveUsedIts):
-        # An indented block. This follows on:
-        # - a do keyword
-        # - an else keyword
-        #
-
+    def consumeIndent(self, context, couldAlsoHaveUsedIts):
         token = self.previous()
 
         if not self.matchEos():
@@ -221,6 +239,13 @@ class Parser:
                 "If you don't want the body to do anything, add an indented line that just says 'nil'.",
                 linesBefore=1,
             )
+
+    def indentedStatements(self, context, couldAlsoHaveUsedIts):
+        # An indented block. This follows on:
+        # - a do keyword
+        # - an else keyword
+        #
+        self.consumeIndent(context, couldAlsoHaveUsedIts)
         return self.statements()
 
     def statements(self):
@@ -266,13 +291,25 @@ class Parser:
         elif self.matchKeyword("print"):
             return self.printStatement()
         elif self.matchKeyword("func"):
-            return self.funcStatement("function")
+            return self.funcStatement()
+        elif self.matchKeyword("impl"):
+            return self.implStatement()
+        elif self.matchKeyword("struct"):
+            return self.structStatement()
+        elif self.matchKeyword("method", "getter", "setter"):
+            token = self.previous()
+            self.error(
+                "E1736",
+                f"Unexpected '{token.lexeme}'.",
+                token,
+                "Methods, getters, and setters can only be defined in an `impl` block.",
+            )
         else:
             return self.expressionStatement()
 
     def doStatement(self):
         # -> "do" EOS statement*
-        return tree.DoStmt(self.indentedStatements("do", False))
+        return tree.DoStmt(self.previous(), self.indentedStatements("do", False))
 
     def ifStatement(self):
         # -> "if" expression "do" EOS statement* ("else" EOS statement*)?
@@ -412,16 +449,17 @@ class Parser:
         statements = self.indentedStatements("while-do", False)
         return tree.WhileStmt(kwToken, condition, statements)
 
-    def funcStatement(self, kind):
+    def funcStatement(self):
         # -> "func" IDENTIFIER "(" parameters? ")" "do" EOS statement*
         # parameters -> IDENTIFIER ( "," IDENTIFIER )* ","?
         # todo: should we prohibit function/class declarations inside loops or ifs? E.g. only in the "root" of a scope?
         funcToken = self.previous()
+        kind = funcToken.lexeme
 
         if self.matchEos():
             self.error(
                 "E1110",
-                f"Found a lonely 'func' keyword.",
+                f"Found a lonely '{kind}' keyword.",
                 funcToken,
                 HINT_FUNC,
             )
@@ -440,48 +478,236 @@ class Parser:
 
         params = self.funcParameters()
 
-        if self.matchKeyword("do"):
-            # Statement-mode
-            if name is None:
+        if name is None:
+            if self.peek().lexeme == "do":
                 self.error(
                     "E1959",
-                    f"Expected {kind} name",
+                    f"Expected {kind} name.",
                     funcToken,
-                    "Lambda's (function expressions) can be anonymous, but normal functions cannot.'",
+                    "Lambda's (function expressions) can be anonymous, but normal functions cannot.",
                 )
-            statements = self.indentedStatements("func-do", True)
+            else:
+                name = Token(
+                    TT.Identifier,
+                    "",
+                    funcToken.line,
+                    funcToken.column + len(funcToken.lexeme),
+                )
+
+        if self.matchKeyword("do"):
+            # Statement-mode
+            statements = self.indentedStatements(f"{kind}-do", True)
+            return tree.FunctionStmt(funcToken, name, params, statements)
         elif self.matchKeyword("its"):
             # Expression-mode
             body = self.expression()
             self.consumeEosAfterExpression()
-            name = name or ""
             expr = tree.FunctionExpr(funcToken, name, params, body)
             return tree.ExpressionStmt(expr)
         else:
             self.error(
                 "E1653",
-                "Expected 'do' or 'its' after function signature.",
+                f"Expected 'do' or 'its' after {kind} signature.",
                 self.peek(),
             )
 
-        return tree.FunctionStmt(name, params, statements)
-
     def returnStatement(self):
         # -> "return" expression? EOS
-        keyword = self.previous()
+        token = self.previous()
         value = None
         has_value = False
         if not self.matchEos():
             value = self.expression(allow_kw=True)
             has_value = True
             self.consumeEosAfterExpression()
-        return tree.ReturnStmt(keyword, value)
+        return tree.ReturnStmt(token, value)
+
+    def structStatement(self):
+        # ""struct" IDENTIFIER EOS fields*
+
+        structToken = self.previous()
+
+        if self.matchEos():
+            self.error(
+                "E1185",
+                f"Found a lonely 'struct' keyword.",
+                structToken,
+                HINT_STRUCT,
+            )
+        elif self.match(TT.Identifier):
+            name = self.previous()
+        else:
+            self.error(
+                "E1550",
+                f"Unexpected token after 'struct'.",
+                self.previous(),
+                "",
+            )
+
+        self.consumeIndent("struct", False)
+
+        fields = {}
+
+        # Do kinda what statements() does, but limited to the kind of stuff we expect in a struct
+        while True:
+            if self.match(TT.Dedent, TT.EOF):
+                break
+            elif self.match(TT.InvalidIndentation):
+                self.error(
+                    "E1548",
+                    "Unindent does not match any outer indentation level.",
+                    self.peek(),
+                    "The indentation level does not match that of the previous lines.",
+                    linesBefore=2,
+                    throw=False,
+                )
+            try:
+                if self.peek().lexeme == "nil":
+                    self.advance()
+                    self.matchEos()
+                elif self.matchKeyword("func", "method", "getter", "setter"):
+                    token = self.previous()
+                    self.error(
+                        "E1241",
+                        f"Unexpected '{token.lexeme}' in struct definition.",
+                        token,
+                        "A struct only defines its fields (data). "
+                        "Its functions, methods, getters, and setters are defined in an `impl` block.",
+                    )
+                elif self.match(TT.Identifier):
+                    field = self.previous()
+                    if self.match(TT.Identifier):
+                        type = self.previous()
+                        fieldName = field.lexeme
+                        if fieldName not in fields:
+                            fields[fieldName] = (field, type)
+                        else:
+                            self.error(
+                                "E1101",
+                                f"Field with the name '{fieldName}' is already defined on this struct.",
+                                field,
+                                "Struct fields must be unique.",
+                                throw=False,
+                            )
+                        self.matchEos()
+                    else:
+                        token1 = self.previous()
+                        token2 = self.advance()
+                        token = token1 if token2.type == TT.Newline else token2
+                        self.error(
+                            "E1671",
+                            f"Unexpected expression after field name.",
+                            token,
+                            "Struct fields must be of the form: 'name type'",
+                        )
+                else:
+                    token = self.advance()
+                    self.error(
+                        "E1940",
+                        f"Unexpected expression in struct definition.",
+                        token,
+                        HINT_STRUCT,
+                    )
+
+            except ParseError:
+                self.synchronize()
+
+        return tree.StructStmt(structToken, name, fields)
+
+    def implStatement(self):
+        # ""impl" IDENTIFIER EOS functions*
+
+        implToken = self.previous()
+
+        if self.matchEos():
+            self.error(
+                "E1147",
+                f"Found a lonely 'impl' keyword.",
+                implToken,
+                HINT_IMPL,
+            )
+        elif self.match(TT.Identifier):
+            name = self.previous()
+        else:
+            self.error(
+                "E1273",
+                f"The impl keyword must be followed by a name.",
+                implToken,
+                "",
+            )
+
+        self.consumeIndent("impl", False)
+
+        allNames = set()
+        getterNames = set()
+        functions = []
+
+        # Do kinda what statements() does, but limited to the kind of stuff we expect in a struct
+        while True:
+            if self.match(TT.Dedent, TT.EOF):
+                break
+            elif self.match(TT.InvalidIndentation):
+                self.error(
+                    "E1875",
+                    "Unindent does not match any outer indentation level.",
+                    self.peek(),
+                    "The indentation level does not match that of the previous lines.",
+                    linesBefore=2,
+                    throw=False,
+                )
+            try:
+                if self.matchKeyword("func", "method", "getter", "setter"):
+                    fn = self.funcStatement()
+                    if isinstance(fn, tree.ExpressionStmt):
+                        fn = fn.expr
+                    funcName = fn.name.lexeme
+                    if fn.kind == "setter":
+                        if funcName in getterNames:
+                            functions.append(fn)
+                        else:
+                            self.error(
+                                "E1876",
+                                f"Setter '{funcName}' needs its corresponding getter to be defined first.",
+                                fn.name,
+                                "For consistency, each setter must have a matching getter.",
+                                throw=False,
+                            )
+                    elif funcName not in allNames:
+                        functions.append(fn)
+                        allNames.add(funcName)
+                        if fn.kind == "getter":
+                            getterNames.add(funcName)
+                    else:
+                        self.error(
+                            "E1048",
+                            f"Function with the name '{funcName}' is already implemented.",
+                            fn.name,
+                            "Struct functions/methods must be unique.",
+                            throw=False,
+                        )
+                elif self.peek().lexeme == "nil":
+                    self.advance()
+                    self.matchEos()
+                else:
+                    token = self.advance()
+                    self.error(
+                        "E1985",
+                        f"Unexpected expression in impl definition.",
+                        token,
+                        HINT_IMPL,
+                    )
+
+            except ParseError:
+                self.synchronize()
+
+        return tree.ImplStmt(implToken, name, functions)
 
     def printStatement(self):
         # -> "print" expression "\n"
+        token = self.previous()
         value = self.expression(allow_kw=True)
         self.consumeEosAfterExpression()
-        return tree.PrintStmt(value)
+        return tree.PrintStmt(token, value)
 
     def expressionStatement(self):
         # -> expression "\n"
@@ -588,6 +814,17 @@ class Parser:
         while True:
             if self.match(TT.LeftParen):
                 expr = self.finishCall(expr)
+            elif self.match(TT.Dot, TT.DotDot):
+                token = self.previous()
+                if self.match(TT.Identifier):
+                    expr = tree.GetExpr(token, expr, self.previous())
+                else:
+                    self.error(
+                        "E1556",
+                        "Expected identifier after dotdot ('..').",
+                        token,
+                        "Attribute getters must be identifiers (i.e. a name).",
+                    )
             else:
                 break
 
@@ -713,6 +950,11 @@ class Parser:
             # Convert r-value expr into l-value assignment
             name = leftExpr.name
             return tree.AssignExpr(name, rightExpr)
+        elif isinstance(leftExpr, tree.GetExpr):
+            # Convert getExpr into setExpr
+            return tree.SetExpr(
+                leftExpr.token, leftExpr.object, leftExpr.name, rightExpr
+            )
         else:
             # Error, but no need to unwind, because we're not in a confused state
             self.error(

@@ -11,10 +11,44 @@ from zoofc1 import main, Source, ZoofCompiler, tree
 c = ZoofCompiler()
 m = c.createModule("main")
 
-s1 = Source("i1", 1, "and")
-# s1 = Source("i1", 1, "  print 3 + 4\n  print 42\n3")
-# s2 = Source("i2", 3, "b = 2")
-# s3 = Source("i3", 4, "foo()")
+
+source = """
+struct Vector
+    x F64
+    y F64
+
+
+impl Vector
+
+    func new(x, y) do
+        return This(x, y)
+
+    getter x() its this..x
+    setter x(v) do
+        this..x = v
+
+    getter y() its this..y
+    setter y(v) do
+        this..y = v
+
+    getter length() do
+        return (this..x^2 + this..y^2) ^ 0.5
+
+
+v = Vector.new(1, 2)
+print v
+print v.x
+print v.y
+print v.length
+
+v.x = 3
+print v.x
+print v.length
+
+
+"""
+
+s1 = Source("i1", 1, source)
 
 m.execute(s1)
 # m.execute(s2)

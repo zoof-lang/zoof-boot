@@ -69,8 +69,14 @@ KEYWORDS = (
     # "true",
     # "false",
     # "nil",
+    "trait",
+    "struct",
+    "impl",
     "func",
     "proc",
+    "getter",
+    "setter",
+    "method",
     "return",
     "if",
     "elif",
@@ -87,7 +93,6 @@ KEYWORDS = (
 )
 RESERVED = (
     "super",
-    "this",
     "swicth",
     "match",
     "step",

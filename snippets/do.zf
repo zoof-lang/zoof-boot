@@ -1,5 +1,6 @@
 #### exec: do 1
 # Do blocks are just for indentation
+# TODO: perhaps have a `block do` instead, with its own scope.
 a = 2
 do
     a = 3

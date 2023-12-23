@@ -68,7 +68,7 @@ class ErrorHandler:
         lines = self.source.lines
 
         # Get bounds of code to show. Line numbers are relative.
-        if isinstance(exprOrToken, tree.Expr):
+        if isinstance(exprOrToken, tree.ExprOrStmt):
             loc1, loc2 = exprOrToken.location()
             line1, column1 = loc1
             line2, column2 = loc2

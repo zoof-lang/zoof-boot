@@ -45,12 +45,17 @@ class ArbitraryNumber(NativeCallable):
 
 
 class ZoofFunction(Callable):
-    def __init__(self, declaration, closure, source):
+    def __init__(self, declaration, closure, bindings, source):
         self.declaration = declaration
         self.closure = closure
+        self.bindings = bindings
         self.source = source
         self.freeVars = self.declaration.freeVars.copy()
         self.captured = {}
+
+    def __repr__(self):
+        kind = self.declaration.token.lexeme
+        return f"<{kind}>"
 
     def arity(self):
         return len(self.declaration.params)
@@ -68,7 +73,7 @@ class ZoofFunction(Callable):
         # Be good for memory
         environment.map.clear()
 
-    def call(self, interpreter, arguments):
+    def call(self, interpreter, arguments, bindings=None):
         if self.captured:
             expr = list(self.captured.values())[0]
             raise RuntimeErr(
@@ -79,6 +84,10 @@ class ZoofFunction(Callable):
         environment = Environment(self.closure)
         # for name, value in self.captured.items():
         #     environment.set(name, value)
+        for name, ob in self.bindings.items():
+            environment.set(name, ob)
+        for name, ob in (bindings or {}).items():
+            environment.set(name, ob)
         for param, arg in zip(self.declaration.params, arguments):
             environment.set(param, arg)
 
@@ -97,6 +106,130 @@ class ZoofFunction(Callable):
                 return interpreter.executeBlock(self.declaration.body, environment)
         finally:
             interpreter.ehandler.swapSource(prevSource)
+
+    def bind(self, new_bindings):
+        bindings = self.bindings.copy()
+        bindings.update(new_bindings)
+        return ZoofFunction(self.declaration, self.closure, bindings, self.source)
+
+
+class ZoofStruct:
+    def __init__(self, declaration):
+        self.declaration = declaration
+
+        self.funcs = {}
+        self.methods = {}
+        self.getters = {}
+        self.setters = {}
+
+    def __repr__(self):
+        name = self.declaration.name.lexeme
+        return f"<Struct {name} with {len(self.funcs)} funcs, {len(self.methods)} methods, {len(self.getters)} getters, {len(self.setters)} setters>"
+
+    def addFunction(self, fn):
+        name = fn.declaration.name.lexeme
+        kind = fn.declaration.token.lexeme
+        if kind == "func":
+            self.funcs[name] = fn
+        elif kind == "getter":
+            self.getters[name] = fn
+        elif kind == "setter":
+            self.setters[name] = fn
+        elif kind == "method":
+            self.methods[name] = fn
+        else:
+            raise RuntimeError(f"Unforeseen function kind '{kind}'.")
+
+    def get(self, nameToken):
+        name = nameToken.lexeme
+        fn = self.funcs.get(name, None)
+        if fn is not None:
+            return fn
+        else:
+            raise RuntimeErr(
+                "E8629",
+                f"Struct {self.declaration.name.lexeme} does not have static function '{name}'.",
+                nameToken,
+                "",
+            )
+
+    def instantiate(self, arguments):
+        names = list(self.declaration.fields.keys())
+        assert len(arguments) == len(names)
+        data = {}
+        for name, value in zip(names, arguments):
+            data[name] = value
+        return ZoofInstance(self, data)
+
+
+class ZoofInstance:
+    def __init__(self, archetype, data):
+        self.archetype = archetype
+        self.data = data
+
+    def __repr__(self):
+        t = self.archetype
+        name = t.declaration.name.lexeme
+        return f"<{name} instance with {len(t.methods)} methods, {len(t.getters)} getters, {len(t.setters)} setters>"
+
+    def getData(self, nameToken):
+        name = nameToken.lexeme
+        if name not in self.data:
+            structName = self.archetype.declaration.name.lexeme
+            raise RuntimeErr(
+                "E8223",
+                f"Struct {structName} does not have a field '{name}' to get.",
+                nameToken,
+                "",
+            )
+        return self.data[name]
+
+    def setData(self, nameToken, value):
+        name = nameToken.lexeme
+        if name not in self.data:
+            structName = self.archetype.declaration.name.lexeme
+            raise RuntimeErr(
+                "E8313",
+                f"Struct {structName} does not have a field'{name}' so set.",
+                nameToken,
+                "",
+            )
+        self.data[name] = value
+
+    def getProp(self, interpreter, nameToken):
+        name = nameToken.lexeme
+        fn = self.archetype.getters.get(name, None)
+        bindings = {"this": self}
+        if fn is not None:
+            attr = fn.call(interpreter, [], bindings)
+        else:
+            fn = self.archetype.methods.get(name, None)
+            if fn is not None:
+                attr = fn.bind(bindings)
+            else:
+                structName = self.archetype.declaration.name.lexeme
+                raise RuntimeErr(
+                    "E8240",
+                    f"Struct {structName} does not have a getter or method called '{name}'.",
+                    nameToken,
+                    "",
+                )
+        return attr
+
+    def setProp(self, interpreter, nameToken, value):
+        name = nameToken.lexeme
+        fn = self.archetype.setters.get(name, None)
+        if fn is not None:
+            bindings = {"this": self}
+            fn.call(interpreter, [value], bindings)
+        else:
+            structName = self.archetype.declaration.name.lexeme
+            raise RuntimeErr(
+                "E8970",
+                f"Struct {structName} does not have a setter called '{name}'.",
+                nameToken,
+                "",
+            )
 
 
 BUILTINS = {}
@@ -133,7 +266,10 @@ class Environment:
         self.loopStack = []
 
     def set(self, name: Token, value):
-        self.map[name.lexeme] = value
+        if isinstance(name, str):
+            self.map[name] = value
+        else:
+            self.map[name.lexeme] = value
 
     def get(self, name: Token):
         try:
@@ -154,7 +290,7 @@ class InterpreterVisitor:
         builtins = Environment(None)
         builtins.map.update(BUILTINS)
         self.env = Environment(builtins)
-        self.maybeClosures = []
+        self.maybeClosures = []  # todo: refactor this mechanism
 
     def interpret(self, program):
         """Interpret the given program."""
@@ -304,18 +440,39 @@ class InterpreterVisitor:
         value = self.evaluate(stmt.expr)
         self.print(self.stringify(value))
 
-    def visitFunctionStmt(self, stmt):
-        function = ZoofFunction(stmt, self.env, self.ehandler.source)
-        self.env.set(stmt.name, function)
-        if self.maybeClosures:
-            self.maybeClosures[-1].append(function)
-
     def visitReturnStmt(self, stmt):
         if stmt.value is None:
             value = None
         else:
             value = self.evaluate(stmt.value)
         raise Return(value)
+
+    def visitFunctionStmt(self, stmt):
+        function = ZoofFunction(stmt, self.env, {}, self.ehandler.source)
+        self.env.set(stmt.name, function)
+        if self.maybeClosures:
+            self.maybeClosures[-1].append(function)
+
+    def visitStructStmt(self, stmt):
+        struct = ZoofStruct(stmt)
+        self.env.set(stmt.name, struct)
+
+    def visitImplStmt(self, stmt):
+        ob = self.env.get(stmt.target)
+        if isinstance(ob, ZoofStruct):
+            for funcStmt in stmt.functions:
+                fn = ZoofFunction(
+                    funcStmt, self.env, {"This": ob}, self.ehandler.source
+                )
+                ob.addFunction(fn)
+                if self.maybeClosures:
+                    self.maybeClosures[-1].append(function)
+        else:
+            raise RuntimeErr(
+                "E8161",
+                f"Cannot impl '{stmt.target.lexeme}' because it is not a Struct or Trait.",
+                stmt.target,
+            )
 
     def visitExpressionStmt(self, stmt):
         return self.evaluate(stmt.expr)
@@ -329,6 +486,54 @@ class InterpreterVisitor:
             env = env.parent
         return env.get(expr.name)
 
+    def visitGetExpr(self, expr):
+        ob = self.evaluate(expr.object)
+        if isinstance(ob, ZoofStruct):
+            return ob.get(expr.name)
+        elif isinstance(ob, ZoofInstance):
+            if expr.token.lexeme == "..":
+                if ob.archetype is self.env.map.get("This", None):
+                    return ob.getData(expr.name)
+                else:
+                    raise RuntimeErr(
+                        "E8335",
+                        "Invalid use of the field getter operator ('..').",
+                        expr,
+                        "Can only use the dotdot operator inside a method of an object of the same type.",
+                    )
+            else:
+                return ob.getProp(self, expr.name)
+        else:
+            raise RuntimeErr(
+                "E8466",
+                "Cannot use getter on this object. Not a struct.",
+                expr.object,
+            )
+
+    def visitSetExpr(self, expr):
+        ob = self.evaluate(expr.object)
+        if isinstance(ob, ZoofInstance):
+            value = self.evaluate(expr.value)
+            if expr.token.lexeme == "..":
+                if ob.archetype is self.env.map.get("This", None):
+                    ob.setData(expr.name, value)
+                else:
+                    raise RuntimeErr(
+                        "E8196",
+                        "Invalid use of the field setter operator ('..').",
+                        expr,
+                        "Can only use `ob..field = value` inside a method of an object of the same type.",
+                    )
+            else:
+                ob.setProp(self, expr.name, value)
+            return value
+        else:
+            raise RuntimeErr(
+                "E8880",
+                "Cannot use setter on this object. Not a struct.",
+                expr.object,
+            )
+
     def visitIfExpr(self, expr):
         if self.isTruethy(self.evaluate(expr.condition), expr.condition):
             return self.evaluate(expr.thenExpr)
@@ -336,7 +541,7 @@ class InterpreterVisitor:
             return self.evaluate(expr.elseExpr)
 
     def visitFunctionExpr(self, expr):
-        function = ZoofFunction(expr, self.env, self.ehandler.source)
+        function = ZoofFunction(expr, self.env, {}, self.ehandler.source)
         if self.maybeClosures:
             self.maybeClosures[-1].append(function)
         return function
@@ -467,7 +672,9 @@ class InterpreterVisitor:
         callee = self.evaluate(expr.callee)
         arguments = [self.evaluate(argExpr) for argExpr in expr.arguments]
 
-        # todo: error is bound to the closing paren :/
+        if isinstance(callee, ZoofStruct) and callee is self.env.map.get("This", None):
+            return callee.instantiate(arguments)
+
         if not isinstance(callee, Callable):
             raise RuntimeErr(
                 "E8247",
@@ -480,7 +687,7 @@ class InterpreterVisitor:
             raise RuntimeErr(
                 "E8960",
                 f"Callee Expected {callee.arity()} arguments, but the call has {len(arguments)}.",
-                expr.paren,
+                expr,
                 "The callable object cannot be called this way. You should probably",
                 "double-check the signature.",
             )

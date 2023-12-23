@@ -10,21 +10,38 @@ class ExprOrStmt:
         else:
             return method(self)
 
+    def location(self):
+        raise NotImplementedError()  # ((line1, col1), (line2, col2))
+
 
 # %%
 
 
 class Stmt(ExprOrStmt):
-    pass
+    def location(self):
+        # Implementation that works for most statements
+        token = self.token
+        offset = len(self.token.lexeme)
+        return (token.line, token.column), (token.line, token.column + offset)
 
 
 class Program(Stmt):
     def __init__(self, statements):
         self.statements = statements
 
+    def location(self):
+        return (self.statements[0].location()[0], self.statements[-1].location()[1])
+
+
+class PrintStmt(Stmt):
+    def __init__(self, token, expr):
+        self.token = token
+        self.expr = expr
+
 
 class DoStmt(Stmt):
-    def __init__(self, statements):
+    def __init__(self, token, statements):
+        self.token = token
         self.statements = statements
 
 
@@ -56,35 +73,48 @@ class BreakStmt(Stmt):
         self.token = token
 
 
-class PrintStmt(Stmt):
-    def __init__(self, expr):
-        self.expr = expr
+class ReturnStmt(Stmt):
+    def __init__(self, token, value):
+        self.token = token
+        self.value = value
+
+
+class FunctionStmt(Stmt):
+    def __init__(self, token, name, params, statements):
+        self.token = token
+        self.name = name
+        self.params = params
+        self.body = statements
+        self.kind = self.token.lexeme  # func, method, getter, setter
+
+
+class StructStmt(Stmt):
+    def __init__(self, token, name, fields):
+        self.token = token
+        self.name = name
+        self.fields = fields
+
+
+class ImplStmt(Stmt):
+    def __init__(self, token, target, functions: list):
+        self.token = token
+        self.target = target
+        self.functions = functions
 
 
 class ExpressionStmt(Stmt):
     def __init__(self, expr):
         self.expr = expr
 
-
-class FunctionStmt(Stmt):
-    def __init__(self, name, params, statements):
-        self.name = name
-        self.params = params
-        self.body = statements
-
-
-class ReturnStmt(Stmt):
-    def __init__(self, keyword, value):
-        self.keyword = keyword
-        self.value = value
+    def location(self):
+        return self.expr.location()
 
 
 # %%
 
 
 class Expr(ExprOrStmt):
-    def location(self):
-        raise NotImplementedError()
+    pass
 
 
 class IfExpr(Expr):
@@ -111,6 +141,7 @@ class FunctionExpr(Expr):
         self.name = name
         self.params = params
         self.body = expr
+        self.kind = self.token.lexeme  # func, method, getter, setter
 
     def location(self):
         loc1 = self.token.line, self.token.column
@@ -173,6 +204,31 @@ class GroupingExpr(Expr):
 
     def location(self):
         return self.expr.location()
+
+
+class GetExpr(Expr):
+    def __init__(self, token, object, name):
+        self.token = token
+        self.object = object
+        self.name = name
+
+    def location(self):
+        loc1 = self.object.location()[0]
+        loc2 = self.name.line, self.name.column + len(self.name.lexeme)
+        return loc1, loc2
+
+
+class SetExpr(Expr):
+    def __init__(self, token, object, name, value):
+        self.token = token
+        self.object = object
+        self.name = name
+        self.value = value
+
+    def location(self):
+        loc1 = self.object.location()[0]
+        loc2 = self.name.line, self.name.column + len(self.name.lexeme)
+        return loc1, loc2
 
 
 class RangeExpr(Expr):
