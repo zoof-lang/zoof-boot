@@ -67,11 +67,22 @@ The syntax for creating a struct is:
 """
 
 
-HINT_IMPL = """
-The `impl` keyword is used to define functions on a struct, trait or multimethod,
-i.e. to *implement* it.
+HINT_TRAIT = """
+The syntax for creating a trait is:
 
-    impl Foo
+    trait TFoo
+
+        func some_method(self) do
+            return "hi"
+
+        abstract getter someProp(self)
+"""
+
+HINT_IMPL = """
+The `impl` keyword is used to define methods on a struct for a specific trait
+or multimethod, i.e. to *implement* it.
+
+    impl TFoo for Bar
 
         func some_method(self) do
             return "hi"
@@ -293,10 +304,12 @@ class Parser:
             return self.printStatement()
         elif self.matchKeyword("func"):
             return self.funcStatement()
-        elif self.matchKeyword("impl"):
-            return self.implStatement()
         elif self.matchKeyword("struct"):
             return self.structStatement()
+        elif self.matchKeyword("trait"):
+            return self.traitStatement()
+        elif self.matchKeyword("impl"):
+            return self.implStatement()
         elif self.matchKeyword("method", "getter", "setter"):
             token = self.previous()
             self.error(
@@ -450,7 +463,7 @@ class Parser:
         statements = self.indentedStatements("while-do", False)
         return tree.WhileStmt(kwToken, condition, statements)
 
-    def funcStatement(self):
+    def funcStatement(self, isAbstract=False):
         # -> "func" IDENTIFIER "(" parameters? ")" "do" EOS statement*
         # parameters -> IDENTIFIER ( "," IDENTIFIER )* ","?
         # todo: should we prohibit function/class declarations inside loops or ifs? E.g. only in the "root" of a scope?
@@ -495,7 +508,15 @@ class Parser:
                     funcToken.column + len(funcToken.lexeme),
                 )
 
-        if self.matchKeyword("do"):
+        if isAbstract:
+            if not self.matchEos():
+                self.error(
+                    "E1000",
+                    f"Expected newline after signature of abstract function.",
+                    self.peek(),
+                )
+            return tree.FunctionStmt(funcToken, name, params, None)
+        elif self.matchKeyword("do"):
             # Statement-mode
             statements = self.indentedStatements(f"{kind}-do", True)
             return tree.FunctionStmt(funcToken, name, params, statements)
@@ -547,16 +568,135 @@ class Parser:
             )
 
         self.consumeIndent("struct", False)
+        fields, functions = self.consumeBodyOfStructTraitImpl("struct")
 
+        for fn in functions:
+            if fn.body is None:
+                self.error(
+                    "E1000",
+                    f"Cannot define abstract methods  on an struct definition.",
+                    fn.token,
+                    "Abstract methods are only allowed on traits.",
+                    throw=False,
+                )
+
+        return tree.StructStmt(structToken, name, fields, functions)
+
+    def traitStatement(self):
+        # ""trait" IDENTIFIER EOS methods*
+
+        traitToken = self.previous()
+
+        if self.matchEos():
+            self.error(
+                "E1000",
+                f"Found a lonely 'trait' keyword.",
+                traitToken,
+                HINT_TRAIT,
+            )
+        elif self.match(TT.Identifier):
+            name = self.previous()
+        else:
+            self.error(
+                "E1000",
+                f"Unexpected token after 'trait'.",
+                self.previous(),
+                "",
+            )
+
+        self.consumeIndent("trait", False)
+        _, functions = self.consumeBodyOfStructTraitImpl("trait")
+
+        for fn in functions:
+            if fn.kind == "func":
+                self.error(
+                    "E1000",
+                    f"Cannot define 'func' on an trait definition.",
+                    fn.token,
+                    "In a trait block, only methods, getters, and setters are allowed.",
+                    throw=False,
+                )
+
+        return tree.TraitStmt(traitToken, name, functions)
+
+    def implStatement(self):
+        # ""impl" IDENTIFIER EOS functions*
+
+        implToken = self.previous()
+
+        if self.matchEos():
+            self.error(
+                "E1147",
+                f"Found a lonely 'impl' keyword.",
+                implToken,
+                HINT_IMPL,
+            )
+
+        if self.match(TT.Identifier):
+            targetTrait = self.previous()
+        else:
+            self.error(
+                "E1273",
+                f"The impl keyword must be followed by the name of a Trait.",
+                implToken,
+                "",
+            )
+
+        if not self.matchKeyword("for"):
+            self.error(
+                "E1000",
+                f"The impl keyword must be followed by a name and then 'for'.",
+                implToken,
+                HINT_IMPL,
+            )
+
+        if self.match(TT.Identifier):
+            targetStruct = self.previous()
+        else:
+            self.error(
+                "E1000",
+                f"An impl definition must specify the Struct to implement.",
+                implToken,
+                HINT_IMPL,
+            )
+
+        self.consumeIndent("impl", False)
+        _, functions = self.consumeBodyOfStructTraitImpl("impl")
+
+        for fn in functions:
+            if fn.kind == "func":
+                self.error(
+                    "E1000",
+                    f"Cannot define 'func' on an impl definition.",
+                    fn.token,
+                    "In an impl block, only methods, getters, and setters are allowed.",
+                    throw=False,
+                )
+            elif fn.body is None:
+                self.error(
+                    "E1000",
+                    f"Cannot define abstract methods  on an impl definition.",
+                    fn.token,
+                    "Abstract methods are only allowed on traits.",
+                    throw=False,
+                )
+
+        return tree.ImplStmt(implToken, targetTrait, targetStruct, functions)
+
+    def consumeBodyOfStructTraitImpl(self, context):
+        allNames = set()
+        getterNames = set()
+        functions = []
         fields = {}
+        nextIsAbstract = False
 
-        # Do kinda what statements() does, but limited to the kind of stuff we expect in a struct
+        # Do kinda what statements() does, but limited to the kind of stuff we expect in a struct/trait
         while True:
             if self.match(TT.Dedent, TT.EOF):
                 break
             elif self.match(TT.InvalidIndentation):
                 self.error(
-                    "E1548",
+                    "E1875",
                     "Unindent does not match any outer indentation level.",
                     self.peek(),
                     "The indentation level does not match that of the previous lines.",
@@ -564,19 +704,7 @@ class Parser:
                     throw=False,
                 )
             try:
-                if self.peek().lexeme == "nil":
-                    self.advance()
-                    self.matchEos()
-                elif self.matchKeyword("func", "method", "getter", "setter"):
-                    token = self.previous()
-                    self.error(
-                        "E1241",
-                        f"Unexpected '{token.lexeme}' in struct definition.",
-                        token,
-                        "A struct only defines its fields (data). "
-                        "Its functions, methods, getters, and setters are defined in an `impl` block.",
-                    )
-                elif self.match(TT.Identifier):
+                if context == "struct" and self.match(TT.Identifier):
                     field = self.previous()
                     if self.match(TT.Identifier):
                         type = self.previous()
@@ -602,64 +730,25 @@ class Parser:
                             token,
                             "Struct fields must be of the form: 'name type'",
                         )
-                else:
-                    token = self.advance()
-                    self.error(
-                        "E1940",
-                        f"Unexpected expression in struct definition.",
-                        token,
-                        HINT_STRUCT,
-                    )
-
-            except ParseError:
-                self.synchronize()
-
-        return tree.StructStmt(structToken, name, fields)
-
-    def implStatement(self):
-        # ""impl" IDENTIFIER EOS functions*
-
-        implToken = self.previous()
-
-        if self.matchEos():
-            self.error(
-                "E1147",
-                f"Found a lonely 'impl' keyword.",
-                implToken,
-                HINT_IMPL,
-            )
-        elif self.match(TT.Identifier):
-            name = self.previous()
-        else:
-            self.error(
-                "E1273",
-                f"The impl keyword must be followed by a name.",
-                implToken,
-                "",
-            )
-
-        self.consumeIndent("impl", False)
-
-        allNames = set()
-        getterNames = set()
-        functions = []
-
-        # Do kinda what statements() does, but limited to the kind of stuff we expect in a struct
-        while True:
-            if self.match(TT.Dedent, TT.EOF):
-                break
-            elif self.match(TT.InvalidIndentation):
-                self.error(
-                    "E1875",
-                    "Unindent does not match any outer indentation level.",
-                    self.peek(),
-                    "The indentation level does not match that of the previous lines.",
-                    linesBefore=2,
-                    throw=False,
-                )
-            try:
-                if self.matchKeyword("func", "method", "getter", "setter"):
-                    fn = self.funcStatement()
+                elif self.matchKeyword("abstract"):
+                    if context == "trait" and self.peek().lexeme in (
+                        "func",
+                        "method",
+                        "getter",
+                        "setter",
+                    ):
+                        nextIsAbstract = True
+                    else:
+                        self.error(
+                            "E1000",
+                            f"Unexpected use of the 'abstract' keyword.",
+                            self.previous(),
+                            "",
+                        )
+                elif self.matchKeyword("func", "method", "getter", "setter"):
+                    isAbstract = nextIsAbstract
+                    nextIsAbstract = False
+                    fn = self.funcStatement(isAbstract)
                     if isinstance(fn, tree.ExpressionStmt):
                         fn = fn.expr
                     funcName = fn.name.lexeme
@@ -682,9 +771,9 @@ class Parser:
                     else:
                         self.error(
                             "E1048",
-                            f"Function with the name '{funcName}' is already implemented.",
+                            f"Function with the name '{funcName}' is already defined.",
                             fn.name,
-                            "Struct functions/methods must be unique.",
+                            f"The functions/methods on a {context} must be unique.",
                             throw=False,
                         )
                 elif self.peek().lexeme == "nil":
@@ -694,15 +783,15 @@ class Parser:
                     token = self.advance()
                     self.error(
                         "E1985",
-                        f"Unexpected expression in impl definition.",
+                        f"Unexpected expression in {context} definition.",
                         token,
-                        HINT_IMPL,
+                        "",
                     )
 
             except ParseError:
                 self.synchronize()
 
-        return tree.ImplStmt(implToken, name, functions)
+        return fields, functions
 
     def printStatement(self):
         # -> "print" expression "\n"
@@ -743,6 +832,8 @@ class Parser:
         TT.Star: (21, "L", tree.BinaryExpr),
         TT.Slash: (21, "L", tree.BinaryExpr),
         TT.Caret: (22, "R", tree.BinaryExpr),
+        # Cast
+        "as": (23, "L", tree.BinaryExpr),
         # Unary, and the rest are handled with recursive descent in expressionUnit
     }
 
@@ -757,9 +848,12 @@ class Parser:
         while True:
             # Detect token for binary op
             token = self.peek()
-            if token.type not in self.OPINFO_MAP:
+            if token.type == TT.Keyword and token.lexeme in self.OPINFO_MAP:
+                prec, assoc, TreeCls = self.OPINFO_MAP[token.lexeme]
+            elif token.type in self.OPINFO_MAP:
+                prec, assoc, TreeCls = self.OPINFO_MAP[token.type]
+            else:
                 break
-            prec, assoc, TreeCls = self.OPINFO_MAP[token.type]
             if prec < min_prec:
                 break
             self.advance()  # ok, accept it!

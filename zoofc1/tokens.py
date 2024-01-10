@@ -69,6 +69,7 @@ KEYWORDS = (
     # "true",
     # "false",
     # "nil",
+    "abstract",
     "trait",
     "struct",
     "impl",
