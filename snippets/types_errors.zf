@@ -394,3 +394,37 @@ Can only use `ob..field = value` inside a method of an object of the same type.
 
 
 
+#### exec: E8270 - must implement abstract methods 1
+trait TFoo
+    abstract method spam()
+struct Bar from TFoo
+    nil
+#### output
+-- RuntimeError (E8270) ---------------------------------------------- snippet:3
+
+Abstract method not implemented for Bar: spam
+
+3| struct Bar from TFoo
+   ^^^^^^
+#### end
+
+
+
+#### exec: E8270 - must implement abstract methods 2
+trait TFoo
+    abstract method spam()
+struct Bar
+    nil
+impl TFoo for Bar
+    nil
+#### output
+-- RuntimeError (E8270) ---------------------------------------------- snippet:5
+
+Abstract method not implemented for Bar-as-TFoo: spam
+
+5| impl TFoo for Bar
+   ^^^^
+#### end
+
+
+

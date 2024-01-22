@@ -150,7 +150,7 @@ class ZoofArcheType:
         if abstracts:
             abstractNames = ", ".join(f.declaration.name.lexeme for f in abstracts)
             raise RuntimeErr(
-                "E8000",
+                "E8270",
                 f"Abstract method not implemented for {self.name()}: {abstractNames}",
                 self.declaration.token,
                 "",
@@ -343,7 +343,7 @@ class ZoofInstance:
         structName = thisStruct.name()
         targetName = archetype.name()
         raise RuntimeErr(
-            "E8000",
+            "E8296",
             f"Cannot cast a {structName} to {targetName}.",
             token,
             "",
@@ -606,13 +606,13 @@ class InterpreterVisitor:
         struct = self.env.get(stmt.struct.name)
         if not isinstance(trait, ZoofTrait):
             raise RuntimeErr(
-                "E8000",
+                "E8948",
                 f"Impl expects a trait before 'for'.",
                 stmt.target,
             )
         if not isinstance(struct, ZoofStruct):
             raise RuntimeErr(
-                "E8000",
+                "E8412",
                 f"Impl expects a struct after 'for'.",
                 stmt.target,
             )

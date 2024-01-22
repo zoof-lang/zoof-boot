@@ -519,7 +519,7 @@ class Parser:
         if isAbstract:
             if not self.matchEos():
                 self.error(
-                    "E1000",
+                    "E1778",
                     f"Expected newline after signature of abstract function.",
                     self.peek(),
                 )
@@ -592,8 +592,8 @@ class Parser:
         for fn in functions:
             if fn.body is None:
                 self.error(
-                    "E1000",
-                    f"Cannot define abstract methods  on an struct definition.",
+                    "E1785",
+                    f"Cannot define abstract methods on an struct definition.",
                     fn.token,
                     "Abstract methods are only allowed on traits.",
                     throw=False,
@@ -608,7 +608,7 @@ class Parser:
 
         if self.matchEos():
             self.error(
-                "E1000",
+                "E1764",
                 f"Found a lonely 'trait' keyword.",
                 traitToken,
                 HINT_TRAIT,
@@ -617,7 +617,7 @@ class Parser:
             name = self.previous()
         else:
             self.error(
-                "E1000",
+                "E1446",
                 f"Unexpected token after 'trait'.",
                 self.previous(),
                 "",
@@ -629,7 +629,7 @@ class Parser:
         for fn in functions:
             if fn.kind == "func":
                 self.error(
-                    "E1000",
+                    "E1536",
                     f"Cannot define 'func' on an trait definition.",
                     fn.token,
                     "In a trait block, only methods, getters, and setters are allowed.",
@@ -663,7 +663,7 @@ class Parser:
 
         if not self.matchKeyword("for"):
             self.error(
-                "E1000",
+                "E1441",
                 f"The impl keyword must be followed by a name and then 'for'.",
                 implToken,
                 HINT_IMPL,
@@ -673,7 +673,7 @@ class Parser:
             targetStruct = self.previous()
         else:
             self.error(
-                "E1000",
+                "E1053",
                 f"An impl definition must specify the Struct to implement.",
                 implToken,
                 HINT_IMPL,
@@ -685,7 +685,7 @@ class Parser:
         for fn in functions:
             if fn.kind == "func":
                 self.error(
-                    "E1000",
+                    "E1069",
                     f"Cannot define 'func' on an impl definition.",
                     fn.token,
                     "In an impl block, only methods, getters, and setters are allowed.",
@@ -693,7 +693,7 @@ class Parser:
                 )
             elif fn.body is None:
                 self.error(
-                    "E1000",
+                    "E1211",
                     f"Cannot define abstract methods  on an impl definition.",
                     fn.token,
                     "Abstract methods are only allowed on traits.",
@@ -761,7 +761,7 @@ class Parser:
                         nextIsAbstract = True
                     else:
                         self.error(
-                            "E1000",
+                            "E1130",
                             f"Unexpected use of the 'abstract' keyword.",
                             self.previous(),
                             "",
