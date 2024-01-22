@@ -104,15 +104,96 @@ struct Vector from TLength
 
     getter length() its (this..x^2 + this..y^2) ^ 0.5
 
+# No need to cast to TLength
 v = Vector.new(3, 4)
 v.showLength()
 v.x = 5
 v.showLength()
+
+# But casting is posisble!
+v2 = v as TLength
+v2.showLength()
 #### output
 'length is '
 5.0
 'length is '
 6.4031242374328485
+'length is '
+6.4031242374328485
+#### end
+
+
+
+#### exec: the expression problem
+
+# -- api.zf
+
+trait TSave
+    abstract method save()
+
+trait TToPdf
+    abstract method toPdf()
+
+
+# -- text.zf
+
+struct TextDocument
+    func new() its This()
+    # Imagine extensive methods here
+
+
+impl TSave for TextDocument
+    method save() do
+        print 'Saving text doc!'
+
+
+impl TToPdf for TextDocument
+    method toPdf() do
+        print 'Converting text to pdf!'
+
+
+# -- spreadsheet.zf
+
+struct SpreadSheetDocument
+    func new() its This()
+    # Imagine extensive methods here
+
+
+impl TSave for SpreadSheetDocument
+    method save() do
+        print 'Saving spreadsheet doc!'
+
+
+impl TToPdf for SpreadSheetDocument
+    method toPdf() do
+        print 'Converting spreadsheet to pdf!'
+
+
+# -- app.zf
+
+# Two docs, they could be any kind of document, from this code p.o.v.
+doc1 = TextDocument.new()
+doc2 = SpreadSheetDocument.new()
+
+func saveDoc(doc) do
+    # Note: eventually the cast will not be necessary if we annotate the doc param to be a TSave
+    (doc as TSave).save()
+
+func docToPdf(doc) do
+    (doc as TToPdf).toPdf()
+
+saveDoc(doc1)
+saveDoc(doc2)
+docToPdf(doc1)
+docToPdf(doc2)
+
+#### expected output
+
+#### actual output
+'Saving text doc!'
+'Saving spreadsheet doc!'
+'Converting text to pdf!'
+'Converting spreadsheet to pdf!'
 #### end
 
 

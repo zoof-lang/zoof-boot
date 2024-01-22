@@ -13,38 +13,7 @@ m = c.createModule("main")
 
 
 source = """
-
-trait TLength
-    abstract getter length()
-
-    method showLength() do
-        print 'length is '
-        print this.length
-
-
-struct Vector bla TLength
-
-    x F64
-    y F64
-
-    func new(x, y) do
-        return This(x, y)
-
-    getter x() its this..x
-    setter x(v) do
-        this..x = v
-
-    getter y() its this..y
-    setter y(v) do
-        this..y = v
-
-    getter length() its (this..x^2 + this..y^2) ^ 0.5
-
-v = Vector.new(3, 4)
-v.showLength()
-v.x = 5
-v.showLength()
-
+print 42
 
 """
 

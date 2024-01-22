@@ -211,6 +211,7 @@ class ZoofStruct(ZoofArcheType):
 
     def __init__(self, declaration, traits):
         super().__init__(declaration)
+        self.traits = traits
 
         for trait in traits:
             self.methods.update(trait.methods)
@@ -335,9 +336,12 @@ class ZoofInstance:
             if archetype is thisStruct:
                 return ZoofInstance(thisStruct, self.data)
         elif isinstance(archetype, ZoofTrait):
-            impl = archetype.implementations.get(thisStruct, None)
-            if impl is not None:
-                return ZoofInstance(impl, self.data)
+            if archetype in thisStruct.traits:
+                return self
+            else:
+                impl = archetype.implementations.get(thisStruct, None)
+                if impl is not None:
+                    return ZoofInstance(impl, self.data)
 
         # else
         structName = thisStruct.name()
@@ -574,7 +578,17 @@ class InterpreterVisitor:
     def visitStructStmt(self, stmt):
         traits = []
         for traitName in stmt.bases:
-            traits.append(self.env.get(traitName.name))
+            trait = self.env.get(traitName.name)
+            if isinstance(trait, ZoofTrait):
+                traits.append(trait)
+            else:
+                # Note: maybe it will be possible to inherit from structs, depending
+                # on what this means for static analysis and wasm code generation.
+                raise RuntimeErr(
+                "E8517",
+                f"A struct can only inherit from traits.",
+                traitName,
+                )
 
         struct = ZoofStruct(stmt, traits)
         self.env.set(stmt.name, struct)
