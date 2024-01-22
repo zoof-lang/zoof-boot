@@ -136,6 +136,8 @@ class ResolverVisitor:
 
     def visitStructStmt(self, stmt):
         self.declare(stmt.name)
+        for traitName in stmt.bases:
+            self.resolve(traitName)
         for fn in stmt.functions:
             self.resolveFunction(fn, extra_names=["this", "This"])
 
@@ -145,6 +147,8 @@ class ResolverVisitor:
             self.resolveFunction(fn, extra_names=["this", "This"])
 
     def visitImplStmt(self, stmt):
+        self.resolve(stmt.trait)
+        self.resolve(stmt.struct)
         for fn in stmt.functions:
             self.resolveFunction(fn, extra_names=["this", "This"])
 

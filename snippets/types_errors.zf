@@ -92,7 +92,7 @@ Unexpected 'method'.
 
 1| method bar() its 42
    ^^^^^^
-Methods, getters, and setters can only be defined in an `impl` block.
+Methods, getters, and setters can only be defined in a struct, trait, or impl block.
 #### end
 
 

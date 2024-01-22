@@ -141,6 +141,21 @@ class ZoofArcheType:
     def name(self):
         raise NotImplementedError()
 
+    def checkNoAbstract(self):
+        abstracts = []
+        abstracts += [f for f in self.methods.values() if f.declaration.body is None]
+        abstracts += [f for f in self.getters.values() if f.declaration.body is None]
+        abstracts += [f for f in self.setters.values() if f.declaration.body is None]
+
+        if abstracts:
+            abstractNames = ", ".join(f.declaration.name.lexeme for f in abstracts)
+            raise RuntimeErr(
+                "E8000",
+                f"Abstract method not implemented for {self.name()}: {abstractNames}",
+                self.declaration.token,
+                "",
+            )
+
 
 class ZoofTrait(ZoofArcheType):
     """A Trait can function as a super-type for structs, or as
@@ -181,21 +196,26 @@ class ZoofImpl(ZoofArcheType):
         self.setters.update(trait.setters)
 
     def __repr__(self):
-        traitName = self.declaration.trait.lexeme
-        structName = self.declaration.struct.lexeme
+        traitName = self.declaration.trait.name.lexeme
+        structName = self.declaration.struct.name.lexeme
         return f"<Impl {traitName} for {structName}>"
 
     def name(self):
-        traitName = self.declaration.trait.lexeme
-        structName = self.declaration.struct.lexeme
+        traitName = self.declaration.trait.name.lexeme
+        structName = self.declaration.struct.name.lexeme
         return f"{structName}-as-{traitName}"
 
 
 class ZoofStruct(ZoofArcheType):
     """An object representation, with data."""
 
-    def __init__(self, declaration):
+    def __init__(self, declaration, traits):
         super().__init__(declaration)
+
+        for trait in traits:
+            self.methods.update(trait.methods)
+            self.getters.update(trait.getters)
+            self.setters.update(trait.setters)
 
     def __repr__(self):
         name = self.name()
@@ -552,7 +572,11 @@ class InterpreterVisitor:
             self.maybeClosures[-1].append(function)
 
     def visitStructStmt(self, stmt):
-        struct = ZoofStruct(stmt)
+        traits = []
+        for traitName in stmt.bases:
+            traits.append(self.env.get(traitName.name))
+
+        struct = ZoofStruct(stmt, traits)
         self.env.set(stmt.name, struct)
 
         for funcStmt in stmt.functions:
@@ -562,6 +586,8 @@ class InterpreterVisitor:
             struct.addFunction(function)
             if self.maybeClosures:
                 self.maybeClosures[-1].append(function)
+
+        struct.checkNoAbstract()
 
     def visitTraitStmt(self, stmt):
         trait = ZoofTrait(stmt)
@@ -576,8 +602,8 @@ class InterpreterVisitor:
                 self.maybeClosures[-1].append(function)
 
     def visitImplStmt(self, stmt):
-        trait = self.env.get(stmt.trait)
-        struct = self.env.get(stmt.struct)
+        trait = self.env.get(stmt.trait.name)
+        struct = self.env.get(stmt.struct.name)
         if not isinstance(trait, ZoofTrait):
             raise RuntimeErr(
                 "E8000",
@@ -600,6 +626,8 @@ class InterpreterVisitor:
             impl.addFunction(function)
             if self.maybeClosures:
                 self.maybeClosures[-1].append(function)
+
+        impl.checkNoAbstract()
 
     def visitExpressionStmt(self, stmt):
         return self.evaluate(stmt.expr)

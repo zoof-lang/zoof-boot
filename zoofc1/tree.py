@@ -86,9 +86,10 @@ class FunctionStmt(Stmt):
 
 
 class StructStmt(Stmt):
-    def __init__(self, token, name, fields, functions: list):
+    def __init__(self, token, name, bases, fields, functions: list):
         self.token = token
         self.name = name
+        self.bases = bases
         self.fields = fields
         self.functions = functions
 

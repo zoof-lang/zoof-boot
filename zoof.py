@@ -22,7 +22,7 @@ trait TLength
         print this.length
 
 
-struct Vector
+struct Vector bla TLength
 
     x F64
     y F64
@@ -38,23 +38,11 @@ struct Vector
     setter y(v) do
         this..y = v
 
-
-impl TLength for Vector
-
     getter length() its (this..x^2 + this..y^2) ^ 0.5
 
-
-v = Vector.new(1, 2) as TLength
-# v = Vector.new(1, 2)(TLength)
-print v
-print v.x
-print v.y
-# print v.length
+v = Vector.new(3, 4)
 v.showLength()
-
-v.x = 3
-print v.x
-# print v.length
+v.x = 5
 v.showLength()
 
 

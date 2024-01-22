@@ -174,8 +174,16 @@ class Parser:
         while not (self.matchEos() or self.check(TT.EOF)):
             self.advance()
         if self.match(TT.Indent):
-            while not self.match(TT.Dedent, TT.EOF):
-                self.advance()
+            level = 1
+            while level > 0:
+                if self.match(TT.Indent):
+                    level += 1
+                elif self.match(TT.Dedent):
+                    level -= 1
+                elif self.match(TT.EOF):
+                    break
+                else:
+                    self.advance()
 
     # %%
 
@@ -316,7 +324,7 @@ class Parser:
                 "E1736",
                 f"Unexpected '{token.lexeme}'.",
                 token,
-                "Methods, getters, and setters can only be defined in an `impl` block.",
+                "Methods, getters, and setters can only be defined in a struct, trait, or impl block.",
             )
         else:
             return self.expressionStatement()
@@ -567,6 +575,17 @@ class Parser:
                 "",
             )
 
+        # Consume base traits
+        bases = []
+        if self.matchKeyword("from"):
+            while True:
+                if self.match(TT.Identifier):
+                    bases.append(tree.VariableExpr(self.previous()))
+                    if self.match(TT.Plus):
+                        continue
+                    else:
+                        break
+
         self.consumeIndent("struct", False)
         fields, functions = self.consumeBodyOfStructTraitImpl("struct")
 
@@ -580,7 +599,7 @@ class Parser:
                     throw=False,
                 )
 
-        return tree.StructStmt(structToken, name, fields, functions)
+        return tree.StructStmt(structToken, name, bases, fields, functions)
 
     def traitStatement(self):
         # ""trait" IDENTIFIER EOS methods*
@@ -681,6 +700,8 @@ class Parser:
                     throw=False,
                 )
 
+        targetTrait = tree.VariableExpr(targetTrait)
+        targetStruct = tree.VariableExpr(targetStruct)
         return tree.ImplStmt(implToken, targetTrait, targetStruct, functions)
 
     def consumeBodyOfStructTraitImpl(self, context):
