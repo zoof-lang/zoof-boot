@@ -174,7 +174,7 @@ class Parser:
         while not (self.matchEos() or self.check(TT.EOF)):
             self.advance()
         if self.match(TT.Indent):
-            while not self.match(TT.Dedent):
+            while not self.match(TT.Dedent, TT.EOF):
                 self.advance()
 
     # %%

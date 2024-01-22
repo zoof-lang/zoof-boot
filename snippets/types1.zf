@@ -1,18 +1,11 @@
+#### noop: summary
+# This module tests/shows structs without inheritance
+#### end (no output)
+
+
+
 #### exec: simplest struct ever
 struct Foo
-    nil
-
-print Foo
-#### output
-<Struct Foo with 0 funcs, 0 methods, 0 getters, 0 setters>
-#### end
-
-
-
-#### exec: simplest trait ever
-struct Foo
-    nil
-impl Foo
     nil
 
 print Foo
@@ -27,7 +20,6 @@ struct Foo
     a F64
     b F64
 
-impl Foo
     func new() its This(1, 2)
     method showHi() do
         print 'hi'
@@ -50,8 +42,6 @@ f.showHi()
 struct Vector
     x F64
     y F64
-
-impl Vector
 
     func new(x, y) do
         return This(x, y)

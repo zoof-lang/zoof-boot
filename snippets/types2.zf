@@ -1,0 +1,78 @@
+#### noop: summary
+# This module tests/shows traits
+#### end (no output)
+
+
+
+#### exec: simplest trait ever
+trait TFoo
+    nil
+
+print TFoo
+#### output
+<Trait TFoo with 0 methods, 0 getters, 0 setters>
+#### end
+
+
+
+#### exec: Can always implement simple trait
+trait TFoo
+    nil
+
+struct Bar
+    func new() its This()
+
+impl TFoo for Bar
+    nil
+
+b = Bar.new() as TFoo
+#### output
+<Bar-as-TFoo instance with 0 methods, 0 getters, 0 setters>
+#### end
+
+
+
+#### exec: Real trait impl example
+
+trait TLength
+    abstract getter length()
+
+    method showLength() do
+        print 'length is '
+        print this.length
+
+
+struct Vector
+
+    x F64
+    y F64
+
+    func new(x, y) do
+        return This(x, y)
+
+    getter x() its this..x
+    setter x(v) do
+        this..x = v
+
+    getter y() its this..y
+    setter y(v) do
+        this..y = v
+
+
+impl TLength for Vector
+    getter length() its (this..x^2 + this..y^2) ^ 0.5
+
+
+v = Vector.new(3, 4) as TLength
+v.showLength()
+v.x = 5
+v.showLength()
+#### output
+'length is '
+5.0
+'length is '
+6.4031242374328485
+#### end
+
+
+
