@@ -13,38 +13,7 @@ m = c.createModule("main")
 
 
 source = """
-struct Vector
-    x F64
-    y F64
-
-
-impl Vector
-
-    func new(x, y) do
-        return This(x, y)
-
-    getter x() its this..x
-    setter x(v) do
-        this..x = v
-
-    getter y() its this..y
-    setter y(v) do
-        this..y = v
-
-    getter length() do
-        return (this..x^2 + this..y^2) ^ 0.5
-
-
-v = Vector.new(1, 2)
-print v
-print v.x
-print v.y
-print v.length
-
-v.x = 3
-print v.x
-print v.length
-
+print 42
 
 """
 

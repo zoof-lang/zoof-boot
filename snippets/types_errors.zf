@@ -27,10 +27,10 @@ Found a lonely 'impl' keyword.
 1| impl
    ^^^^
 
-The `impl` keyword is used to define functions on a struct, trait or multimethod,
-i.e. to *implement* it.
+The `impl` keyword is used to define methods on a struct for a specific trait
+or multimethod, i.e. to *implement* it.
 
-    impl Foo
+    impl TFoo for Bar
 
         func some_method(self) do
             return "hi"
@@ -61,7 +61,7 @@ impl 3
 #### output
 -- SyntaxError (E1273) ----------------------------------------------- snippet:1
 
-The impl keyword must be followed by a name.
+The impl keyword must be followed by the name of a Trait.
 
 1| impl 3
    ^^^^
@@ -69,72 +69,16 @@ The impl keyword must be followed by a name.
 
 
 
-#### exec: E1940 - structs can only have fields
+#### exec: E1985 - structs can only have fields
 struct Foo
     3 + 4
 #### output
--- SyntaxError (E1940) ----------------------------------------------- snippet:2
+-- SyntaxError (E1985) ----------------------------------------------- snippet:2
 
 Unexpected expression in struct definition.
 
 2|     3 + 4
        ^
-
-The syntax for creating a struct is:
-
-    struct Foo
-        some: I32
-        fields: F64
-#### end
-
-
-
-#### exec: E1985 - structs can only have fields
-struct Foo
-    nil
-impl Foo
-    3 + 4
-#### output
--- SyntaxError (E1985) ----------------------------------------------- snippet:4
-
-Unexpected expression in impl definition.
-
-4|     3 + 4
-       ^
-
-The `impl` keyword is used to define functions on a struct, trait or multimethod,
-i.e. to *implement* it.
-
-    impl Foo
-
-        func some_method(self) do
-            return "hi"
-
-        getter someProp(self) do
-            return self.a
-#### end
-
-
-
-#### exec: E1241 - no func on a struct
-struct Foo
-    func foo() its 42
-    method bar() its 42
-#### output
--- SyntaxError (E1241) ----------------------------------------------- snippet:2
-
-Unexpected 'func' in struct definition.
-
-2|     func foo() its 42
-       ^^^^
-A struct only defines its fields (data). Its functions, methods, getters, and setters are defined in an `impl` block.
--- SyntaxError (E1241) ----------------------------------------------- snippet:3
-
-Unexpected 'method' in struct definition.
-
-3|     method bar() its 42
-       ^^^^^^
-A struct only defines its fields (data). Its functions, methods, getters, and setters are defined in an `impl` block.
 #### end
 
 
@@ -148,7 +92,7 @@ Unexpected 'method'.
 
 1| method bar() its 42
    ^^^^^^
-Methods, getters, and setters can only be defined in an `impl` block.
+Methods, getters, and setters can only be defined in a struct, trait, or impl block.
 #### end
 
 
@@ -173,7 +117,7 @@ struct Foo
     a F64
    b F64
 #### output
--- SyntaxError (E1548) ----------------------------------------------- snippet:3
+-- SyntaxError (E1875) ----------------------------------------------- snippet:3
 
 Unindent does not match any outer indentation level.
 
@@ -188,18 +132,16 @@ The indentation level does not match that of the previous lines.
 
 #### exec: E1875
 struct Foo
-    nil
-impl Foo
     method a() its 42
    method b() its 52
 #### output
--- SyntaxError (E1875) ----------------------------------------------- snippet:5
+-- SyntaxError (E1875) ----------------------------------------------- snippet:3
 
 Unindent does not match any outer indentation level.
 
-3| impl Foo
-4|     method a() its 42
-5|    method b() its 52
+1| struct Foo
+2|     method a() its 42
+3|    method b() its 52
       ^^^^^^
 The indentation level does not match that of the previous lines.
 #### end
@@ -224,17 +166,15 @@ Struct fields must be unique.
 
 #### exec: E1876 - setter needs getter
 struct Foo
-    nil
-impl Foo
     getter foo() its 42
     setter foo(v) its nil
     setter bar(v) its nil
 #### output
--- SyntaxError (E1876) ----------------------------------------------- snippet:6
+-- SyntaxError (E1876) ----------------------------------------------- snippet:4
 
 Setter 'bar' needs its corresponding getter to be defined first.
 
-6|     setter bar(v) its nil
+4|     setter bar(v) its nil
               ^^^
 For consistency, each setter must have a matching getter.
 #### end
@@ -243,19 +183,17 @@ For consistency, each setter must have a matching getter.
 
 #### exec: E1048 - no duplicate methods / getters
 struct Foo
-    nil
-impl Foo
     getter foo() its 42
     setter foo(v) its nil
     getter foo(v) its nil
 #### output
--- SyntaxError (E1048) ----------------------------------------------- snippet:6
+-- SyntaxError (E1048) ----------------------------------------------- snippet:4
 
-Function with the name 'foo' is already implemented.
+Function with the name 'foo' is already defined.
 
-6|     getter foo(v) its nil
+4|     getter foo(v) its nil
               ^^^
-Struct functions/methods must be unique.
+The functions/methods on a struct must be unique.
 #### end
 
 
@@ -264,14 +202,13 @@ Struct functions/methods must be unique.
 struct Foo
     a F64
 
-impl Foo
     method x() its self..
 #### output
--- SyntaxError (E1556) ----------------------------------------------- snippet:5
+-- SyntaxError (E1556) ----------------------------------------------- snippet:4
 
 Expected identifier after dotdot ('..').
 
-5|     method x() its self..
+4|     method x() its self..
                           ^^
 Attribute getters must be identifiers (i.e. a name).
 #### end
@@ -288,21 +225,6 @@ The name 'this' is reserved.
 1| this = 2
    ^^^^
 Reserved names cannot be used as the name for variable, function etc.
-#### end
-
-
-
-#### exec: E8161
-a = 4
-impl a
-    nil
-#### output
--- RuntimeError (E8161) ---------------------------------------------- snippet:2
-
-Cannot impl 'a' because it is not a Struct or Trait.
-
-2| impl a
-        ^
 #### end
 
 
@@ -325,16 +247,17 @@ Struct Foo does not have static function 'doesNotExist'.
 #### exec: E8240 - invalid struct get
 struct Foo
     a F64
-impl Foo
+
     func new() its Foo(32)
+
 f = Foo.new()
 print f.a
 #### output
--- RuntimeError (E8240) ---------------------------------------------- snippet:6
+-- RuntimeError (E8240) ---------------------------------------------- snippet:7
 
 Struct Foo does not have a getter or method called 'a'.
 
-6| print f.a
+7| print f.a
            ^
 #### end
 
@@ -343,16 +266,17 @@ Struct Foo does not have a getter or method called 'a'.
 #### exec: E8970 - invalid struct set
 struct Foo
     a F64
-impl Foo
+
     func new() its Foo(32)
+
 f = Foo.new()
 f.a = 3
 #### output
--- RuntimeError (E8970) ---------------------------------------------- snippet:6
+-- RuntimeError (E8970) ---------------------------------------------- snippet:7
 
 Struct Foo does not have a setter called 'a'.
 
-6| f.a = 3
+7| f.a = 3
      ^
 #### end
 
@@ -361,7 +285,7 @@ Struct Foo does not have a setter called 'a'.
 #### exec: E8223 - invalid struct field get
 struct Foo
     a F64
-impl Foo
+
     func new() its Foo(32)
     method bar() do
         return this..b
@@ -381,7 +305,7 @@ Struct Foo does not have a field 'b' to get.
 #### exec: E8313 - invalid struct field set
 struct Foo
     a F64
-impl Foo
+
     func new() its Foo(32)
     method bar() do
         this..b = 2
@@ -429,7 +353,7 @@ Cannot use setter on this object. Not a struct.
 #### exec: E8335 - invalid use of dotdot get
 struct Foo
     a F64
-impl Foo
+
     func new() its Foo(32)
 
 f = Foo.new()
@@ -451,7 +375,7 @@ Can only use the dotdot operator inside a method of an object of the same type.
 #### exec: E8196 - invalid use of dotdot set
 struct Foo
     a F64
-impl Foo
+
     func new() its Foo(32)
 
 f = Foo.new()
@@ -466,6 +390,40 @@ Invalid use of the field setter operator ('..').
 8|     x..a = 2
        ^^^^
 Can only use `ob..field = value` inside a method of an object of the same type.
+#### end
+
+
+
+#### exec: E8270 - must implement abstract methods 1
+trait TFoo
+    abstract method spam()
+struct Bar from TFoo
+    nil
+#### output
+-- RuntimeError (E8270) ---------------------------------------------- snippet:3
+
+Abstract method not implemented for Bar: spam
+
+3| struct Bar from TFoo
+   ^^^^^^
+#### end
+
+
+
+#### exec: E8270 - must implement abstract methods 2
+trait TFoo
+    abstract method spam()
+struct Bar
+    nil
+impl TFoo for Bar
+    nil
+#### output
+-- RuntimeError (E8270) ---------------------------------------------- snippet:5
+
+Abstract method not implemented for Bar-as-TFoo: spam
+
+5| impl TFoo for Bar
+   ^^^^
 #### end
 
 

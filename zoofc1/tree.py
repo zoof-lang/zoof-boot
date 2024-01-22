@@ -81,21 +81,31 @@ class FunctionStmt(Stmt):
         self.token = token
         self.name = name
         self.params = params
-        self.body = statements
+        self.body = statements  # nil if abstract, list for stmt, expr for expr-func
         self.kind = self.token.lexeme  # func, method, getter, setter
 
 
 class StructStmt(Stmt):
-    def __init__(self, token, name, fields):
+    def __init__(self, token, name, bases, fields, functions: list):
         self.token = token
         self.name = name
+        self.bases = bases
         self.fields = fields
+        self.functions = functions
+
+
+class TraitStmt(Stmt):
+    def __init__(self, token, name, functions: list):
+        self.token = token
+        self.name = name
+        self.functions = functions
 
 
 class ImplStmt(Stmt):
-    def __init__(self, token, target, functions: list):
+    def __init__(self, token, trait, struct, functions: list):
         self.token = token
-        self.target = target
+        self.trait = trait
+        self.struct = struct
         self.functions = functions
 
 

@@ -113,22 +113,16 @@ class ZoofFunction(Callable):
         return ZoofFunction(self.declaration, self.closure, bindings, self.source)
 
 
-class ZoofStruct:
+class ZoofArcheType:
+    """Base type for Structs and Traits."""
+
     def __init__(self, declaration):
         self.declaration = declaration
 
-        self.funcs = {}
         self.methods = {}
         self.getters = {}
         self.setters = {}
-
-    def __repr__(self):
-        name = self.declaration.name.lexeme
-        return (
-            f"<Struct {name} with {len(self.funcs)} funcs, "
-            f"{len(self.methods)} methods, {len(self.getters)} getters, "
-            f"{len(self.setters)} setters>"
-        )
+        self.funcs = {}  # only for structs
 
     def addFunction(self, fn):
         name = fn.declaration.name.lexeme
@@ -143,6 +137,97 @@ class ZoofStruct:
             self.methods[name] = fn
         else:
             raise RuntimeError(f"Unforeseen function kind '{kind}'.")
+
+    def name(self):
+        raise NotImplementedError()
+
+    def checkNoAbstract(self):
+        abstracts = []
+        abstracts += [f for f in self.methods.values() if f.declaration.body is None]
+        abstracts += [f for f in self.getters.values() if f.declaration.body is None]
+        abstracts += [f for f in self.setters.values() if f.declaration.body is None]
+
+        if abstracts:
+            abstractNames = ", ".join(f.declaration.name.lexeme for f in abstracts)
+            raise RuntimeErr(
+                "E8270",
+                f"Abstract method not implemented for {self.name()}: {abstractNames}",
+                self.declaration.token,
+                "",
+            )
+
+
+class ZoofTrait(ZoofArcheType):
+    """A Trait can function as a super-type for structs, or as
+    a "duck-type".
+    """
+
+    def __init__(self, declaration):
+        super().__init__(declaration)
+        self.implementations = {}  # struct -> ZoofImpl
+
+    def __repr__(self):
+        name = self.name()
+        return (
+            f"<Trait {name} with "
+            f"{len(self.methods)} methods, {len(self.getters)} getters, "
+            f"{len(self.setters)} setters>"
+        )
+
+    def name(self):
+        return self.declaration.name.lexeme
+
+
+class ZoofImpl(ZoofArcheType):
+    """The implementation of a Trait, for a specific struct."""
+
+    def __init__(self, declaration, trait, struct):
+        super().__init__(declaration)
+        # Store struct, but not the trait
+        self.struct = struct
+
+        self.methods.update(struct.methods)
+        self.getters.update(struct.getters)
+        self.setters.update(struct.setters)
+        self.funcs.update(struct.funcs)
+
+        self.methods.update(trait.methods)
+        self.getters.update(trait.getters)
+        self.setters.update(trait.setters)
+
+    def __repr__(self):
+        traitName = self.declaration.trait.name.lexeme
+        structName = self.declaration.struct.name.lexeme
+        return f"<Impl {traitName} for {structName}>"
+
+    def name(self):
+        traitName = self.declaration.trait.name.lexeme
+        structName = self.declaration.struct.name.lexeme
+        return f"{structName}-as-{traitName}"
+
+
+class ZoofStruct(ZoofArcheType):
+    """An object representation, with data."""
+
+    def __init__(self, declaration, traits):
+        super().__init__(declaration)
+        self.traits = traits
+
+        for trait in traits:
+            self.methods.update(trait.methods)
+            self.getters.update(trait.getters)
+            self.setters.update(trait.setters)
+
+    def __repr__(self):
+        name = self.name()
+        return (
+            f"<Struct {name} with {len(self.funcs)} funcs, "
+            f"{len(self.methods)} methods, {len(self.getters)} getters, "
+            f"{len(self.setters)} setters>"
+        )
+
+    def name(self):
+        return self.declaration.name.lexeme
 
     def get(self, nameToken):
         name = nameToken.lexeme
@@ -167,13 +252,15 @@ class ZoofStruct:
 
 
 class ZoofInstance:
+    """An object. An instance of a struct."""
+
     def __init__(self, archetype, data):
         self.archetype = archetype
         self.data = data
 
     def __repr__(self):
         t = self.archetype
-        name = t.declaration.name.lexeme
+        name = self.archetype.name()
         return f"<{name} instance with {len(t.methods)} methods, {len(t.getters)} getters, {len(t.setters)} setters>"
 
     def getData(self, nameToken):
@@ -211,7 +298,7 @@ class ZoofInstance:
             if fn is not None:
                 attr = fn.bind(bindings)
             else:
-                structName = self.archetype.declaration.name.lexeme
+                structName = self.archetype.name()
                 raise RuntimeErr(
                     "E8240",
                     f"Struct {structName} does not have a getter or method called '{name}'.",
@@ -234,6 +321,37 @@ class ZoofInstance:
                 nameToken,
                 "",
             )
+
+    def structType(self):
+        if isinstance(self.archetype, ZoofStruct):
+            return self.archetype
+        else:
+            return self.archetype.struct
+
+    def cast(self, archetype, token):
+        thisStruct = self.structType()
+        if archetype is self.archetype:
+            return self
+        elif isinstance(archetype, ZoofStruct):
+            if archetype is thisStruct:
+                return ZoofInstance(thisStruct, self.data)
+        elif isinstance(archetype, ZoofTrait):
+            if archetype in thisStruct.traits:
+                return self
+            else:
+                impl = archetype.implementations.get(thisStruct, None)
+                if impl is not None:
+                    return ZoofInstance(impl, self.data)
+
+        # else
+        structName = thisStruct.name()
+        targetName = archetype.name()
+        raise RuntimeErr(
+            "E8296",
+            f"Cannot cast a {structName} to {targetName}.",
+            token,
+            "",
+        )
 
 
 BUILTINS = {}
@@ -458,25 +576,72 @@ class InterpreterVisitor:
             self.maybeClosures[-1].append(function)
 
     def visitStructStmt(self, stmt):
-        struct = ZoofStruct(stmt)
+        traits = []
+        for traitName in stmt.bases:
+            trait = self.env.get(traitName.name)
+            if isinstance(trait, ZoofTrait):
+                traits.append(trait)
+            else:
+                # Note: maybe it will be possible to inherit from structs, depending
+                # on what this means for static analysis and wasm code generation.
+                raise RuntimeErr(
+                "E8517",
+                f"A struct can only inherit from traits.",
+                traitName,
+                )
+
+        struct = ZoofStruct(stmt, traits)
         self.env.set(stmt.name, struct)
 
+        for funcStmt in stmt.functions:
+            function = ZoofFunction(
+                funcStmt, self.env, {"This": struct}, self.ehandler.source
+            )
+            struct.addFunction(function)
+            if self.maybeClosures:
+                self.maybeClosures[-1].append(function)
+
+        struct.checkNoAbstract()
+
+    def visitTraitStmt(self, stmt):
+        trait = ZoofTrait(stmt)
+        self.env.set(stmt.name, trait)
+
+        for funcStmt in stmt.functions:
+            function = ZoofFunction(
+                funcStmt, self.env, {"This": trait}, self.ehandler.source
+            )
+            trait.addFunction(function)
+            if self.maybeClosures:
+                self.maybeClosures[-1].append(function)
+
     def visitImplStmt(self, stmt):
-        ob = self.env.get(stmt.target)
-        if isinstance(ob, ZoofStruct):
-            for funcStmt in stmt.functions:
-                function = ZoofFunction(
-                    funcStmt, self.env, {"This": ob}, self.ehandler.source
-                )
-                ob.addFunction(function)
-                if self.maybeClosures:
-                    self.maybeClosures[-1].append(function)
-        else:
+        trait = self.env.get(stmt.trait.name)
+        struct = self.env.get(stmt.struct.name)
+        if not isinstance(trait, ZoofTrait):
             raise RuntimeErr(
-                "E8161",
-                f"Cannot impl '{stmt.target.lexeme}' because it is not a Struct or Trait.",
+                "E8948",
+                f"Impl expects a trait before 'for'.",
                 stmt.target,
             )
+        if not isinstance(struct, ZoofStruct):
+            raise RuntimeErr(
+                "E8412",
+                f"Impl expects a struct after 'for'.",
+                stmt.target,
+            )
+
+        impl = ZoofImpl(stmt, trait, struct)
+        trait.implementations[struct] = impl
+        for funcStmt in stmt.functions:
+            function = ZoofFunction(
+                funcStmt, self.env, {"This": struct}, self.ehandler.source
+            )
+            impl.addFunction(function)
+            if self.maybeClosures:
+                self.maybeClosures[-1].append(function)
+
+        impl.checkNoAbstract()
 
     def visitExpressionStmt(self, stmt):
         return self.evaluate(stmt.expr)
@@ -496,7 +661,7 @@ class InterpreterVisitor:
             return ob.get(expr.name)
         elif isinstance(ob, ZoofInstance):
             if expr.token.lexeme == "..":
-                if ob.archetype is self.env.map.get("This", None):
+                if ob.structType() is self.env.map.get("This", None):
                     return ob.getData(expr.name)
                 else:
                     raise RuntimeErr(
@@ -519,7 +684,7 @@ class InterpreterVisitor:
         if isinstance(ob, ZoofInstance):
             value = self.evaluate(expr.value)
             if expr.token.lexeme == "..":
-                if ob.archetype is self.env.map.get("This", None):
+                if ob.structType() is self.env.map.get("This", None):
                     ob.setData(expr.name, value)
                 else:
                     raise RuntimeErr(
@@ -666,12 +831,18 @@ class InterpreterVisitor:
             return self.isEqual(left, right)
         elif optype == TT.BangEqual:
             return not self.isEqual(left, right)
-        else:
-            raise RuntimeErr(
-                "E8701",
-                f"Unexpected binary expression '{optype}'.",
-                expr.op,
-            )
+        # Cast
+        elif optype.name == "Keyword":
+            opname = expr.op.lexeme
+            if opname == "as":
+                return left.cast(right, expr)
+
+        # else
+        raise RuntimeErr(
+            "E8701",
+            f"Unexpected binary expression '{optype}'.",
+            expr.op,
+        )
 
     def visitCallExpr(self, expr):
         callee = self.evaluate(expr.callee)

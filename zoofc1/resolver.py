@@ -1,4 +1,4 @@
-from .tree import Stmt, Expr, VariableExpr
+from .tree import ExprOrStmt, Stmt, Expr, VariableExpr
 from .interpreter import BUILTINS
 
 # Scope 0: current scope
@@ -136,8 +136,19 @@ class ResolverVisitor:
 
     def visitStructStmt(self, stmt):
         self.declare(stmt.name)
+        for traitName in stmt.bases:
+            self.resolve(traitName)
+        for fn in stmt.functions:
+            self.resolveFunction(fn, extra_names=["this", "This"])
+
+    def visitTraitStmt(self, stmt):
+        self.declare(stmt.name)
+        for fn in stmt.functions:
+            self.resolveFunction(fn, extra_names=["this", "This"])
 
     def visitImplStmt(self, stmt):
+        self.resolve(stmt.trait)
+        self.resolve(stmt.struct)
         for fn in stmt.functions:
             self.resolveFunction(fn, extra_names=["this", "This"])
 
@@ -158,8 +169,11 @@ class ResolverVisitor:
             self.declare(param)
         if isinstance(declaration.body, list):
             self.resolveStatements(declaration.body)
-        else:
+        elif isinstance(declaration.body, ExprOrStmt):
             self.resolve(declaration.body)
+        else:
+            assert declaration.body is None  # abstract func
+
         # Add freeVars to the AST node, so the interpreter can create precise closures
         declaration.freeVars = {
             name: expr

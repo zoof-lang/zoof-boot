@@ -44,9 +44,6 @@
 # This should be `- (ob.foo)`,  not `(-ob).foo`
 
 struct Object
-    nil
-
-impl Object
     func new() its This()
     getter foo() its 42
 
